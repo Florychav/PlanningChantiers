@@ -1053,12 +1053,15 @@ function renderGantt() {
   if (state.filterPerson !== 'all') persons = persons.filter(p => String(p.id) === String(state.filterPerson));
   if (state.filterGroup !== 'tous') persons = persons.filter(p => p.groupe === state.filterGroup);
   const groupOrder = ['JSG','SS','DSG','Protocoleur/TS','Externe','Autre'];
-  // Ordre des rôles : Chef de Chantier, Protocoleur, Pré-Protocoleur, Monteur, autres
-  const roleOrder = ['chef de chantier','chef chantier','protocoleur','pré-protocoleur','pre-protocoleur','monteur'];
+  // Ordre des rôles : Chef → Protocoleur → Pré-Protocoleur → Monteur → autres
+  // Règles explicites (l'ordre des if compte : pré-protocoleur AVANT protocoleur car il le contient)
   const roleRank = (r) => {
-    const k = (r||'').toLowerCase();
-    const i = roleOrder.findIndex(o => k.includes(o));
-    return i < 0 ? 99 : i;
+    const k = (r||'').toLowerCase().trim();
+    if (k.startsWith('chef')) return 0;                                          // Chef, Chef de Chantier, Chef Chantier
+    if (k.includes('pré-protocoleur') || k.includes('pre-protocoleur')) return 2; // Pré-Protocoleur
+    if (k.includes('protocoleur')) return 1;                                     // Protocoleur, Protocoleuse
+    if (k.includes('monteur') || k.includes('monteuse')) return 3;               // Monteur, Monteuse
+    return 99;
   };
   persons.sort((a,b) => {
     const ga = groupOrder.indexOf(a.groupe), gb = groupOrder.indexOf(b.groupe);
@@ -2099,7 +2102,10 @@ function _submitLabelFormInner(labelId, type) {
   const errorEl = document.getElementById('f-error');
   errorEl.textContent = '';
 
-  const personId = parseInt(document.getElementById('f-person').value);
+  // Récupération de l'ID personne — peut être numérique (legacy) ou UUID
+  const personIdRaw = document.getElementById('f-person').value;
+  const matchedPerson = state.personnes.find(p => String(p.id) === String(personIdRaw));
+  const personId = matchedPerson ? matchedPerson.id : personIdRaw;
   const debut = document.getElementById('f-debut').value;
   const dureeOuvr = Math.max(1, parseInt(document.getElementById('f-duree-ouvrable')?.value) || 1);
   const fin = dateStr(addBusinessDays(parseDate(debut), dureeOuvr));
@@ -3095,7 +3101,10 @@ function saveReunion() {
   const date = document.getElementById('reu-date').value;
   const dureeOuvr = Math.max(1, parseInt(document.getElementById('reu-duree').value) || 1);
   const texte = document.getElementById('reu-texte').value.trim() || "Réunion d'équipe";
-  const ids = Array.from(document.querySelectorAll('.reu-pers:checked')).map(c => parseInt(c.value));
+  // ID personne : conserver le type natif (numérique legacy ou UUID)
+  const ids = Array.from(document.querySelectorAll('.reu-pers:checked'))
+    .map(c => state.personnes.find(p => String(p.id) === String(c.value))?.id)
+    .filter(x => x != null);
   if (!date) { toast('Date requise', 'error'); return; }
   if (ids.length === 0) { toast('Sélectionnez au moins une personne', 'error'); return; }
   const fin = dateStr(addBusinessDays(parseDate(date), dureeOuvr));
