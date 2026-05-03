@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="https://menetrey-lift.ch/wp-content/uploads/2022/05/logo-menetrey-mobile.png">
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -223,17 +224,36 @@ table.stats-table tr:hover td{background:var(--bg-elev-2)}
 .legend{display:flex;flex-wrap:wrap;gap:10px;padding:7px 14px;background:var(--bg-elev-1);border-bottom:1px solid var(--border);flex-shrink:0}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted)}
 .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;border:1px solid rgba(255,255,255,.08)}
-/* ── FILE OPEN SCREEN ── */
-#file-screen{position:fixed;inset:0;background:radial-gradient(ellipse at top,#0f1c33 0%,var(--bg) 60%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:3000;color:var(--text);gap:20px;padding:24px}
-#file-screen::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 20% 30%,rgba(59,108,196,.15) 0,transparent 40%),radial-gradient(circle at 80% 70%,rgba(59,108,196,.08) 0,transparent 40%);pointer-events:none}
-#file-screen img.fs-logo{max-width:280px;width:100%;height:auto;filter:brightness(0) invert(1) opacity(.95);margin-bottom:8px;position:relative;z-index:1}
-#file-screen h2{font-size:24px;font-weight:600;letter-spacing:-.02em;position:relative;z-index:1}
-#file-screen p{color:var(--text-muted);text-align:center;max-width:420px;line-height:1.6;font-size:14px;position:relative;z-index:1}
-#file-screen .file-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;position:relative;z-index:1;margin-top:8px}
+/* ── AUTH / LOGIN SCREEN ── */
+#auth-screen{position:fixed;inset:0;background:radial-gradient(ellipse at top,#0f1c33 0%,var(--bg) 60%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:3000;color:var(--text);gap:18px;padding:24px}
+#auth-screen.visible{display:flex}
+#auth-screen::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 20% 30%,rgba(59,108,196,.15) 0,transparent 40%),radial-gradient(circle at 80% 70%,rgba(59,108,196,.08) 0,transparent 40%);pointer-events:none}
+#auth-screen img.fs-logo{max-width:260px;width:100%;height:auto;filter:brightness(0) invert(1) opacity(.95);margin-bottom:4px;position:relative;z-index:1}
+#auth-screen h2{font-size:22px;font-weight:600;letter-spacing:-.02em;position:relative;z-index:1}
+#auth-screen p{color:var(--text-muted);text-align:center;max-width:420px;line-height:1.5;font-size:13px;position:relative;z-index:1}
+#auth-screen .auth-form{display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px;position:relative;z-index:1;margin-top:6px}
+#auth-screen .auth-form input{padding:11px 13px;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev-2);color:var(--text);font-size:14px;font-family:inherit;transition:.15s}
+#auth-screen .auth-form input:focus{outline:none;border-color:var(--primary);background:var(--bg-elev-3);box-shadow:0 0 0 3px var(--primary-soft)}
 .btn-white{background:var(--primary);color:#fff;font-weight:500;padding:11px 22px;border-radius:8px;border:1px solid var(--primary);cursor:pointer;font-size:14px;transition:.15s;font-family:inherit;letter-spacing:-.01em}
 .btn-white:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
-.btn-white.secondary{background:transparent;color:var(--text);border-color:var(--border-strong)}
-.btn-white.secondary:hover{background:var(--bg-elev-2)}
+.btn-white:disabled{opacity:.6;cursor:wait}
+/* Indicateur de synchro */
+#sync-indicator{font-size:11px;color:var(--text-faint)}
+#sync-indicator::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 6px rgba(16,185,129,.5);margin-right:4px;vertical-align:middle}
+#sync-indicator.syncing::before{background:#fbbf24;box-shadow:0 0 6px rgba(251,191,36,.5);animation:pulse 1s infinite}
+#sync-indicator.error::before{background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,.5)}
+@keyframes pulse{50%{opacity:.4}}
+/* Badge rôle */
+.role-badge{display:inline-block;padding:1px 6px;border-radius:10px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-left:6px;border:1px solid var(--border)}
+.role-admin{background:rgba(220,76,76,.15);color:#fca5a5;border-color:rgba(220,76,76,.3)}
+.role-editor{background:rgba(59,108,196,.15);color:#93c5fd;border-color:rgba(59,108,196,.3)}
+.role-viewer{background:var(--bg-elev-3);color:var(--text-muted)}
+/* Permissions UI : viewer ne voit pas les contrôles d'édition */
+body.role-readonly .editor-only,
+body.role-readonly .admin-only,
+body:not(.role-admin) .admin-only{display:none !important}
+body.role-readonly .label-block{cursor:default}
+body.role-readonly .day-cell{cursor:default}
 /* Scrollbar */
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -301,16 +321,18 @@ body.compact #compact-chev{transform:rotate(-90deg);display:inline-block}
 </head>
 <body class="compact">
 
-<!-- FILE OPEN SCREEN -->
-<div id="file-screen">
+<!-- AUTH / LOGIN SCREEN -->
+<div id="auth-screen">
   <img class="fs-logo" src="https://menetrey-lift.ch/wp-content/uploads/2022/05/logotest-web.png" alt="Ascenseurs Menétrey SA">
   <h2>Planning de Chantier</h2>
-  <p>Ouvrez un fichier <code style="background:var(--bg-elev-2);padding:1px 6px;border-radius:4px;border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:12px">planning.json</code> existant ou créez un nouveau planning.</p>
-  <div class="file-actions">
-    <button class="btn-white" onclick="openFile()">Ouvrir planning.json</button>
-    <button class="btn-white secondary" onclick="newFile()">Nouveau planning</button>
-  </div>
-  <p style="font-size:11px;color:var(--text-faint);margin-top:8px">Données stockées localement sur votre ordinateur</p>
+  <p>Connectez-vous pour accéder au planning partagé.</p>
+  <form class="auth-form" onsubmit="event.preventDefault(); doLogin();" autocomplete="on">
+    <input type="email" id="login-email" placeholder="Email" required autocomplete="username">
+    <input type="password" id="login-password" placeholder="Mot de passe" required autocomplete="current-password">
+    <button type="submit" class="btn-white" id="login-btn">Se connecter</button>
+    <div id="login-error" class="form-error" style="min-height:18px"></div>
+  </form>
+  <p style="font-size:11px;color:var(--text-faint);margin-top:8px">Données synchronisées en temps réel · Supabase</p>
 </div>
 
 <!-- MAIN APP -->
@@ -329,9 +351,9 @@ body.compact #compact-chev{transform:rotate(-90deg);display:inline-block}
     <div class="tab" data-tab="events" onclick="switchTab('events')">🎉 Événements</div>
   </div>
   <div class="spacer"></div>
-  <span id="file-status-label" class="file-status"></span>
-  <button class="btn btn-ghost btn-sm" onclick="openFile()">📂 Changer fichier</button>
-  <button class="btn btn-ghost btn-sm" id="save-btn" onclick="saveToFileUser()">💾 Sauvegarder</button>
+  <span id="sync-indicator" class="file-status" title="Synchronisation Supabase"></span>
+  <span id="user-info" class="file-status"></span>
+  <button class="btn btn-ghost btn-sm" id="logout-btn" onclick="doLogout()" style="display:none">⏏ Déconnexion</button>
 </header>
 
 <!-- ═══════════════════════════ GANTT TAB ═══════════════════════════ -->
@@ -361,7 +383,7 @@ body.compact #compact-chev{transform:rotate(-90deg);display:inline-block}
       <option value="Externe">Externe</option>
       <option value="Autre">Autre</option>
     </select>
-    <button class="btn btn-primary btn-sm" onclick="addLabel(null)">+ Nouvelle étiquette</button>
+    <button class="btn btn-primary btn-sm editor-only" onclick="addLabel(null)">+ Nouvelle étiquette</button>
   </div>
   <div class="legend">
     <span class="legend-item"><span class="legend-dot" style="background:var(--rouge)"></span>Remplacement</span>
@@ -407,7 +429,7 @@ body.compact #compact-chev{transform:rotate(-90deg);display:inline-block}
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
       <h2 style="font-size:16px;font-weight:700">Gestion de l'équipe</h2>
       <div class="spacer"></div>
-      <button class="btn btn-primary btn-sm" onclick="showPersonForm(null)">+ Ajouter une personne</button>
+      <button class="btn btn-primary btn-sm admin-only" onclick="showPersonForm(null)">+ Ajouter une personne</button>
     </div>
     <div class="team-list" id="team-list"></div>
   </div>
@@ -418,8 +440,8 @@ body.compact #compact-chev{transform:rotate(-90deg);display:inline-block}
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
       <h2 style="font-size:16px;font-weight:700">Événements globaux</h2>
       <div class="spacer"></div>
-      <button class="btn btn-primary btn-sm" onclick="showPontForm()">+ Pont offert</button>
-      <button class="btn btn-primary btn-sm" onclick="showReunionForm()">+ Réunion d'équipe</button>
+      <button class="btn btn-primary btn-sm editor-only" onclick="showPontForm()">+ Pont offert</button>
+      <button class="btn btn-primary btn-sm editor-only" onclick="showReunionForm()">+ Réunion d'équipe</button>
     </div>
     <div style="background:var(--bg-elev-1);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px">
       <h3 style="padding:10px 14px;font-size:13px;font-weight:700;background:var(--bg-elev-2);border-bottom:1px solid var(--border);color:var(--text)">🌉 Ponts offerts (jours fériés ajoutés)</h3>
@@ -496,37 +518,41 @@ const JOURS_FERIES = new Set(Object.keys(FERIES_INFO));
 
 
 // ════════════════════════════════════════════════════
+// SUPABASE — configuration
+// ════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://nnkthgxbcslkhkdayjvg.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_zX0P2GxSqIlh3Lqb_-PtCw_ydCahuhp';
+let sb = null; // client Supabase, initialisé dans init()
+
+// ════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════
 let state = {
   personnes: [],
   etiquettes: [],
   ponts: [],        // [{id, date:'YYYY-MM-DD', nom}]
-  reunions: [],     // [{id, date, dureeOuvr, texte, personnes:[ids]}] — historique pour suppression groupée
-  admin: false,
+  reunions: [],     // [{id, date, dureeOuvr, texte, personnes:[ids]}]
+  admin: false,     // alias compat : true si userRole === 'admin'
+  userRole: null,   // 'viewer' | 'editor' | 'admin'
+  session: null,    // session Supabase
   view: 'trimestre',
   anchorDate: new Date(),
   filterPerson: 'all',
   filterGroup: 'tous',
-  fileHandle: null,
-  dirty: false,
-  currentUser: null,
+  currentUser: null,  // email connecté
   rangeBefore: 180,
   rangeAfter: 540,
+  // Anti-rebond pour realtime (évite d'appliquer son propre push)
+  _suppressRealtime: false,
 };
+
+// Helpers permission
+function canEdit()  { return ['editor','admin'].includes(state.userRole); }
+function canAdmin() { return state.userRole === 'admin'; }
 
 // ════════════════════════════════════════════════════
 // STATE HELPERS
 // ════════════════════════════════════════════════════
-
-// Charge un objet JSON dans l'état applicatif
-function loadStateFromData(data) {
-  state.personnes  = data.personnes  || [];
-  state.etiquettes = data.etiquettes || [];
-  state.ponts      = data.ponts      || [];
-  state.reunions   = data.reunions   || [];
-  state.admin      = data.admin      || false;
-}
 
 // Remet la vue par défaut (Trimestre, ancre = aujourd'hui)
 function setDefaultView() {
@@ -538,177 +564,215 @@ function setDefaultView() {
 }
 
 // ════════════════════════════════════════════════════
-// DATA LAYER — isolé pour migration Phase 2 SharePoint
+// SUPABASE — AUTH
 // ════════════════════════════════════════════════════
-async function getData() {
-  return {
-    personnes:  JSON.parse(JSON.stringify(state.personnes)),
-    etiquettes: JSON.parse(JSON.stringify(state.etiquettes)),
-    ponts:      JSON.parse(JSON.stringify(state.ponts || [])),
-    reunions:   JSON.parse(JSON.stringify(state.reunions || [])),
-    admin: state.admin,
-  };
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  errEl.textContent = '';
+  btn.disabled = true; btn.textContent = 'Connexion…';
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { errEl.textContent = error.message; return; }
+    await onAuthSuccess(data.session);
+  } catch (e) {
+    errEl.textContent = e.message || 'Erreur de connexion';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Se connecter';
+  }
 }
 
-async function saveData(data) {
-  state.personnes = data.personnes || [];
-  state.etiquettes = data.etiquettes || [];
-  state.ponts = data.ponts || [];
-  state.reunions = data.reunions || [];
-  if (data.admin !== undefined) state.admin = data.admin;
-  state.dirty = true;
+async function doLogout() {
+  unsubscribeRealtime();
+  await sb.auth.signOut();
+  state.session = null;
+  state.userRole = null;
+  state.admin = false;
+  state.currentUser = null;
+  state.personnes = [];
+  state.etiquettes = [];
+  state.ponts = [];
+  state.reunions = [];
+  document.getElementById('logout-btn').style.display = 'none';
+  document.getElementById('user-info').textContent = '';
+  document.getElementById('sync-indicator').textContent = '';
+  showAuthScreen();
+}
+
+async function onAuthSuccess(session) {
+  state.session = session;
+  state.currentUser = session.user.email;
+  // Récupérer le rôle applicatif
+  const { data: appUser, error: roleErr } = await sb
+    .from('app_users')
+    .select('role')
+    .eq('user_id', session.user.id)
+    .maybeSingle();
+  if (roleErr) console.warn('Lecture rôle :', roleErr.message);
+  state.userRole = appUser?.role || 'viewer';
+  state.admin = state.userRole === 'admin';
+  // UI utilisateur
+  const roleClass = `role-${state.userRole}`;
+  const roleLabel = state.userRole.toUpperCase();
+  document.getElementById('user-info').innerHTML =
+    `👤 ${session.user.email}<span class="role-badge ${roleClass}">${roleLabel}</span>`;
+  document.getElementById('logout-btn').style.display = '';
+  document.getElementById('sync-indicator').textContent = 'Synchronisé';
+  hideAuthScreen();
+  // Charger les données
+  setSyncing(true);
+  try {
+    await loadStateFromSupabase();
+  } catch (e) {
+    toast('Erreur de chargement : ' + e.message, 'error');
+  }
+  setSyncing(false);
+  applyRolePermissionsToUI();
+  setDefaultView();
   renderAll();
-  await saveToFile();
+  requestAnimationFrame(() => scrollToDate(new Date()));
+  // Realtime
+  subscribeRealtime();
+  toast(`Connecté · ${state.userRole}`, 'success');
+}
+
+function showAuthScreen() {
+  document.getElementById('auth-screen').classList.add('visible');
+}
+function hideAuthScreen() {
+  document.getElementById('auth-screen').classList.remove('visible');
 }
 
 // ════════════════════════════════════════════════════
-// FILE SYSTEM ACCESS API
+// SUPABASE — CHARGEMENT
 // ════════════════════════════════════════════════════
-async function openFile() {
-  try {
-    const [handle] = await window.showOpenFilePicker({
-      types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
-    });
-    state.fileHandle = handle;
-    const file = await handle.getFile();
-    const data = JSON.parse(await file.text());
-    loadStateFromData(data);
-    hideFileScreen();
-    updateFileStatus(handle.name);
-    setDefaultView();
-    renderAll();
-    requestAnimationFrame(() => scrollToDate(new Date()));
-    toast('Fichier chargé : ' + handle.name, 'success');
-  } catch (e) {
-    if (e.name !== 'AbortError') toast('Erreur ouverture : ' + e.message, 'error');
+async function loadStateFromSupabase() {
+  const [p, e, po, r] = await Promise.all([
+    sb.from('personnes').select('body'),
+    sb.from('etiquettes').select('body'),
+    sb.from('ponts').select('body'),
+    sb.from('reunions').select('body'),
+  ]);
+  if (p.error)  throw new Error('personnes : '  + p.error.message);
+  if (e.error)  throw new Error('etiquettes : ' + e.error.message);
+  if (po.error) throw new Error('ponts : '      + po.error.message);
+  if (r.error)  throw new Error('reunions : '   + r.error.message);
+  state.personnes  = (p.data  || []).map(x => x.body);
+  state.etiquettes = (e.data  || []).map(x => x.body);
+  state.ponts      = (po.data || []).map(x => x.body);
+  state.reunions   = (r.data  || []).map(x => x.body);
+  // Si l'instance est vide ET l'utilisateur est admin, proposer un seed
+  if (canAdmin() && state.personnes.length === 0 && state.etiquettes.length === 0) {
+    if (confirm('Base de données vide. Initialiser avec les données de démo ?')) {
+      state.personnes  = getDefaultPersonnes();
+      state.etiquettes = getDefaultEtiquettes();
+      await syncToSupabase();
+    }
   }
 }
 
-async function newFile() {
-  try {
-    const handle = await window.showSaveFilePicker({
-      suggestedName: 'planning.json',
-      types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
-    });
-    state.fileHandle = handle;
-    state.personnes  = getDefaultPersonnes();
-    state.etiquettes = getDefaultEtiquettes();
-    state.ponts      = [];
-    state.reunions   = [];
-    state.admin      = false;
-    await writeFile();
-    hideFileScreen();
-    updateFileStatus(handle.name);
-    setDefaultView();
-    renderAll();
-    requestAnimationFrame(() => scrollToDate(new Date()));
-    toast('Nouveau planning créé', 'success');
-  } catch (e) {
-    if (e.name !== 'AbortError') toast('Erreur création : ' + e.message, 'error');
-  }
+// ════════════════════════════════════════════════════
+// SUPABASE — SYNC (push)
+// ════════════════════════════════════════════════════
+// Stratégie : sync complète par diff (upsert tout l'état + delete les IDs absents).
+// Simple, fiable, et n'oblige pas à instrumenter chaque mutation.
+
+function setSyncing(on) {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  if (on) { el.classList.add('syncing'); el.classList.remove('error'); el.textContent = 'Synchro…'; }
+  else { el.classList.remove('syncing'); el.textContent = 'Synchronisé'; }
+}
+function setSyncError(msg) {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  el.classList.add('error'); el.classList.remove('syncing');
+  el.textContent = 'Erreur sync';
+  if (msg) el.title = msg;
 }
 
-async function saveToFile(opts) {
-  const userClick = opts === true || opts?.userClick === true;
-  // Toujours mettre à jour le cache localStorage (utile pour relancer)
-  try {
-    localStorage.setItem('menetrey_planning_cache', JSON.stringify({
-      personnes: state.personnes, etiquettes: state.etiquettes,
-      ponts: state.ponts || [], reunions: state.reunions || [],
-      admin: state.admin
-    }));
-  } catch(e) {}
+let _syncTimer = null;
+async function saveToFile() {
+  // Toutes les mutations passent par cette fonction (compatibilité avec le code existant)
+  if (!sb || !state.session) return;
+  if (!canEdit()) {
+    toast('Lecture seule : modifications non sauvegardées', 'warning');
+    return;
+  }
+  // Debounce 200ms pour fusionner les rafales (drag, fusion, cascade)
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(() => {
+    syncToSupabase().catch(e => setSyncError(e.message));
+  }, 200);
+}
 
-  // Cas 1 : un fichier est ouvert via File System Access → écriture directe
-  if (state.fileHandle) {
-    try {
-      await writeFile();
-      state.dirty = false;
-      flashSaveBtn('success');
-      if (userClick) toast('Planning sauvegardé', 'success');
-      return;
-    } catch (e) {
-      // Permission perdue ? Retomber sur la sélection manuelle si clic utilisateur
-      if (userClick && window.showSaveFilePicker) {
-        state.fileHandle = null;
-        return saveToFile(true);
+async function syncToSupabase() {
+  if (!sb || !state.session || !canEdit()) return;
+  setSyncing(true);
+  state._suppressRealtime = true;
+  try {
+    const tables = {
+      personnes:  state.personnes,
+      etiquettes: state.etiquettes,
+      ponts:      state.ponts,
+      reunions:   state.reunions,
+    };
+    for (const [t, items] of Object.entries(tables)) {
+      // 1) Upsert l'état complet
+      if (items.length > 0) {
+        const rows = items.map(x => ({ id: String(x.id), body: x }));
+        const { error } = await sb.from(t).upsert(rows);
+        if (error) throw new Error(`${t} upsert: ${error.message}`);
       }
-      toast('Erreur sauvegarde fichier : ' + e.message, 'error');
-      flashSaveBtn('error');
-      return;
+      // 2) Supprimer les rows qui ne sont plus dans l'état
+      const { data: existing, error: selErr } = await sb.from(t).select('id');
+      if (selErr) throw new Error(`${t} select: ${selErr.message}`);
+      const stateIds = new Set(items.map(x => String(x.id)));
+      const toDelete = (existing || []).filter(r => !stateIds.has(String(r.id))).map(r => r.id);
+      if (toDelete.length) {
+        const { error: delErr } = await sb.from(t).delete().in('id', toDelete);
+        if (delErr) throw new Error(`${t} delete: ${delErr.message}`);
+      }
     }
+    setSyncing(false);
+  } catch (e) {
+    setSyncError(e.message);
+    toast('Erreur sync : ' + e.message, 'error');
+  } finally {
+    // Délai avant de réautoriser le realtime (évite d'appliquer son propre push)
+    setTimeout(() => { state._suppressRealtime = false; }, 600);
   }
-
-  // Cas 2 : pas de fileHandle. Si clic utilisateur, demander où sauvegarder
-  // (et lier le fileHandle pour les sauvegardes futures).
-  if (userClick && window.showSaveFilePicker) {
-    try {
-      const handle = await window.showSaveFilePicker({
-        suggestedName: 'planning.json',
-        types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
-      });
-      state.fileHandle = handle;
-      await writeFile();
-      state.dirty = false;
-      updateFileStatus(handle.name);
-      flashSaveBtn('success');
-      toast('Planning sauvegardé sous ' + handle.name, 'success');
-      return;
-    } catch (e) {
-      if (e.name === 'AbortError') return; // utilisateur a annulé
-      toast('Erreur sauvegarde : ' + e.message, 'error');
-      flashSaveBtn('error');
-      return;
-    }
-  }
-
-  // Cas 3 : sauvegarde automatique (sans clic) sans fileHandle → cache local seulement
-  state.dirty = true;
-  // Discret : pas de toast pour les sauvegardes automatiques
 }
 
-// Wrapper utilisé par le bouton "Sauvegarder" pour signaler un clic utilisateur
-function saveToFileUser() { return saveToFile(true); }
-
-// Petit retour visuel sur le bouton après save
-function flashSaveBtn(state) {
-  const btn = document.getElementById('save-btn');
-  if (!btn) return;
-  const orig = btn.innerHTML;
-  if (state === 'success') {
-    btn.innerHTML = '✓ Sauvegardé';
-    btn.style.background = 'rgba(16,185,129,.2)';
-    btn.style.color = '#34d399';
-  } else {
-    btn.innerHTML = '✕ Erreur';
-    btn.style.background = 'rgba(220,38,38,.2)';
-    btn.style.color = '#f87171';
-  }
-  setTimeout(() => {
-    btn.innerHTML = orig;
-    btn.style.background = '';
-    btn.style.color = '';
-  }, 1800);
+// ════════════════════════════════════════════════════
+// SUPABASE — REALTIME
+// ════════════════════════════════════════════════════
+let _realtimeChannels = [];
+let _realtimeReloadTimer = null;
+function subscribeRealtime() {
+  unsubscribeRealtime();
+  const debouncedReload = () => {
+    if (state._suppressRealtime) return;
+    clearTimeout(_realtimeReloadTimer);
+    _realtimeReloadTimer = setTimeout(async () => {
+      try {
+        await loadStateFromSupabase();
+        renderAll();
+      } catch (e) { console.warn('Realtime reload error:', e); }
+    }, 250);
+  };
+  ['personnes','etiquettes','ponts','reunions'].forEach(t => {
+    const ch = sb.channel('rt-' + t)
+      .on('postgres_changes', { event: '*', schema: 'public', table: t }, debouncedReload)
+      .subscribe();
+    _realtimeChannels.push(ch);
+  });
 }
-
-async function writeFile() {
-  const writable = await state.fileHandle.createWritable();
-  await writable.write(JSON.stringify({
-    personnes: state.personnes,
-    etiquettes: state.etiquettes,
-    ponts: state.ponts || [],
-    reunions: state.reunions || [],
-    admin: state.admin,
-  }, null, 2));
-  await writable.close();
-}
-
-function hideFileScreen() {
-  document.getElementById('file-screen').style.display = 'none';
-}
-
-function updateFileStatus(name) {
-  document.getElementById('file-status-label').textContent = '📄 ' + name;
+function unsubscribeRealtime() {
+  _realtimeChannels.forEach(ch => { try { sb.removeChannel(ch); } catch(e){} });
+  _realtimeChannels = [];
 }
 
 // ════════════════════════════════════════════════════
@@ -907,20 +971,12 @@ function nextBusinessDay(d) {
   while (!isBusinessDay(n)) n = addDays(n, 1);
   return n;
 }
-// Utilisateur courant (config + localStorage)
+// Utilisateur courant — vient de Supabase Auth (email)
 function getCurrentUser() {
-  if (state.currentUser) return state.currentUser;
-  let u = localStorage.getItem('menetrey_currentUser');
-  if (!u) {
-    u = prompt('Votre nom (utilisé comme auteur des modifications) :', 'Flory') || 'Inconnu';
-    localStorage.setItem('menetrey_currentUser', u);
-  }
-  state.currentUser = u;
-  return u;
+  return state.currentUser || 'Inconnu';
 }
 function isAdminUser() {
-  const u = (getCurrentUser() || '').toLowerCase();
-  return state.admin || u.includes('menétrey') || u.includes('menetrey') || u === 'admin';
+  return state.admin === true;
 }
 function pushHistory(label, action, changes) {
   if (!label.history) label.history = [];
@@ -1330,8 +1386,8 @@ function attachLabelDrag(lblEl, labelId, colW) {
   const start = (clientX, clientY, e) => {
     const lbl = state.etiquettes.find(l => l.id === labelId);
     if (!lbl) return;
-    // Étiquette verrouillée : on autorise le clic (pour ouvrir le détail) mais pas le drag
-    lockedNoDrag = !!(lbl.verrouille && !state.admin);
+    // Viewer (lecture seule) ou étiquette verrouillée : on autorise le clic (pour ouvrir le détail) mais pas le drag
+    lockedNoDrag = !canEdit() || !!(lbl.verrouille && !state.admin);
     dragMoved = false;
     startX = clientX; startY = clientY;
     origStart = lbl.dateDebut; origEnd = lbl.dateFin; origPerson = lbl.personneId;
@@ -1348,9 +1404,9 @@ function attachLabelDrag(lblEl, labelId, colW) {
   const move = (cx, cy) => {
     const dx = cx - startX, dy = cy - startY;
     if (!dragMoved && (Math.abs(dx) > THRESHOLD || Math.abs(dy) > THRESHOLD)) {
-      // Étiquette verrouillée : on bloque le déplacement mais on garde le clic
       if (lockedNoDrag) {
-        toast('Étiquette verrouillée — utilisez "→ SAV en cours" depuis le détail pour la déverrouiller', 'warning');
+        if (!canEdit()) toast('Lecture seule', 'warning');
+        else toast('Étiquette verrouillée — utilisez "→ SAV en cours" depuis le détail pour la déverrouiller', 'warning');
         return;
       }
       dragMoved = true;
@@ -1698,11 +1754,11 @@ function showLabelDetail(labelId) {
       ${historyHtml}
     </div>
     <div class="popup-actions">
-      ${isRose ? `<button class="btn btn-sm" style="background:#424242;color:#fff" onclick="convertToNoir('${lbl.id}')">→ SAV Bloqué</button>` : ''}
-      ${isNoir ? `<button class="btn btn-sm" style="background:#EC407A;color:#fff" onclick="convertToRose('${lbl.id}')">→ SAV en cours</button>` : ''}
-      <button class="btn btn-secondary btn-sm" onclick="copyLabel('${lbl.id}')">📋 Copier</button>
-      ${(!lbl.verrouille || state.admin || isNoir) ? `<button class="btn btn-secondary btn-sm" onclick="editLabel('${lbl.id}');closeAllPopups()">✏️ Modifier</button>` : ''}
-      ${(!lbl.verrouille || state.admin) ? `<button class="btn btn-danger btn-sm" onclick="deleteLabel('${lbl.id}')">🗑️ Supprimer</button>` : ''}
+      ${canEdit() && isRose ? `<button class="btn btn-sm" style="background:#424242;color:#fff" onclick="convertToNoir('${lbl.id}')">→ SAV Bloqué</button>` : ''}
+      ${canEdit() && isNoir ? `<button class="btn btn-sm" style="background:#EC407A;color:#fff" onclick="convertToRose('${lbl.id}')">→ SAV en cours</button>` : ''}
+      ${canEdit() ? `<button class="btn btn-secondary btn-sm" onclick="copyLabel('${lbl.id}')">📋 Copier</button>` : ''}
+      ${canEdit() && (!lbl.verrouille || state.admin || isNoir) ? `<button class="btn btn-secondary btn-sm" onclick="editLabel('${lbl.id}');closeAllPopups()">✏️ Modifier</button>` : ''}
+      ${canEdit() && (!lbl.verrouille || state.admin) ? `<button class="btn btn-danger btn-sm" onclick="deleteLabel('${lbl.id}')">🗑️ Supprimer</button>` : ''}
       <button class="btn btn-secondary btn-sm" onclick="closeAllPopups()">Fermer</button>
     </div>
   `;
@@ -1799,6 +1855,7 @@ function showCellContextMenu(e, personId, dateStrAt) {
 }
 
 function onCellClick(personId, dateStr) {
+  if (!canEdit()) return;
   closeAllPopups();
   addLabel(personId, dateStr);
 }
@@ -2511,9 +2568,9 @@ function renderTeam() {
             <td>${p.role}</td>
             <td><span class="badge ${p.actif?'badge-actif':'badge-inactif'}">${p.actif?'Actif':'Inactif'}</span></td>
             <td style="text-align:right;white-space:nowrap">
-              <button class="btn btn-secondary btn-sm" onclick="showPersonForm(${p.id})">✏️</button>
+              ${canAdmin() ? `<button class="btn btn-secondary btn-sm" onclick="showPersonForm(${p.id})">✏️</button>
               <button class="btn btn-secondary btn-sm" onclick="togglePersonActive(${p.id})">${p.actif?'Désactiver':'Activer'}</button>
-              <button class="btn btn-danger btn-sm" onclick="deletePerson(${p.id})">🗑️</button>
+              <button class="btn btn-danger btn-sm" onclick="deletePerson(${p.id})">🗑️</button>` : '<span style="color:var(--text-faint);font-size:11px">Lecture seule</span>'}
             </td>
           </tr>
         `).join('')}
@@ -2937,7 +2994,7 @@ function renderEvents() {
     <thead><tr style="background:var(--bg-elev-2)"><th style="${thStyle}">Date</th><th style="${thStyle}">Nom</th><th style="${thStyle};text-align:right">Action</th></tr></thead>
     <tbody>
     ${ponts.length === 0 ? `<tr><td colspan="3" style="${tdStyle};color:var(--text-muted);font-style:italic">Aucun pont enregistré</td></tr>` : ponts.map(p => `
-      <tr><td style="${tdStyle}">${formatDate(p.date)}</td><td style="${tdStyle}">${p.nom||''}</td><td style="${tdStyle};text-align:right"><button class="btn btn-danger btn-sm" onclick="deletePont('${p.id}')">Supprimer</button></td></tr>
+      <tr><td style="${tdStyle}">${formatDate(p.date)}</td><td style="${tdStyle}">${p.nom||''}</td><td style="${tdStyle};text-align:right">${canEdit() ? `<button class="btn btn-danger btn-sm" onclick="deletePont('${p.id}')">Supprimer</button>` : ''}</td></tr>
     `).join('')}
     </tbody>`;
 
@@ -2951,7 +3008,7 @@ function renderEvents() {
         const p = state.personnes.find(x=>x.id===id);
         return p ? `${p.prenom} ${p.nom}` : '?';
       }).join(', ');
-      return `<tr><td style="${tdStyle}">${formatDate(r.date)}</td><td style="${tdStyle}">${r.dureeOuvr} j</td><td style="${tdStyle}">${r.texte||''}</td><td style="${tdStyle};font-size:12px">${noms}</td><td style="${tdStyle};text-align:right"><button class="btn btn-danger btn-sm" onclick="deleteReunion('${r.id}')">Supprimer</button></td></tr>`;
+      return `<tr><td style="${tdStyle}">${formatDate(r.date)}</td><td style="${tdStyle}">${r.dureeOuvr} j</td><td style="${tdStyle}">${r.texte||''}</td><td style="${tdStyle};font-size:12px">${noms}</td><td style="${tdStyle};text-align:right">${canEdit() ? `<button class="btn btn-danger btn-sm" onclick="deleteReunion('${r.id}')">Supprimer</button>` : ''}</td></tr>`;
     }).join('')}
     </tbody>`;
 }
@@ -2980,6 +3037,7 @@ function savePont() {
   document.querySelector('.modal-overlay')?.remove();
   renderEvents();
   if (typeof renderGantt === 'function') renderGantt();
+  saveToFile();
   toast('Pont enregistré', 'success');
 }
 function deletePont(id) {
@@ -2987,6 +3045,7 @@ function deletePont(id) {
   state.ponts = (state.ponts||[]).filter(p => p.id !== id);
   renderEvents();
   if (typeof renderGantt === 'function') renderGantt();
+  saveToFile();
   toast('Pont supprimé', 'info');
 }
 
@@ -3046,6 +3105,7 @@ function saveReunion() {
   document.querySelector('.modal-overlay')?.remove();
   renderEvents();
   if (typeof renderGantt === 'function') renderGantt();
+  saveToFile();
   toast(`Réunion créée pour ${ids.length} personne(s)`, 'success');
 }
 function deleteReunion(id) {
@@ -3054,82 +3114,67 @@ function deleteReunion(id) {
   state.reunions = (state.reunions||[]).filter(r => r.id !== id);
   renderEvents();
   if (typeof renderGantt === 'function') renderGantt();
+  saveToFile();
   toast('Réunion supprimée', 'info');
 }
 
 // ════════════════════════════════════════════════════
-// INIT
+// COMPACT MODE
 // ════════════════════════════════════════════════════
-async function tryAutoLoadPlanning() {
-  const afterLoad = () => {
-    setDefaultView();
-    renderAll();
-    requestAnimationFrame(() => {
-      try { renderGantt(); } catch(e){}
-      requestAnimationFrame(() => scrollToDate(new Date()));
-    });
-  };
-
-  // 1) Tenter fetch local (fonctionne via http-server)
-  try {
-    const resp = await fetch('./planning.json', { cache:'no-store' });
-    if (resp.ok) {
-      loadStateFromData(await resp.json());
-      hideFileScreen();
-      updateFileStatus('planning.json (auto)');
-      afterLoad();
-      toast('planning.json chargé automatiquement', 'success');
-      return true;
-    }
-  } catch(e) { /* fetch impossible si on ouvre via file:// */ }
-
-  // 2) Fallback localStorage
-  try {
-    const cached = localStorage.getItem('menetrey_planning_cache');
-    if (cached) {
-      loadStateFromData(JSON.parse(cached));
-      hideFileScreen();
-      updateFileStatus('cache local');
-      afterLoad();
-      toast('Planning chargé depuis cache local', 'info');
-      return true;
-    }
-  } catch(e) {}
-
-  return false;
-}
-
-// Le cache localStorage est désormais géré directement dans saveToFile() ci-dessus.
-
 function toggleCompact() {
   document.body.classList.toggle('compact');
-  // Re-render pour ajuster les largeurs des cellules sticky
   if (typeof renderGantt === 'function' && document.getElementById('tab-gantt')?.style.display !== 'none') {
     requestAnimationFrame(() => { try { renderGantt(); } catch(e){} });
   }
 }
 
+// ════════════════════════════════════════════════════
+// PERMISSIONS UI — applique le rôle aux contrôles
+// ════════════════════════════════════════════════════
+function applyRolePermissionsToUI() {
+  const isEditor = canEdit();
+  const isAdmin  = canAdmin();
+  document.body.classList.toggle('role-readonly', !isEditor);
+  document.body.classList.toggle('role-editor', isEditor && !isAdmin);
+  document.body.classList.toggle('role-admin', isAdmin);
+}
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
 async function init() {
-  // Set stats default dates (current year)
+  // Dates de stats par défaut (année courante)
   const y = new Date().getFullYear();
   document.getElementById('stats-start').value = `${y}-01-01`;
   document.getElementById('stats-end').value = `${y}-12-31`;
 
-  // Tentative de chargement automatique
-  const loaded = await tryAutoLoadPlanning();
-  if (loaded) return;
-
-  // Check File System Access API support
-  if (!window.showOpenFilePicker) {
-    document.getElementById('file-screen').innerHTML = `
-      <div style="font-size:48px">⚠️</div>
-      <h2>Navigateur non supporté</h2>
-      <p>L'application nécessite la <strong>File System Access API</strong>.<br>
-      Utilisez <strong>Chrome</strong> ou <strong>Edge</strong> version 86+.</p>
-      <p style="font-size:12px;opacity:.6;margin-top:12px">Firefox et Safari ne supportent pas encore cette API.</p>
-    `;
+  // Vérifier que la lib Supabase est chargée
+  if (!window.supabase) {
+    document.getElementById('auth-screen').innerHTML =
+      '<div style="font-size:48px">⚠️</div><h2>Supabase indisponible</h2>' +
+      '<p>Vérifiez votre connexion internet et rechargez la page.</p>';
+    showAuthScreen();
     return;
   }
+
+  // Initialiser le client Supabase
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true },
+    realtime: { params: { eventsPerSecond: 5 } }
+  });
+
+  // Auto-login si une session est déjà en cache
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    await onAuthSuccess(session);
+  } else {
+    showAuthScreen();
+  }
+
+  // Réagir aux changements d'état d'authentification (token expiré, etc.)
+  sb.auth.onAuthStateChange((event, sess) => {
+    if (event === 'SIGNED_OUT') showAuthScreen();
+  });
 }
 
 init();
