@@ -659,10 +659,23 @@ async function loadStateFromSupabase() {
   if (e.error)  throw new Error('etiquettes : ' + e.error.message);
   if (po.error) throw new Error('ponts : '      + po.error.message);
   if (r.error)  throw new Error('reunions : '   + r.error.message);
-  state.personnes  = (p.data  || []).map(x => x.body);
-  state.etiquettes = (e.data  || []).map(x => x.body);
-  state.ponts      = (po.data || []).map(x => x.body);
-  state.reunions   = (r.data  || []).map(x => x.body);
+  // Normalisation des IDs en string : évite les mismatch UUID vs numérique legacy
+  state.personnes = (p.data || []).map(x => ({ ...x.body, id: String(x.body.id) }));
+  state.etiquettes = (e.data || []).map(x => {
+    const b = x.body;
+    return {
+      ...b,
+      personneId: b.personneId != null ? String(b.personneId) : b.personneId,
+      motherLabelId: b.motherLabelId != null ? String(b.motherLabelId) : b.motherLabelId,
+      linkedLabelId: b.linkedLabelId != null ? String(b.linkedLabelId) : b.linkedLabelId,
+      linkedFromId: b.linkedFromId != null ? String(b.linkedFromId) : b.linkedFromId,
+    };
+  });
+  state.ponts    = (po.data || []).map(x => x.body);
+  state.reunions = (r.data  || []).map(x => {
+    const b = x.body;
+    return { ...b, personnes: (b.personnes || []).map(id => String(id)) };
+  });
   // Si l'instance est vide ET l'utilisateur est admin, proposer un seed
   if (canAdmin() && state.personnes.length === 0 && state.etiquettes.length === 0) {
     if (confirm('Base de données vide. Initialiser avec les données de démo ?')) {
@@ -2682,7 +2695,12 @@ function calcStats() {
   const end = document.getElementById('stats-end').value;
   if (!start || !end) { toast('Sélectionnez une période', 'warning'); return; }
 
-  const etq = state.etiquettes.filter(e => e.dateDebut <= end && e.dateFin >= start);
+  // Filtrer les étiquettes orphelines (personne introuvable) — ne jamais les compter dans les stats
+  const validPersonIds = new Set(state.personnes.map(p => String(p.id)));
+  const etq = state.etiquettes.filter(e =>
+    e.dateDebut <= end && e.dateFin >= start &&
+    e.personneId != null && validPersonIds.has(String(e.personneId))
+  );
   // Compte uniquement les jours OUVRABLES (exclut weekends et jours fériés/ponts)
   const inRange = (e) => {
     const s = e.dateDebut > start ? e.dateDebut : start;
@@ -2748,7 +2766,7 @@ function calcStats() {
 
   // Helpers pour générer les infobulles détaillées
   const personName = id => {
-    const p = state.personnes.find(x=>x.id===id);
+    const p = state.personnes.find(x => String(x.id) === String(id));
     return p ? `${p.prenom} ${p.nom}` : '?';
   };
   const listChantiers = arr => arr.length
@@ -2757,7 +2775,7 @@ function calcStats() {
   const listJoursParPersonne = arr => {
     const m = {};
     arr.forEach(e => { const j = inRange(e); if (j>0) m[e.personneId] = (m[e.personneId]||0) + j; });
-    const rows = Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([id,j]) => `• ${personName(parseInt(id))} : ${j} j`);
+    const rows = Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([id,j]) => `• ${personName(id)} : ${j} j`);
     return rows.length ? rows.join('\n') : 'Aucun';
   };
   const tipBleu = `${bleu.length} installation(s) neuve(s) :\n` + listChantiers(bleu);
@@ -2934,7 +2952,11 @@ function exportExcel() {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows1), 'Chantiers');
 
   // Sheet 2: KPIs résumé
-  const etqAll = state.etiquettes.filter(e => e.dateDebut <= end && e.dateFin >= start);
+  const validPersonIdsX = new Set(state.personnes.map(p => String(p.id)));
+  const etqAll = state.etiquettes.filter(e =>
+    e.dateDebut <= end && e.dateFin >= start &&
+    e.personneId != null && validPersonIdsX.has(String(e.personneId))
+  );
   const inRange = (e) => {
     const s = e.dateDebut > start ? e.dateDebut : start;
     const f = e.dateFin < end ? e.dateFin : end;
