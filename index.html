@@ -1050,7 +1050,7 @@ function renderGantt() {
 
   // Filter + sort persons
   let persons = state.personnes.filter(p => p.actif);
-  if (state.filterPerson !== 'all') persons = persons.filter(p => p.id === parseInt(state.filterPerson));
+  if (state.filterPerson !== 'all') persons = persons.filter(p => String(p.id) === String(state.filterPerson));
   if (state.filterGroup !== 'tous') persons = persons.filter(p => p.groupe === state.filterGroup);
   const groupOrder = ['JSG','SS','DSG','Protocoleur/TS','Externe','Autre'];
   // Ordre des rôles : Chef de Chantier, Protocoleur, Pré-Protocoleur, Monteur, autres
@@ -1427,7 +1427,10 @@ function attachLabelDrag(lblEl, labelId, colW) {
     const elBelow = document.elementFromPoint(cx, cy);
     const rowBelow = elBelow?.closest('.gr-row');
     if (rowBelow && rowBelow.dataset.personId) {
-      lbl.personneId = parseInt(rowBelow.dataset.personId);
+      // L'ID peut être numérique (legacy) ou UUID — on garde le type d'origine
+      const ds = rowBelow.dataset.personId;
+      const matchedPerson = state.personnes.find(p => String(p.id) === ds);
+      lbl.personneId = matchedPerson ? matchedPerson.id : ds;
     }
     if (rafId) cancelAnimationFrame(rafId);
     rafId = requestAnimationFrame(() => { try { renderGantt(); } catch(e){} });
@@ -2568,9 +2571,9 @@ function renderTeam() {
             <td>${p.role}</td>
             <td><span class="badge ${p.actif?'badge-actif':'badge-inactif'}">${p.actif?'Actif':'Inactif'}</span></td>
             <td style="text-align:right;white-space:nowrap">
-              ${canAdmin() ? `<button class="btn btn-secondary btn-sm" onclick="showPersonForm(${p.id})">✏️</button>
-              <button class="btn btn-secondary btn-sm" onclick="togglePersonActive(${p.id})">${p.actif?'Désactiver':'Activer'}</button>
-              <button class="btn btn-danger btn-sm" onclick="deletePerson(${p.id})">🗑️</button>` : '<span style="color:var(--text-faint);font-size:11px">Lecture seule</span>'}
+              ${canAdmin() ? `<button class="btn btn-secondary btn-sm" onclick="showPersonForm('${p.id}')">✏️</button>
+              <button class="btn btn-secondary btn-sm" onclick="togglePersonActive('${p.id}')">${p.actif?'Désactiver':'Activer'}</button>
+              <button class="btn btn-danger btn-sm" onclick="deletePerson('${p.id}')">🗑️</button>` : '<span style="color:var(--text-faint);font-size:11px">Lecture seule</span>'}
             </td>
           </tr>
         `).join('')}
@@ -2580,7 +2583,7 @@ function renderTeam() {
 }
 
 function showPersonForm(personId) {
-  const existing = personId ? state.personnes.find(p => p.id === personId) : null;
+  const existing = personId ? state.personnes.find(p => String(p.id) === String(personId)) : null;
   const modal = createModal(existing ? 'Modifier personne' : 'Ajouter une personne');
   const body = modal.querySelector('.modal-body');
   body.innerHTML = `
@@ -2603,7 +2606,7 @@ function showPersonForm(personId) {
   const footer = modal.querySelector('.modal-footer');
   footer.innerHTML = `
     <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-    <button class="btn btn-primary" onclick="submitPersonForm(${personId||0})">${existing?'Enregistrer':'Ajouter'}</button>
+    <button class="btn btn-primary" onclick="submitPersonForm('${personId||''}')">${existing?'Enregistrer':'Ajouter'}</button>
   `;
   document.body.appendChild(modal);
 }
@@ -2616,11 +2619,19 @@ function submitPersonForm(personId) {
   if (!prenom || !nom) { alert('Prénom et nom requis'); return; }
 
   if (personId) {
-    const p = state.personnes.find(p => p.id === personId);
+    const p = state.personnes.find(p => String(p.id) === String(personId));
     if (p) Object.assign(p, { prenom, nom, groupe, role });
   } else {
-    const maxId = state.personnes.reduce((m,p) => Math.max(m,p.id), 0);
-    state.personnes.push({ id: maxId+1, prenom, nom, groupe, role, actif: true });
+    // Nouvel ID : UUID si l'app utilise déjà des UUIDs, sinon incrément numérique (legacy)
+    const allNumeric = state.personnes.every(p => typeof p.id === 'number' || /^\d+$/.test(String(p.id)));
+    let newId;
+    if (state.personnes.length === 0 || !allNumeric) {
+      newId = (crypto?.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+    } else {
+      const maxId = state.personnes.reduce((m,p) => Math.max(m, parseInt(p.id) || 0), 0);
+      newId = maxId + 1;
+    }
+    state.personnes.push({ id: newId, prenom, nom, groupe, role, actif: true });
   }
   closeModal();
   renderTeam();
@@ -2631,7 +2642,7 @@ function submitPersonForm(personId) {
 }
 
 function togglePersonActive(personId) {
-  const p = state.personnes.find(p => p.id === personId);
+  const p = state.personnes.find(p => String(p.id) === String(personId));
   if (p) {
     p.actif = !p.actif;
     renderTeam();
@@ -2643,13 +2654,13 @@ function togglePersonActive(personId) {
 }
 
 function deletePerson(personId) {
-  const p = state.personnes.find(p => p.id === personId);
+  const p = state.personnes.find(p => String(p.id) === String(personId));
   if (!p) return;
-  const hasLabels = state.etiquettes.some(e => e.personneId === personId);
+  const hasLabels = state.etiquettes.some(e => String(e.personneId) === String(p.id));
   if (hasLabels && !confirm(`${p.prenom} ${p.nom} a des étiquettes. Les supprimer aussi ?`)) return;
   if (!confirm(`Supprimer ${p.prenom} ${p.nom} ?`)) return;
-  state.personnes = state.personnes.filter(p => p.id !== personId);
-  if (hasLabels) state.etiquettes = state.etiquettes.filter(e => e.personneId !== personId);
+  state.personnes = state.personnes.filter(x => String(x.id) !== String(p.id));
+  if (hasLabels) state.etiquettes = state.etiquettes.filter(e => String(e.personneId) !== String(p.id));
   renderTeam();
   renderGantt();
   updatePersonFilter();
