@@ -1,0 +1,3352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planning Chantier — Ascenseurs Menétrey SA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="https://menetrey-lift.ch/wp-content/uploads/2022/05/logo-menetrey-mobile.png">
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* — Palette dark Linear/Vercel + accent Menétrey — */
+  --bg:#16161a;            /* fond principal (jours ouvrés) — éclairci pour contraste week-end */
+  --bg-elev-1:#1d1d22;     /* surfaces niveau 1 (cards, header) */
+  --bg-elev-2:#23232a;     /* surfaces niveau 2 (modale, popups) */
+  --bg-elev-3:#2a2a32;     /* hover, focus */
+  --border:#33333a;        /* bordures fines */
+  --border-strong:#33333a; /* bordures marquées */
+  --text:#ededee;          /* texte principal */
+  --text-muted:#a1a1a8;    /* texte secondaire */
+  --text-faint:#6e6e76;    /* texte tertiaire */
+  --primary:#3b6cc4;       /* bleu Menétrey adapté dark */
+  --primary-hover:#5685db;
+  --primary-soft:rgba(59,108,196,.15);
+  --gray:#6e6e76;
+  /* Couleurs étiquettes — désaturées pour le dark mode */
+  --rouge:#dc4c4c;--bleu:#3b6cc4;--violet:#9d4cb6;
+  --gris-lbl:#7e8893;--jaune:#d4b73a;--vert:#33c777;
+  --orange:#e8901a;--rose:#d8568a;--noir-lbl:#3a3a3e;
+  --brun:#8d6e63;
+  --col-w:32px;--row-h:48px;
+}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;font-feature-settings:'cv02','cv03','cv04','cv11'}
+/* ── HEADER ── */
+header{background:var(--bg-elev-1);color:var(--text);padding:0 16px;display:flex;align-items:center;height:52px;flex-shrink:0;gap:12px;border-bottom:1px solid var(--border);position:relative}
+header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(59,108,196,.4),transparent)}
+header img.brand-logo{height:30px;width:auto;filter:brightness(0) invert(1) opacity(.95);transition:.2s}
+header img.brand-logo:hover{filter:none}
+header h1{font-size:14px;font-weight:600;white-space:nowrap;letter-spacing:-.01em;color:var(--text)}
+header .tagline{font-size:10px;color:var(--text-faint);white-space:nowrap;letter-spacing:.05em;text-transform:uppercase}
+header .spacer{flex:1}
+header .file-status{font-size:11px;color:var(--text-muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px}
+header .file-status::before{content:'';width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 6px rgba(16,185,129,.5)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid transparent;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;font-family:inherit;transition:all .15s;letter-spacing:-.01em}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+.btn-secondary{background:var(--bg-elev-2);color:var(--text);border-color:var(--border)}
+.btn-secondary:hover{background:var(--bg-elev-3);border-color:var(--border-strong)}
+.btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg-elev-2);color:var(--text);border-color:var(--border-strong)}
+.btn-sm{padding:4px 9px;font-size:11px}
+.btn-danger{background:#3a1e1e;color:#f87171;border-color:#5a2929}
+.btn-danger:hover{background:#4a2424;color:#fca5a5}
+/* ── TABS ── */
+.tabs{background:var(--bg-elev-1);border-bottom:1px solid var(--border);display:flex;flex-shrink:0;padding:0 16px}
+.tab{padding:10px 16px;cursor:pointer;font-weight:500;font-size:12.5px;color:var(--text-muted);border-bottom:1.5px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:.15s;letter-spacing:-.005em}
+.tab.active{color:var(--text);border-bottom-color:var(--primary)}
+.tab:hover{color:var(--text)}
+/* Tabs intégrés dans le header (gain de place vertical) */
+.tabs.tabs-inheader{background:transparent;border-bottom:none;padding:0;margin-left:24px;align-self:stretch}
+.tabs.tabs-inheader .tab{color:var(--text-faint);padding:0 12px;display:flex;align-items:center;border-bottom:1.5px solid transparent;margin-bottom:-1px;font-size:12px}
+.tabs.tabs-inheader .tab.active{color:var(--text);border-bottom-color:var(--primary)}
+.tabs.tabs-inheader .tab:hover{color:var(--text)}
+/* ── GANTT TOOLBAR ── */
+.gantt-toolbar{background:var(--bg-elev-1);border-bottom:1px solid var(--border);padding:8px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.view-btn{padding:4px 12px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:11.5px;background:var(--bg-elev-2);color:var(--text-muted);font-weight:500;transition:.15s;font-family:inherit}
+.view-btn:hover{background:var(--bg-elev-3);color:var(--text)}
+.view-btn.active{background:var(--primary-soft);color:var(--primary-hover);border-color:var(--primary)}
+.nav-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--bg-elev-2);color:var(--text-muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:.15s}
+.nav-btn:hover{background:var(--bg-elev-3);color:var(--text);border-color:var(--border-strong)}
+select.filter-sel{padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg-elev-2);color:var(--text);cursor:pointer;font-family:inherit}
+select.filter-sel:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+#period-label{font-size:12px;font-weight:500;color:var(--text-muted);min-width:160px;letter-spacing:-.005em}
+/* ── GANTT LAYOUT — single scroll container ── */
+.gantt-wrap{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.gantt-scroll{flex:1;overflow:auto}
+/* Header row — sticky top */
+.gr-header{position:sticky;top:0;z-index:25;display:flex;background:var(--bg-elev-1);border-bottom:1px solid var(--border)}
+.gr-corner{position:sticky;left:0;z-index:30;width:180px;min-width:180px;flex-shrink:0;background:var(--bg-elev-1);border-right:1px solid var(--border);display:flex;align-items:center;padding:0 12px;font-weight:600;font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;height:76px}
+.gr-header-right{display:flex;flex-direction:column;flex-shrink:0}
+.gr-month-row{display:flex;height:22px;background:var(--bg-elev-2);border-bottom:1px solid var(--border);flex-shrink:0}
+.gr-week-row{display:flex;height:16px;background:var(--bg-elev-1);border-bottom:1px solid var(--border);flex-shrink:0}
+.week-band{display:flex;align-items:center;font-size:9.5px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;border-right:1px solid var(--border);background:var(--bg-elev-1);white-space:nowrap;flex-shrink:0}
+.week-band-inner{position:sticky;left:188px;padding:0 6px}
+.gr-day-row{display:flex;height:38px;flex-shrink:0}
+.gr-row,.gr-group{min-width:max-content}
+.month-band{display:flex;align-items:center;font-size:10.5px;font-weight:600;color:var(--primary-hover);text-transform:uppercase;letter-spacing:.08em;border-right:1px solid var(--border);flex-shrink:0;white-space:nowrap;background:var(--bg-elev-2)}
+.month-band .month-band-inner{position:sticky;left:188px;padding:0 8px}
+/* Day header cells */
+.day-header{min-width:var(--col-w);width:var(--col-w);height:38px;max-height:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;border-right:1px solid var(--border);flex-shrink:0;cursor:default;user-select:none;overflow:hidden;background:var(--bg-elev-1);color:var(--text-muted)}
+.day-header .day-num{font-weight:600;font-size:13px;line-height:1.1;color:var(--text)}
+.day-header .day-name{font-size:9px;text-transform:uppercase;color:var(--text-faint);line-height:1.1;letter-spacing:.05em}
+.day-header.today{background:rgba(59,108,196,.42);color:#fff}
+.day-header.today .day-num{color:#fff;font-weight:800;font-size:14px;text-shadow:0 0 10px rgba(96,165,250,.7)}
+.day-header.today .day-name{color:#fff;font-weight:600}
+.day-header.weekend{background:#0d0d0f}
+.day-header.weekend .day-num,.day-header.weekend .day-name{color:var(--text-faint)}
+.day-header.ferie{background:rgba(212,183,58,.38);color:#fde68a}
+.day-header.ferie .day-num{color:#fde68a;font-weight:700}
+.day-header.today.ferie{background:linear-gradient(135deg,rgba(59,108,196,.42) 50%,rgba(212,183,58,.38) 50%)}
+/* Marqueurs +14 / +35 jours dans le header — bleu clair, intensité comme férié */
+.day-header.marker-14{background:rgba(96,165,250,.18);color:#bfdbfe}
+.day-header.marker-14 .day-num{color:#bfdbfe;font-weight:700}
+.day-header.marker-35{background:rgba(147,197,253,.15);color:#dbeafe}
+.day-header.marker-35 .day-num{color:#dbeafe;font-weight:700}
+/* Group header row */
+.gr-group{display:flex;background:var(--bg-elev-1);border-bottom:1px solid var(--border);height:30px}
+.gr-group-name{position:sticky;left:0;z-index:20;width:180px;min-width:180px;flex-shrink:0;background:var(--bg-elev-1);border-right:1px solid var(--border);display:flex;align-items:center;padding:0 12px;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-faint);letter-spacing:.08em}
+.gr-group-fill{flex:1;background:var(--bg-elev-1)}
+/* Person row */
+.gr-row{display:flex;border-bottom:1px solid var(--border);height:var(--row-h);background:#15151a}
+.gr-row:hover{background:#1a1a20}
+.gr-name{position:sticky;left:0;z-index:10;width:180px;min-width:180px;flex-shrink:0;background:inherit;border-right:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px}
+.gr-name .group-badge{font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--bg-elev-3);color:var(--text-muted);flex-shrink:0;border:1px solid var(--border);letter-spacing:.03em}
+.gr-name .person-info{overflow:hidden}
+.gr-name .person-name{font-weight:500;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);letter-spacing:-.005em}
+.gr-name .person-role{font-size:10.5px;color:var(--text-faint);margin-top:1px}
+/* Days area */
+.gr-days{display:flex;position:relative;flex-shrink:0}
+.day-cell{min-width:var(--col-w);width:var(--col-w);height:var(--row-h);border-right:1px solid var(--border);flex-shrink:0;cursor:pointer;transition:.1s;position:relative;background:#15151a}
+.gr-row:hover .day-cell{background:#1a1a20}
+.day-cell:hover,.gr-row:hover .day-cell:hover{background:#22222a}
+.day-cell.weekend{background:#08080a}
+.gr-row:hover .day-cell.weekend{background:#0c0c10}
+/* Bandes verticales : férié + 2 marqueurs bleus (+14, +35) */
+.day-cell.ferie{background:rgba(212,183,58,.16);box-shadow:inset 1px 0 0 rgba(212,183,58,.5),inset -1px 0 0 rgba(212,183,58,.5)}
+.day-cell.marker-14{background:rgba(96,165,250,.13);box-shadow:inset 1px 0 0 #60a5fa,inset -1px 0 0 #60a5fa}
+.day-cell.marker-35{background:rgba(147,197,253,.12);box-shadow:inset 1px 0 0 #93c5fd,inset -1px 0 0 #93c5fd}
+/* AUJOURD'HUI — marqueur très prononcé, glow + bandes épaisses + accent vif */
+.day-cell.today{background:rgba(59,108,196,.32);box-shadow:inset 3px 0 0 #60a5fa,inset -3px 0 0 #60a5fa,0 0 12px rgba(96,165,250,.25)}
+/* Header — mêmes liserés latéraux pour aligner visuellement */
+.day-header.ferie{box-shadow:inset 1px 0 0 rgba(212,183,58,.35),inset -1px 0 0 rgba(212,183,58,.35),inset 0 -2px 0 #d4b73a}
+.day-header.marker-14{box-shadow:inset 1px 0 0 #60a5fa,inset -1px 0 0 #60a5fa,inset 0 -2px 0 #60a5fa}
+.day-header.marker-35{box-shadow:inset 1px 0 0 #93c5fd,inset -1px 0 0 #93c5fd,inset 0 -2px 0 #93c5fd}
+.day-header.today{box-shadow:inset 3px 0 0 #60a5fa,inset -3px 0 0 #60a5fa,inset 0 -3px 0 #60a5fa,0 0 14px rgba(96,165,250,.4)}
+/* ── LABELS ── */
+.label-block{position:absolute;top:4px;height:calc(var(--row-h) - 8px);border-radius:6px;display:flex;align-items:center;padding:0 9px;font-size:11px;font-weight:500;cursor:grab;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;z-index:5;border:1px solid rgba(255,255,255,.06);transition:.15s;user-select:none;box-shadow:0 1px 0 rgba(0,0,0,.4);touch-action:pan-x pan-y;letter-spacing:-.005em}
+/* En mode flottant, on bloque le scroll natif pour pouvoir intercepter les touchmove */
+.label-block.floating{touch-action:none}
+.label-block.dragging{cursor:grabbing;opacity:.85;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.1);transform:scale(1.02)}
+/* Tactile : retour visuel pendant le long-press (avant activation) */
+.label-block.long-pressing{transform:scale(.97);box-shadow:0 0 0 2px var(--primary),0 0 12px rgba(96,165,250,.5);transition:transform .15s,box-shadow .15s}
+/* Tactile : étiquette en mode flottant (drag actif après long-press 2s) */
+.label-block.floating{cursor:grabbing;opacity:.92;z-index:60;transform:scale(1.06);box-shadow:0 12px 32px rgba(0,0,0,.7),0 0 0 2px var(--primary),0 0 18px rgba(96,165,250,.6);transition:transform .15s}
+.label-block:hover{filter:brightness(1.15);box-shadow:0 2px 8px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.08)}
+.label-block.dark-text{color:#1a1a1c}
+.label-block.light-text{color:#fff}
+.label-block .lock-icon{margin-left:4px;font-size:10px;opacity:.85}
+/* ── PAGE SECTIONS ── */
+.page{display:none;flex:1;overflow:auto;padding:20px}
+.page.active{display:block}
+/* ── STATS ── */
+.stats-toolbar{background:var(--bg-elev-1);padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.stats-content{flex:1;overflow:auto;padding:20px;background:var(--bg)}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--bg-elev-1);border:1px solid var(--border);border-radius:10px;padding:16px;transition:.15s;position:relative;overflow:hidden}
+.kpi-card:hover{border-color:var(--border-strong);background:var(--bg-elev-2)}
+.kpi-card .kpi-label{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-weight:500}
+.kpi-card .kpi-value{font-size:28px;font-weight:600;color:var(--text);letter-spacing:-.02em;line-height:1}
+.kpi-card .kpi-sub{font-size:11px;color:var(--text-faint);margin-top:4px}
+.chart-section{background:var(--bg-elev-1);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px}
+.chart-section h3{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;letter-spacing:-.005em}
+canvas.bar-chart{width:100%;height:200px}
+table.stats-table{width:100%;border-collapse:collapse;font-size:12px;color:var(--text)}
+table.stats-table th{background:var(--bg-elev-2);padding:9px 12px;text-align:left;font-weight:500;border-bottom:1px solid var(--border);color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+table.stats-table td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+table.stats-table tr:hover td{background:var(--bg-elev-2)}
+/* ── TEAM ── */
+.team-content{padding:20px;background:var(--bg)}
+.team-list{background:var(--bg-elev-1);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.team-list table{width:100%;border-collapse:collapse}
+.team-list th{background:var(--bg-elev-2);padding:11px 14px;text-align:left;font-weight:500;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em}
+.team-list td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text)}
+.team-list tr:last-child td{border-bottom:none}
+.team-list tr:hover td{background:var(--bg-elev-2)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;border:1px solid transparent}
+.badge-actif{background:rgba(51,199,119,.12);color:#4ade80;border-color:rgba(51,199,119,.25)}
+.badge-inactif{background:rgba(220,76,76,.12);color:#f87171;border-color:rgba(220,76,76,.25)}
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .15s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg-elev-2);border:1px solid var(--border-strong);border-radius:12px;max-width:540px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04);color:var(--text)}
+.modal-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.modal-header h2{font-size:15px;font-weight:600;flex:1;letter-spacing:-.01em;color:var(--text)}
+.modal-header .type-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.modal-body{padding:20px 22px}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--bg-elev-1)}
+/* ── FORM ── */
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:11.5px;font-weight:500;color:var(--text-muted);margin-bottom:5px;letter-spacing:.005em}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;transition:.15s;background:var(--bg-elev-1);color:var(--text)}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);background:var(--bg-elev-2)}
+.form-group input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.7)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-note{font-size:11px;color:var(--text-faint);margin-top:4px}
+.form-error{color:#f87171;font-size:12px;margin-top:4px;font-weight:500}
+/* ── CUSTOM SELECT (personne) ── */
+.csel{position:relative}
+.csel-trigger{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;background:var(--bg-elev-1);color:var(--text);cursor:pointer;display:flex;justify-content:space-between;align-items:center;text-align:left;transition:.15s}
+.csel-trigger:focus,.csel-trigger.open{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.csel-list{position:fixed;background:var(--bg-elev-2);border:1px solid var(--border-strong);border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.6);overflow-y:auto;max-height:260px;z-index:9999;display:none;min-width:200px}
+.csel-search{width:100%;padding:9px 11px;border:none;border-bottom:1px solid var(--border);font-size:12px;outline:none;position:sticky;top:0;background:var(--bg-elev-2);color:var(--text);font-family:inherit}
+.csel-item{padding:8px 12px;cursor:pointer;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.csel-item:hover{background:var(--bg-elev-3)}
+.csel-item.csel-selected{background:var(--primary-soft);font-weight:500;color:var(--primary-hover)}
+/* ── POPUP DETAIL ── */
+.detail-popup{position:fixed;z-index:500;background:var(--bg-elev-2);border:1px solid var(--border-strong);border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.7);min-width:300px;max-width:380px;overflow:hidden;color:var(--text)}
+.detail-popup .popup-header{padding:14px 16px;color:#fff;font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px;letter-spacing:-.005em;border-bottom:1px solid rgba(255,255,255,.1)}
+.detail-popup .popup-body{padding:14px 16px}
+.detail-popup .popup-row{display:flex;gap:6px;margin-bottom:7px;font-size:12px}
+.detail-popup .popup-row .pkey{color:var(--text-faint);min-width:110px;flex-shrink:0;font-weight:500}
+.detail-popup .popup-row .pval{font-weight:400;word-break:break-word;color:var(--text)}
+.detail-popup .popup-actions{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:6px;justify-content:flex-end;background:var(--bg-elev-1)}
+/* ── TOAST ── */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:2000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:11px 16px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.5);animation:slideIn .2s ease;max-width:340px;border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(8px)}
+.toast.success{background:rgba(22,163,74,.95)}
+.toast.error{background:rgba(220,38,38,.95)}
+.toast.warning{background:rgba(217,119,6,.95)}
+.toast.info{background:rgba(59,108,196,.95)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
+/* ── LEGEND ── */
+.legend{display:flex;flex-wrap:wrap;gap:10px;padding:7px 14px;background:var(--bg-elev-1);border-bottom:1px solid var(--border);flex-shrink:0}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted)}
+.legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;border:1px solid rgba(255,255,255,.08)}
+/* ── AUTH / LOGIN SCREEN ── */
+#auth-screen{position:fixed;inset:0;background:radial-gradient(ellipse at top,#0f1c33 0%,var(--bg) 60%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:3000;color:var(--text);gap:18px;padding:24px}
+#auth-screen.visible{display:flex}
+#auth-screen::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 20% 30%,rgba(59,108,196,.15) 0,transparent 40%),radial-gradient(circle at 80% 70%,rgba(59,108,196,.08) 0,transparent 40%);pointer-events:none}
+#auth-screen img.fs-logo{max-width:260px;width:100%;height:auto;filter:brightness(0) invert(1) opacity(.95);margin-bottom:4px;position:relative;z-index:1}
+#auth-screen h2{font-size:22px;font-weight:600;letter-spacing:-.02em;position:relative;z-index:1}
+#auth-screen p{color:var(--text-muted);text-align:center;max-width:420px;line-height:1.5;font-size:13px;position:relative;z-index:1}
+#auth-screen .auth-form{display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px;position:relative;z-index:1;margin-top:6px}
+#auth-screen .auth-form input{padding:11px 13px;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev-2);color:var(--text);font-size:14px;font-family:inherit;transition:.15s}
+#auth-screen .auth-form input:focus{outline:none;border-color:var(--primary);background:var(--bg-elev-3);box-shadow:0 0 0 3px var(--primary-soft)}
+.btn-white{background:var(--primary);color:#fff;font-weight:500;padding:11px 22px;border-radius:8px;border:1px solid var(--primary);cursor:pointer;font-size:14px;transition:.15s;font-family:inherit;letter-spacing:-.01em}
+.btn-white:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+.btn-white:disabled{opacity:.6;cursor:wait}
+/* Indicateur de synchro */
+#sync-indicator{font-size:11px;color:var(--text-faint)}
+#sync-indicator::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 6px rgba(16,185,129,.5);margin-right:4px;vertical-align:middle}
+#sync-indicator.syncing::before{background:#fbbf24;box-shadow:0 0 6px rgba(251,191,36,.5);animation:pulse 1s infinite}
+#sync-indicator.error::before{background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,.5)}
+@keyframes pulse{50%{opacity:.4}}
+/* Badge rôle */
+.role-badge{display:inline-block;padding:1px 6px;border-radius:10px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-left:6px;border:1px solid var(--border)}
+.role-admin{background:rgba(220,76,76,.15);color:#fca5a5;border-color:rgba(220,76,76,.3)}
+.role-editor{background:rgba(59,108,196,.15);color:#93c5fd;border-color:rgba(59,108,196,.3)}
+.role-viewer{background:var(--bg-elev-3);color:var(--text-muted)}
+/* Permissions UI : viewer ne voit pas les contrôles d'édition */
+body.role-readonly .editor-only,
+body.role-readonly .admin-only,
+body:not(.role-admin) .admin-only{display:none !important}
+body.role-readonly .label-block{cursor:default}
+body.role-readonly .day-cell{cursor:default}
+/* Scrollbar */
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:4px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#4a4a52}
+/* Stacked overlapping labels (each occupies half the row height) */
+.label-block.stack-top{top:4px;height:calc((var(--row-h) - 8px) / 2 - 1px)}
+.label-block.stack-bot{top:calc(var(--row-h) / 2 + 2px);height:calc((var(--row-h) - 8px) / 2 - 1px)}
+/* Header always neutral background regardless of vertical scroll */
+.gr-header{background:var(--bg-elev-1) !important}
+.gr-header .day-header{background:var(--bg-elev-1)}
+.gr-header .day-header.weekend{background:#0d0d0f}
+/* Jours spéciaux dans l'en-tête — couleurs SOLIDES (mêmes opacité que les autres cellules) */
+.gr-header .day-header.ferie{background:#3d3318 !important;color:#fde68a}
+.gr-header .day-header.today{background:#1f3a78 !important;color:#fff}
+.gr-header .day-header.today .day-num{color:#fff;font-weight:800}
+.gr-header .day-header.today.ferie{background:linear-gradient(135deg,#1f3a78 50%,#3d3318 50%) !important}
+/* History dropdown */
+.history-list{max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;background:var(--bg-elev-1);font-size:11px;color:var(--text)}
+.history-list .h-row{padding:5px 4px;border-bottom:1px solid var(--border);color:var(--text-muted)}
+.history-list .h-row:last-child{border-bottom:none}
+/* Responsive — mobile */
+@media (max-width:768px){
+  header{padding:0 8px;height:auto;min-height:46px;flex-wrap:wrap;gap:4px}
+  header h1{font-size:14px}
+  header .file-status{display:none}
+  .gantt-toolbar{padding:4px;gap:4px}
+  .view-btn{padding:3px 6px;font-size:11px}
+  .legend{display:none}
+  .gr-corner,.gr-name,.gr-group-name{width:110px;min-width:110px;padding:0 4px}
+  .gr-name .person-name{font-size:11px;white-space:normal;line-height:1.15}
+  .gr-name .person-role{font-size:9px}
+  .modal-overlay{padding:0}
+  .modal{max-width:100%;width:100%;max-height:100vh;height:100%;border-radius:0}
+  .form-row{grid-template-columns:1fr}
+  .type-grid{grid-template-columns:repeat(2,1fr)}
+  body{font-size:12px}
+  /* Affiche prénom + nom sur 2 lignes pour gagner de la largeur */
+  .gr-name .person-name .prenom,.gr-name .person-name .nom{display:block}
+}
+/* ── COMPACT MODE — masque les options pour maximiser la zone planning ── */
+body.compact .tabs,
+body.compact .gantt-toolbar,
+body.compact .legend{display:none !important}
+body.compact header{min-height:38px;height:auto;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden}
+body.compact header h1{font-size:14px;line-height:1}
+body.compact header > div:first-child > div:first-child{display:none}
+body.compact .gr-corner,
+body.compact .gr-name,
+body.compact .gr-group-name{width:90px;min-width:90px;padding:0 4px}
+body.compact .gr-name .person-name{font-size:10px;white-space:normal;line-height:1.1;font-weight:600}
+body.compact .gr-name .person-name .prenom,
+body.compact .gr-name .person-name .nom{display:block}
+body.compact .gr-name .person-role{font-size:9px}
+body.compact .gr-name .group-badge{display:none}
+#compact-chev{transition:transform .2s}
+body.compact #compact-chev{transform:rotate(-90deg);display:inline-block}
+/* Type chooser */
+.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:4px 0}
+.type-option{border:2px solid transparent;border-radius:8px;padding:10px;cursor:pointer;transition:.15s;text-align:center}
+.type-option:hover{border-color:currentColor;background:var(--bg-elev-3)}
+.type-option .type-swatch{width:28px;height:28px;border-radius:6px;margin:0 auto 6px}
+.type-option .type-name{font-size:12px;font-weight:600}
+</style>
+</head>
+<body class="compact">
+
+<!-- AUTH / LOGIN SCREEN -->
+<div id="auth-screen">
+  <img class="fs-logo" src="https://menetrey-lift.ch/wp-content/uploads/2022/05/logotest-web.png" alt="Ascenseurs Menétrey SA">
+  <h2>Planning de Chantier</h2>
+  <p>Connectez-vous pour accéder au planning partagé.</p>
+  <form class="auth-form" onsubmit="event.preventDefault(); doLogin();" autocomplete="on">
+    <input type="email" id="login-email" placeholder="Email" required autocomplete="username">
+    <input type="password" id="login-password" placeholder="Mot de passe" required autocomplete="current-password">
+    <button type="submit" class="btn-white" id="login-btn">Se connecter</button>
+    <div id="login-error" class="form-error" style="min-height:18px"></div>
+  </form>
+  <p style="font-size:11px;color:var(--text-faint);margin-top:8px">Données synchronisées en temps réel · Supabase</p>
+</div>
+
+<!-- MAIN APP -->
+<header>
+  <div id="header-title-block" onclick="toggleCompact()" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:10px" title="Cliquer pour masquer/afficher les options">
+    <img class="brand-logo" src="https://menetrey-lift.ch/wp-content/uploads/2022/05/logotest-web.png" alt="Ascenseurs Menétrey SA">
+    <div style="display:flex;flex-direction:column;line-height:1.1">
+      <span style="font-size:9px;color:var(--text-faint);letter-spacing:.1em;text-transform:uppercase;font-weight:500">Planning <span id="compact-chev">▾</span></span>
+      <h1>Chantier</h1>
+    </div>
+  </div>
+  <div class="tabs tabs-inheader">
+    <div class="tab active" data-tab="gantt" onclick="switchTab('gantt')">📅 Planning</div>
+    <div class="tab" data-tab="stats" onclick="switchTab('stats')">📊 Statistiques</div>
+    <div class="tab" data-tab="team" onclick="switchTab('team')">👥 Équipe</div>
+    <div class="tab" data-tab="events" onclick="switchTab('events')">🎉 Événements</div>
+  </div>
+  <a href="index-sav.html" class="btn btn-ghost btn-sm" style="margin-left:16px;text-decoration:none;background:rgba(220,38,38,.1);color:#fca5a5;border-color:rgba(220,38,38,.3)">📋 Planning SAV →</a>
+  <div class="spacer"></div>
+  <span id="sync-indicator" class="file-status" title="Synchronisation Supabase"></span>
+  <span id="user-info" class="file-status"></span>
+  <button class="btn btn-ghost btn-sm" id="logout-btn" onclick="doLogout()" style="display:none">⏏ Déconnexion</button>
+</header>
+
+<!-- ═══════════════════════════ GANTT TAB ═══════════════════════════ -->
+<div id="tab-gantt" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+  <div class="gantt-toolbar">
+    <div style="display:flex;gap:4px">
+      <button class="view-btn" data-view="semaine" onclick="setView('semaine')">Semaine</button>
+      <button class="view-btn" data-view="mois" onclick="setView('mois')">Mois</button>
+      <button class="view-btn active" data-view="trimestre" onclick="setView('trimestre')">Trimestre</button>
+      <button class="view-btn" data-view="annee" onclick="setView('annee')">Année</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <button class="nav-btn" onclick="navPrev()">‹</button>
+      <button class="btn btn-secondary btn-sm" onclick="navToday()">Aujourd'hui</button>
+      <button class="nav-btn" onclick="navNext()">›</button>
+    </div>
+    <span id="period-label"></span>
+    <div class="spacer"></div>
+    <select class="filter-sel" id="filter-person" onchange="applyFilters()">
+      <option value="all">Toutes les personnes</option>
+    </select>
+    <select class="filter-sel" id="filter-group" onchange="applyFilters()">
+      <option value="tous">Tous les groupes</option>
+      <option value="JSG">JSG</option>
+      <option value="SS">SS</option>
+      <option value="Protocoleur/TS">Protocoleur/TS</option>
+      <option value="Externe">Externe</option>
+      <option value="Autre">Autre</option>
+    </select>
+    <button class="btn btn-primary btn-sm editor-only" onclick="addLabel(null)">+ Nouvelle étiquette</button>
+  </div>
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot" style="background:var(--rouge)"></span>Remplacement</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--bleu)"></span>Installation neuve</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--violet)"></span>Modernisation</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--gris-lbl)"></span>Aide montage</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--jaune)"></span>Protocole</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--vert)"></span>Congé</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--orange)"></span>Maladie</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--rose)"></span>SAV</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--noir-lbl)"></span>SAV bloqué</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--brun)"></span>Cas particulier</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#9c27b0;border:1px solid #ccc"></span>Autre</span>
+    <span class="legend-item"><span style="font-size:10px">🏖️</span> = Férié</span>
+    <span class="legend-item" style="margin-left:8px;border-left:1px solid var(--border);padding-left:10px"><span class="legend-dot" style="background:#60a5fa;box-shadow:0 0 6px rgba(96,165,250,.6)"></span>Aujourd'hui</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#60a5fa"></span>+14 jours</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#93c5fd"></span>+35 jours</span>
+  </div>
+  <div class="gantt-wrap">
+    <div class="gantt-scroll" id="gantt-scroll"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ STATS TAB ═══════════════════════════ -->
+<div id="tab-stats" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+  <div class="stats-toolbar">
+    <label style="font-size:12px;font-weight:600">Du</label>
+    <input type="date" id="stats-start" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg-elev-2);color:var(--text);font-family:inherit">
+    <label style="font-size:12px;font-weight:600">au</label>
+    <input type="date" id="stats-end" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg-elev-2);color:var(--text);font-family:inherit">
+    <button class="btn btn-primary btn-sm" onclick="calcStats()">Calculer</button>
+    <div class="spacer"></div>
+    <button class="btn btn-secondary btn-sm" onclick="exportExcel()">↓ Export Excel</button>
+  </div>
+  <div class="stats-content" id="stats-content">
+    <p style="color:var(--text-muted);padding:40px 0;text-align:center">Sélectionnez une période et cliquez sur Calculer</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ TEAM TAB ═══════════════════════════ -->
+<div id="tab-team" style="display:none;flex:1;overflow:auto">
+  <div class="team-content">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <h2 style="font-size:16px;font-weight:700">Gestion de l'équipe</h2>
+      <div class="spacer"></div>
+      <button class="btn btn-primary btn-sm admin-only" onclick="showPersonForm(null)">+ Ajouter une personne</button>
+    </div>
+    <div class="team-list" id="team-list"></div>
+  </div>
+</div>
+
+<div id="tab-events" style="display:none;flex:1;overflow:auto">
+  <div class="team-content">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+      <h2 style="font-size:16px;font-weight:700">Événements globaux</h2>
+      <div class="spacer"></div>
+      <button class="btn btn-primary btn-sm editor-only" onclick="showPontForm()">+ Pont offert</button>
+      <button class="btn btn-primary btn-sm editor-only" onclick="showReunionForm()">+ Réunion d'équipe</button>
+    </div>
+    <div style="background:var(--bg-elev-1);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px">
+      <h3 style="padding:10px 14px;font-size:13px;font-weight:700;background:var(--bg-elev-2);border-bottom:1px solid var(--border);color:var(--text)">🌉 Ponts offerts (jours fériés ajoutés)</h3>
+      <table style="width:100%;border-collapse:collapse" id="ponts-table"></table>
+    </div>
+    <div style="background:var(--bg-elev-1);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+      <h3 style="padding:10px 14px;font-size:13px;font-weight:700;background:var(--bg-elev-2);border-bottom:1px solid var(--border);color:var(--text)">👥 Réunions d'équipe (étiquettes sur personnes sélectionnées)</h3>
+      <table style="width:100%;border-collapse:collapse" id="reunions-table"></table>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ════════════════════════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════════════════════════
+const LABEL_TYPES = {
+  rouge:    { label:'Remplacement',    color:'#dc4c4c', text:'light' },
+  bleu:     { label:'Installation neuve', color:'#3b6cc4', text:'light' },
+  violet:   { label:'Modernisation',   color:'#9d4cb6', text:'light' },
+  gris:     { label:'Aide montage',    color:'#7e8893', text:'light' },
+  jaune:    { label:'Protocole',       color:'#d4b73a', text:'dark'  },
+  vert:     { label:'Congé/Vacances',  color:'#33c777', text:'light' },
+  orange:   { label:'Maladie',         color:'#e8901a', text:'dark'  },
+  rose:     { label:'SAV en cours',    color:'#d8568a', text:'light' },
+  noir:     { label:'SAV bloqué',      color:'#3a3a3e', text:'light' },
+  brun:     { label:'Cas particulier', color:'#8D6E63', text:'light' },
+  autre:    { label:'Autre',           color:'#9C27B0', text:'light' },
+};
+
+// Jours fériés 2025-2027 avec détail canton (FR=Fribourg, GE=Genève)
+const FERIES_INFO = {
+  '2025-01-01':{ nom:'Nouvel An',            cantons:'FR + GE' },
+  '2025-04-18':{ nom:'Vendredi Saint',        cantons:'FR + GE' },
+  '2025-04-21':{ nom:'Lundi de Pâques',       cantons:'FR + GE' },
+  '2025-05-01':{ nom:'Fête du Travail',       cantons:'FR + GE' },
+  '2025-05-29':{ nom:'Ascension',             cantons:'FR + GE' },
+  '2025-06-09':{ nom:'Lundi de Pentecôte',    cantons:'FR + GE' },
+  '2025-08-01':{ nom:'Fête Nationale',        cantons:'FR + GE' },
+  '2025-08-15':{ nom:'Assomption',            cantons:'FR' },
+  '2025-09-11':{ nom:'Jeûne genevois',        cantons:'GE' },
+  '2025-11-01':{ nom:'Toussaint',             cantons:'FR' },
+  '2025-12-25':{ nom:'Noël',                  cantons:'FR + GE' },
+  '2025-12-26':{ nom:'Saint-Étienne',         cantons:'GE' },
+  '2026-01-01':{ nom:'Nouvel An',             cantons:'FR + GE' },
+  '2026-04-03':{ nom:'Vendredi Saint',        cantons:'FR + GE' },
+  '2026-04-06':{ nom:'Lundi de Pâques',       cantons:'FR + GE' },
+  '2026-05-01':{ nom:'Fête du Travail',       cantons:'FR + GE' },
+  '2026-05-14':{ nom:'Ascension',             cantons:'FR + GE' },
+  '2026-05-25':{ nom:'Lundi de Pentecôte',    cantons:'FR + GE' },
+  '2026-08-01':{ nom:'Fête Nationale',        cantons:'FR + GE' },
+  '2026-08-15':{ nom:'Assomption',            cantons:'FR' },
+  '2026-09-10':{ nom:'Jeûne genevois',        cantons:'GE' },
+  '2026-11-01':{ nom:'Toussaint',             cantons:'FR' },
+  '2026-12-25':{ nom:'Noël',                  cantons:'FR + GE' },
+  '2026-12-26':{ nom:'Saint-Étienne',         cantons:'GE' },
+  '2027-01-01':{ nom:'Nouvel An',             cantons:'FR + GE' },
+  '2027-03-26':{ nom:'Vendredi Saint',        cantons:'FR + GE' },
+  '2027-03-29':{ nom:'Lundi de Pâques',       cantons:'FR + GE' },
+  '2027-05-01':{ nom:'Fête du Travail',       cantons:'FR + GE' },
+  '2027-05-06':{ nom:'Ascension',             cantons:'FR + GE' },
+  '2027-05-17':{ nom:'Lundi de Pentecôte',    cantons:'FR + GE' },
+  '2027-08-01':{ nom:'Fête Nationale',        cantons:'FR + GE' },
+  '2027-08-15':{ nom:'Assomption',            cantons:'FR' },
+  '2027-09-09':{ nom:'Jeûne genevois',        cantons:'GE' },
+  '2027-11-01':{ nom:'Toussaint',             cantons:'FR' },
+  '2027-12-25':{ nom:'Noël',                  cantons:'FR + GE' },
+  '2027-12-26':{ nom:'Saint-Étienne',         cantons:'GE' },
+};
+const JOURS_FERIES = new Set(Object.keys(FERIES_INFO));
+
+
+// ════════════════════════════════════════════════════
+// SUPABASE — configuration
+// ════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://nnkthgxbcslkhkdayjvg.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_zX0P2GxSqIlh3Lqb_-PtCw_ydCahuhp';
+let sb = null; // client Supabase, initialisé dans init()
+
+// Catalogue des types SAV (rendus sur les rangées des personnes communes)
+const SAV_LABEL_TYPES = {
+  cyan:    { label:'Câble-poulie',     color:'#00BCD4', text:'light' },
+  orange:  { label:'Divers (SAV)',     color:'#FF9800', text:'dark'  },
+  jaune:   { label:'Électrique (SAV)', color:'#FDD835', text:'dark'  },
+  marron:  { label:'Fosse',            color:'#5D4037', text:'light' },
+  orangec: { label:'Téléalarme',       color:'#FFB74D', text:'dark'  },
+  gris:    { label:'Cabine',           color:'#90A4AE', text:'dark'  },
+  noir:    { label:'Absent (SAV)',     color:'#212121', text:'light' },
+  rose:    { label:'Formation',        color:'#F48FB1', text:'dark'  },
+  vert:    { label:'Indicateur horaire', color:'#43A047', text:'light' },
+};
+
+// ════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════
+let state = {
+  personnes: [],
+  etiquettes: [],
+  etiquettes_sav: [], // étiquettes SAV (rendues sur les personnes communes Menétrey/Burgy)
+  ponts: [],        // [{id, date:'YYYY-MM-DD', nom}]
+  reunions: [],     // [{id, date, dureeOuvr, texte, personnes:[ids]}]
+  admin: false,     // alias compat : true si userRole === 'admin'
+  userRole: null,   // 'viewer' | 'editor' | 'admin'
+  session: null,    // session Supabase
+  view: 'trimestre',
+  anchorDate: new Date(),
+  filterPerson: 'all',
+  filterGroup: 'tous',
+  currentUser: null,  // email connecté
+  rangeBefore: 180,
+  rangeAfter: 540,
+  // Anti-rebond pour realtime (évite d'appliquer son propre push)
+  _suppressRealtime: false,
+};
+
+// Helpers permission
+function canEdit()  { return ['editor','admin'].includes(state.userRole); }
+function canAdmin() { return state.userRole === 'admin'; }
+
+// ════════════════════════════════════════════════════
+// STATE HELPERS
+// ════════════════════════════════════════════════════
+
+// Remet la vue par défaut (Trimestre, ancre = aujourd'hui)
+function setDefaultView() {
+  state.view = 'trimestre';
+  state.anchorDate = new Date();
+  document.querySelectorAll('.view-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === 'trimestre')
+  );
+}
+
+// ════════════════════════════════════════════════════
+// SUPABASE — AUTH
+// ════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  errEl.textContent = '';
+  btn.disabled = true; btn.textContent = 'Connexion…';
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { errEl.textContent = error.message; return; }
+    await onAuthSuccess(data.session);
+  } catch (e) {
+    errEl.textContent = e.message || 'Erreur de connexion';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Se connecter';
+  }
+}
+
+async function doLogout() {
+  unsubscribeRealtime();
+  await sb.auth.signOut();
+  state.session = null;
+  state.userRole = null;
+  state.admin = false;
+  state.currentUser = null;
+  state.personnes = [];
+  state.etiquettes = [];
+  state.ponts = [];
+  state.reunions = [];
+  document.getElementById('logout-btn').style.display = 'none';
+  document.getElementById('user-info').textContent = '';
+  document.getElementById('sync-indicator').textContent = '';
+  showAuthScreen();
+}
+
+async function onAuthSuccess(session) {
+  state.session = session;
+  state.currentUser = session.user.email;
+  // Récupérer le rôle applicatif
+  const { data: appUser, error: roleErr } = await sb
+    .from('app_users')
+    .select('role')
+    .eq('user_id', session.user.id)
+    .maybeSingle();
+  if (roleErr) console.warn('Lecture rôle :', roleErr.message);
+  state.userRole = appUser?.role || 'viewer';
+  state.admin = state.userRole === 'admin';
+  // UI utilisateur
+  const roleClass = `role-${state.userRole}`;
+  const roleLabel = state.userRole.toUpperCase();
+  document.getElementById('user-info').innerHTML =
+    `👤 ${session.user.email}<span class="role-badge ${roleClass}">${roleLabel}</span>`;
+  document.getElementById('logout-btn').style.display = '';
+  document.getElementById('sync-indicator').textContent = 'Synchronisé';
+  hideAuthScreen();
+  // Charger les données
+  setSyncing(true);
+  try {
+    await loadStateFromSupabase();
+  } catch (e) {
+    toast('Erreur de chargement : ' + e.message, 'error');
+  }
+  setSyncing(false);
+  applyRolePermissionsToUI();
+  setDefaultView();
+  renderAll();
+  requestAnimationFrame(() => scrollToDate(new Date()));
+  // Realtime
+  subscribeRealtime();
+  toast(`Connecté · ${state.userRole}`, 'success');
+}
+
+function showAuthScreen() {
+  document.getElementById('auth-screen').classList.add('visible');
+}
+function hideAuthScreen() {
+  document.getElementById('auth-screen').classList.remove('visible');
+}
+
+// ════════════════════════════════════════════════════
+// SUPABASE — CHARGEMENT
+// ════════════════════════════════════════════════════
+async function loadStateFromSupabase() {
+  const [p, e, po, r, es] = await Promise.all([
+    sb.from('personnes').select('body'),
+    sb.from('etiquettes').select('body'),
+    sb.from('ponts').select('body'),
+    sb.from('reunions').select('body'),
+    sb.from('etiquettes_sav').select('body'),
+  ]);
+  if (p.error)  throw new Error('personnes : '  + p.error.message);
+  if (e.error)  throw new Error('etiquettes : ' + e.error.message);
+  if (po.error) throw new Error('ponts : '      + po.error.message);
+  if (r.error)  throw new Error('reunions : '   + r.error.message);
+  // Pas d'erreur fatale si etiquettes_sav indisponible (table peut ne pas exister)
+  if (!es.error) {
+    state.etiquettes_sav = (es.data||[])
+      .map(x => x.body)
+      .filter(b => b.commonPersonId != null) // on ne garde que celles liées à une personne commune
+      .map(b => ({...b, commonPersonId: String(b.commonPersonId)}));
+  } else {
+    state.etiquettes_sav = [];
+  }
+  // Normalisation des IDs en string : évite les mismatch UUID vs numérique legacy
+  state.personnes = (p.data || []).map(x => ({ ...x.body, id: String(x.body.id) }));
+  state.etiquettes = (e.data || []).map(x => {
+    const b = x.body;
+    return {
+      ...b,
+      personneId: b.personneId != null ? String(b.personneId) : b.personneId,
+      motherLabelId: b.motherLabelId != null ? String(b.motherLabelId) : b.motherLabelId,
+      linkedLabelId: b.linkedLabelId != null ? String(b.linkedLabelId) : b.linkedLabelId,
+      linkedFromId: b.linkedFromId != null ? String(b.linkedFromId) : b.linkedFromId,
+    };
+  });
+  state.ponts    = (po.data || []).map(x => x.body);
+  state.reunions = (r.data  || []).map(x => {
+    const b = x.body;
+    return { ...b, personnes: (b.personnes || []).map(id => String(id)) };
+  });
+  // Si l'instance est vide ET l'utilisateur est admin, proposer un seed
+  if (canAdmin() && state.personnes.length === 0 && state.etiquettes.length === 0) {
+    if (confirm('Base de données vide. Initialiser avec les données de démo ?')) {
+      state.personnes  = getDefaultPersonnes();
+      state.etiquettes = getDefaultEtiquettes();
+      await syncToSupabase();
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════
+// SUPABASE — SYNC (push)
+// ════════════════════════════════════════════════════
+// Stratégie : sync complète par diff (upsert tout l'état + delete les IDs absents).
+// Simple, fiable, et n'oblige pas à instrumenter chaque mutation.
+
+function setSyncing(on) {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  if (on) { el.classList.add('syncing'); el.classList.remove('error'); el.textContent = 'Synchro…'; }
+  else { el.classList.remove('syncing'); el.textContent = 'Synchronisé'; }
+}
+function setSyncError(msg) {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  el.classList.add('error'); el.classList.remove('syncing');
+  el.textContent = 'Erreur sync';
+  if (msg) el.title = msg;
+}
+
+let _syncTimer = null;
+async function saveToFile() {
+  // Toutes les mutations passent par cette fonction (compatibilité avec le code existant)
+  if (!sb || !state.session) return;
+  if (!canEdit()) {
+    toast('Lecture seule : modifications non sauvegardées', 'warning');
+    return;
+  }
+  // Debounce 200ms pour fusionner les rafales (drag, fusion, cascade)
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(() => {
+    syncToSupabase().catch(e => setSyncError(e.message));
+  }, 200);
+}
+
+async function syncToSupabase() {
+  if (!sb || !state.session || !canEdit()) return;
+  setSyncing(true);
+  state._suppressRealtime = true;
+  try {
+    const tables = {
+      personnes:  state.personnes,
+      etiquettes: state.etiquettes,
+      ponts:      state.ponts,
+      reunions:   state.reunions,
+    };
+    for (const [t, items] of Object.entries(tables)) {
+      // 1) Upsert l'état complet
+      if (items.length > 0) {
+        const rows = items.map(x => ({ id: String(x.id), body: x }));
+        const { error } = await sb.from(t).upsert(rows);
+        if (error) throw new Error(`${t} upsert: ${error.message}`);
+      }
+      // 2) Supprimer les rows qui ne sont plus dans l'état
+      const { data: existing, error: selErr } = await sb.from(t).select('id');
+      if (selErr) throw new Error(`${t} select: ${selErr.message}`);
+      const stateIds = new Set(items.map(x => String(x.id)));
+      const toDelete = (existing || []).filter(r => !stateIds.has(String(r.id))).map(r => r.id);
+      if (toDelete.length) {
+        const { error: delErr } = await sb.from(t).delete().in('id', toDelete);
+        if (delErr) throw new Error(`${t} delete: ${delErr.message}`);
+      }
+    }
+    setSyncing(false);
+  } catch (e) {
+    setSyncError(e.message);
+    toast('Erreur sync : ' + e.message, 'error');
+  } finally {
+    // Délai avant de réautoriser le realtime (évite d'appliquer son propre push)
+    setTimeout(() => { state._suppressRealtime = false; }, 600);
+  }
+}
+
+// ════════════════════════════════════════════════════
+// SUPABASE — REALTIME
+// ════════════════════════════════════════════════════
+let _realtimeChannels = [];
+let _realtimeReloadTimer = null;
+function subscribeRealtime() {
+  unsubscribeRealtime();
+  const debouncedReload = () => {
+    if (state._suppressRealtime) return;
+    clearTimeout(_realtimeReloadTimer);
+    _realtimeReloadTimer = setTimeout(async () => {
+      try {
+        await loadStateFromSupabase();
+        renderAll();
+      } catch (e) { console.warn('Realtime reload error:', e); }
+    }, 250);
+  };
+  ['personnes','etiquettes','ponts','reunions','etiquettes_sav'].forEach(t => {
+    const ch = sb.channel('rt-' + t)
+      .on('postgres_changes', { event: '*', schema: 'public', table: t }, debouncedReload)
+      .subscribe();
+    _realtimeChannels.push(ch);
+  });
+}
+function unsubscribeRealtime() {
+  _realtimeChannels.forEach(ch => { try { sb.removeChannel(ch); } catch(e){} });
+  _realtimeChannels = [];
+}
+
+// ════════════════════════════════════════════════════
+// DEFAULT TEST DATA
+// ════════════════════════════════════════════════════
+function getDefaultPersonnes() {
+  return [
+    { id:1, prenom:'Jean-Sébastien', nom:'Gravier',    groupe:'JSG',     role:'Chef',     actif:true },
+    { id:2, prenom:'Marc',          nom:'Durand',      groupe:'JSG',     role:'Monteur',  actif:true },
+    { id:3, prenom:'Simon',         nom:'Sentinelli',  groupe:'SS',      role:'Chef',     actif:true },
+    { id:4, prenom:'Léa',           nom:'Bernard',     groupe:'SS',      role:'Monteuse', actif:true },
+    { id:5, prenom:'David',         nom:'Schütz',      groupe:'DSG',     role:'Monteur',  actif:true },
+    { id:6, prenom:'Carlos',        nom:'Mendes',      groupe:'Externe', role:'Externe',  actif:true },
+    { id:7, prenom:'Olivier',       nom:'Roux',        groupe:'Protocoleur/TS', role:'Protocoleur', actif:true },
+  ];
+}
+
+function getDefaultEtiquettes() {
+  const today = new Date();
+  const d = (offset) => {
+    const dt = new Date(today);
+    dt.setDate(dt.getDate() + offset);
+    return dt.toISOString().slice(0,10);
+  };
+  const uid = () => Math.random().toString(36).slice(2,10);
+
+  const etiquettes = [
+    // ROUGE — Remplacement (personne 1)
+    { id:uid(), personneId:1, type:'rouge', dateDebut:d(-5), dateFin:d(10),
+      data:{ numeroInstallation:'02-1111', lieu:'Genève', adresse:'Rue du Rhône 12',
+             vendeur:'Dupont', chefChantier:'Gravier', chefProjet:'Martin',
+             canton:'GE', poidsKg:1200, genre:'électrique', nbArrets:8, nbAcces:10,
+             dureeTotaleJours:15, heuresTotales:120 },
+      verrouille:false, creePar:'Flory' },
+    // JAUNE auto (02-1111 protocole)
+    { id:uid(), personneId:1, type:'jaune', dateDebut:d(11), dateFin:d(12),
+      data:{ numeroInstallation:'02-1111' }, verrouille:false, creePar:'AUTO' },
+
+    // BLEU — Installation neuve (personne 3)
+    { id:uid(), personneId:3, type:'bleu', dateDebut:d(2), dateFin:d(18),
+      data:{ numeroInstallation:'03-2222', lieu:'Lausanne', adresse:'Av. de la Gare 5',
+             vendeur:'Rochat', chefChantier:'Sentinelli', chefProjet:'Dupuis',
+             canton:'VD', poidsKg:2000, genre:'hydraulique', nbArrets:4, nbAcces:5,
+             dureeTotaleJours:16, heuresTotales:128 },
+      verrouille:false, creePar:'Flory' },
+    // JAUNE auto (03-2222 protocole)
+    { id:uid(), personneId:3, type:'jaune', dateDebut:d(19), dateFin:d(20),
+      data:{ numeroInstallation:'03-2222' }, verrouille:false, creePar:'AUTO' },
+
+    // VIOLET — Modernisation (personne 5)
+    { id:uid(), personneId:5, type:'violet', dateDebut:d(5), dateFin:d(20),
+      data:{ numeroInstallation:'04-3333', lieu:'Fribourg', adresse:'Grand Rue 8',
+             vendeur:'Kolly', chefChantier:'Schütz', chefProjet:'Blanc',
+             canton:'FR', poidsKg:800, genre:'électrique', nbArrets:5, nbAcces:6,
+             dureeTotaleJours:15, heuresTotales:115 },
+      verrouille:false, creePar:'Alex' },
+    // JAUNE auto (04-3333)
+    { id:uid(), personneId:5, type:'jaune', dateDebut:d(21), dateFin:d(22),
+      data:{ numeroInstallation:'04-3333' }, verrouille:false, creePar:'AUTO' },
+
+    // GRIS — Aide montage sur 02-1111 (personne 2)
+    { id:uid(), personneId:2, type:'gris', dateDebut:d(-5), dateFin:d(3),
+      data:{ numeroInstallation:'02-1111', dureeJours:8 }, verrouille:false, creePar:'Flory' },
+    { id:uid(), personneId:2, type:'gris', dateDebut:d(4), dateFin:d(8),
+      data:{ numeroInstallation:'02-1111', dureeJours:4 }, verrouille:false, creePar:'Flory' },
+
+    // ORANGE — Maladie (personne 4)
+    { id:uid(), personneId:4, type:'orange', dateDebut:d(-3), dateFin:d(2),
+      data:{}, verrouille:false, creePar:'Flory' },
+
+    // VERT — Congé (personne 6)
+    { id:uid(), personneId:6, type:'vert', dateDebut:d(14), dateFin:d(21),
+      data:{ intitule:'Congé été' }, verrouille:false, creePar:'Alex' },
+
+    // ROSE — SAV en cours (personne 2)
+    { id:uid(), personneId:2, type:'rose', dateDebut:d(12), dateFin:d(16),
+      data:{ descriptionSAV:'Remplacement moteur cabine', travauxRestants:'Réglage final + contrôle' },
+      verrouille:false, creePar:'Flory' },
+
+    // NOIR — SAV bloqué verrouillé (personne 1)
+    { id:uid(), personneId:1, type:'noir', dateDebut:d(15), dateFin:d(19),
+      data:{ descriptionSAV:'Panne tableau électrique', travauxRestants:'Attente pièces détachées' },
+      verrouille:true, creePar:'Alex' },
+  ];
+  return etiquettes;
+}
+
+// ════════════════════════════════════════════════════
+// DATE UTILITIES
+// ════════════════════════════════════════════════════
+function dateStr(d) {
+  if (typeof d === 'string') return d;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const j = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${j}`;
+}
+function parseDate(s) {
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+function addDays(d, n) {
+  const dt = new Date(d);
+  dt.setDate(dt.getDate() + n);
+  return dt;
+}
+function daysBetween(a, b) {
+  return Math.round((parseDate(dateStr(b)) - parseDate(dateStr(a))) / 86400000);
+}
+function isWeekend(d) {
+  const day = (typeof d === 'string' ? parseDate(d) : d).getDay();
+  return day === 0 || day === 6;
+}
+function isFerie(d) {
+  const s = typeof d === 'string' ? d : dateStr(d);
+  if (JOURS_FERIES.has(s)) return true;
+  return (state.ponts || []).some(p => p.date === s);
+}
+function getFerieInfo(d) {
+  const s = typeof d === 'string' ? d : dateStr(d);
+  if (FERIES_INFO[s]) return FERIES_INFO[s];
+  const pont = (state.ponts || []).find(p => p.date === s);
+  if (pont) return { nom: pont.nom || 'Pont offert', cantons: 'Tous' };
+  return null;
+}
+function isToday(d) {
+  return (typeof d === 'string' ? d : dateStr(d)) === dateStr(new Date());
+}
+// Marqueurs : aujourd'hui + N jours calendaires
+function isTodayPlus(d, n) {
+  const target = dateStr(addDays(new Date(), n));
+  return (typeof d === 'string' ? d : dateStr(d)) === target;
+}
+function formatDate(s) {
+  const d = parseDate(s);
+  return d.toLocaleDateString('fr-CH', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+// Jours ouvrables : exclut weekends + fériés
+function isBusinessDay(d) {
+  return !isWeekend(d) && !isFerie(d);
+}
+// Compte de jours ouvrables entre deux dates inclus
+function businessDaysBetween(a, b) {
+  const start = parseDate(dateStr(a));
+  const end = parseDate(dateStr(b));
+  if (end < start) return 0;
+  let count = 0;
+  let d = new Date(start);
+  while (d <= end) {
+    if (isBusinessDay(d)) count++;
+    d = addDays(d, 1);
+  }
+  return count;
+}
+// Étant donnée une date de début et un nombre de jours ouvrables, calculer la date de fin
+function addBusinessDays(startDate, nbBusinessDays) {
+  let d = parseDate(dateStr(startDate));
+  // Si le jour de début n'est pas ouvrable, le décaler au prochain jour ouvrable
+  while (!isBusinessDay(d)) d = addDays(d, 1);
+  let remaining = Math.max(1, nbBusinessDays) - 1;
+  while (remaining > 0) {
+    d = addDays(d, 1);
+    if (isBusinessDay(d)) remaining--;
+  }
+  return d;
+}
+// Décalage en jours ouvrables signé entre deux dates (positif si target>ref, négatif sinon, 0 si égal)
+function businessDayOffset(refDate, targetDate) {
+  const refS = typeof refDate === 'string' ? refDate : dateStr(refDate);
+  const tgtS = typeof targetDate === 'string' ? targetDate : dateStr(targetDate);
+  if (refS === tgtS) return 0;
+  let d = parseDate(refS);
+  const tgt = parseDate(tgtS);
+  const sign = tgt > d ? 1 : -1;
+  let count = 0;
+  while (dateStr(d) !== tgtS) {
+    d = addDays(d, sign);
+    if (isBusinessDay(d)) count++;
+  }
+  return sign * count;
+}
+// Date située à `offset` jours ouvrables de refDate (offset signé)
+function addBusinessDayOffset(refDate, offset) {
+  if (offset === 0) return parseDate(typeof refDate==='string'?refDate:dateStr(refDate));
+  const sign = offset > 0 ? 1 : -1;
+  let remaining = Math.abs(offset);
+  let d = parseDate(typeof refDate==='string'?refDate:dateStr(refDate));
+  while (remaining > 0) {
+    d = addDays(d, sign);
+    if (isBusinessDay(d)) remaining--;
+  }
+  return d;
+}
+function nextBusinessDay(d) {
+  let n = addDays(parseDate(dateStr(d)), 1);
+  while (!isBusinessDay(n)) n = addDays(n, 1);
+  return n;
+}
+// Utilisateur courant — vient de Supabase Auth (email)
+function getCurrentUser() {
+  return state.currentUser || 'Inconnu';
+}
+function isAdminUser() {
+  return state.admin === true;
+}
+function pushHistory(label, action, changes) {
+  if (!label.history) label.history = [];
+  label.history.push({
+    date: new Date().toISOString(),
+    user: getCurrentUser(),
+    action,
+    changes: changes || null
+  });
+}
+
+function getDateRange() {
+  // Calendrier "infini" : on rend ~2 ans autour de l'ancre, étendu dynamiquement au scroll.
+  // La VUE (semaine/mois/trimestre/année) ne change que la largeur des colonnes (zoom).
+  const anchor = state.anchorDate;
+  // Ancrer au lundi de la semaine de l'ancre
+  const dow = anchor.getDay() === 0 ? 6 : anchor.getDay() - 1;
+  const baseStart = addDays(anchor, -dow);
+  // Étendre selon state.rangeBefore / rangeAfter (en jours)
+  if (state.rangeBefore == null) state.rangeBefore = 180;
+  if (state.rangeAfter  == null) state.rangeAfter  = 540;
+  const start = addDays(baseStart, -state.rangeBefore);
+  const totalDays = state.rangeBefore + state.rangeAfter;
+  const dates = [];
+  for (let i = 0; i < totalDays; i++) dates.push(addDays(start, i));
+  return dates;
+}
+function getColWidth() {
+  switch (state.view) {
+    case 'semaine':   return 80;
+    case 'mois':      return 40;
+    case 'trimestre': return 24;
+    case 'annee':     return 16;
+    default: return 40;
+  }
+}
+function periodLabel(dates) {
+  if (!dates.length) return '';
+  const s = dates[0], e = dates[dates.length-1];
+  if (state.view === 'semaine') {
+    return `Sem. ${getWeekNum(s)} — ${formatDate(dateStr(s))} au ${formatDate(dateStr(e))}`;
+  }
+  return dates[0].toLocaleDateString('fr-CH',{month:'long',year:'numeric'}) +
+    (state.view !== 'mois' ? ' – ' + e.toLocaleDateString('fr-CH',{month:'long',year:'numeric'}) : '');
+}
+function getWeekNum(d) {
+  const dt = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const day = dt.getUTCDay()||7;
+  dt.setUTCDate(dt.getUTCDate()+4-day);
+  const yearStart = new Date(Date.UTC(dt.getUTCFullYear(),0,1));
+  return Math.ceil((((dt-yearStart)/86400000)+1)/7);
+}
+
+// ════════════════════════════════════════════════════
+// RENDER ALL
+// ════════════════════════════════════════════════════
+function renderAll() {
+  renderGantt();
+  renderTeam();
+  updatePersonFilter();
+}
+
+// ════════════════════════════════════════════════════
+// GANTT RENDERING — single scroll container
+// ════════════════════════════════════════════════════
+function renderGantt() {
+  const dates = getDateRange();
+  const colW = getColWidth();
+  document.documentElement.style.setProperty('--col-w', colW + 'px');
+  document.getElementById('period-label').textContent = periodLabel(dates);
+
+  // Filter + sort persons
+  let persons = state.personnes.filter(p => p.actif);
+  if (state.filterPerson !== 'all') persons = persons.filter(p => String(p.id) === String(state.filterPerson));
+  if (state.filterGroup !== 'tous') persons = persons.filter(p => p.groupe === state.filterGroup);
+  const groupOrder = ['JSG','SS','DSG','Protocoleur/TS','Externe','Autre'];
+  // Ordre des rôles : Chef → Protocoleur → Pré-Protocoleur → Monteur → autres
+  // Règles explicites (l'ordre des if compte : pré-protocoleur AVANT protocoleur car il le contient)
+  const roleRank = (r) => {
+    const k = (r||'').toLowerCase().trim();
+    if (k.startsWith('chef')) return 0;                                          // Chef, Chef de Chantier, Chef Chantier
+    if (k.includes('pré-protocoleur') || k.includes('pre-protocoleur')) return 2; // Pré-Protocoleur
+    if (k.includes('protocoleur')) return 1;                                     // Protocoleur, Protocoleuse
+    if (k.includes('monteur') || k.includes('monteuse')) return 3;               // Monteur, Monteuse
+    return 99;
+  };
+  persons.sort((a,b) => {
+    const ga = groupOrder.indexOf(a.groupe), gb = groupOrder.indexOf(b.groupe);
+    if (ga !== gb) return (ga<0?99:ga)-(gb<0?99:gb);
+    const ra = roleRank(a.role), rb = roleRank(b.role);
+    if (ra !== rb) return ra - rb;
+    // Même rang → trier alphabétiquement par rôle puis par nom
+    const rcmp = (a.role||'').localeCompare(b.role||'');
+    if (rcmp !== 0) return rcmp;
+    return (a.nom+a.prenom).localeCompare(b.nom+b.prenom);
+  });
+
+  // Date → index map
+  const dateMap = {};
+  dates.forEach((d,i) => { dateMap[dateStr(d)] = i; });
+
+  const scroll = document.getElementById('gantt-scroll');
+  scroll.innerHTML = '';
+
+  // ── HEADER ROW ──
+  const headerRow = document.createElement('div');
+  headerRow.className = 'gr-header';
+  const corner = document.createElement('div');
+  corner.className = 'gr-corner';
+  corner.textContent = 'ÉQUIPE';
+  headerRow.appendChild(corner);
+
+  const dayNames = ['Di','Lu','Ma','Me','Je','Ve','Sa'];
+  const monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+  // Right side container with two rows: month bands + day cells
+  const totalDaysWidth = dates.length * colW;
+  const headerRight = document.createElement('div');
+  headerRight.className = 'gr-header-right';
+  headerRight.style.width = totalDaysWidth + 'px';
+  headerRight.style.minWidth = totalDaysWidth + 'px';
+  const monthRow = document.createElement('div');
+  monthRow.className = 'gr-month-row';
+  monthRow.style.width = totalDaysWidth + 'px';
+  const weekRow = document.createElement('div');
+  weekRow.className = 'gr-week-row';
+  weekRow.style.width = totalDaysWidth + 'px';
+  const dayRow = document.createElement('div');
+  dayRow.className = 'gr-day-row';
+  dayRow.style.width = totalDaysWidth + 'px';
+
+  // Group consecutive dates by year-month + week
+  let curMonth = null, curYear = null, curCount = 0;
+  let curWeek = null, curWeekCount = 0;
+  const flushMonth = () => {
+    if (curCount === 0) return;
+    const band = document.createElement('div');
+    band.className = 'month-band';
+    band.style.width = (curCount * colW) + 'px';
+    band.style.minWidth = (curCount * colW) + 'px';
+    const inner = document.createElement('div');
+    inner.className = 'month-band-inner';
+    inner.textContent = `${monthNames[curMonth]} ${curYear}`;
+    band.appendChild(inner);
+    monthRow.appendChild(band);
+  };
+  const flushWeek = () => {
+    if (curWeekCount === 0) return;
+    const band = document.createElement('div');
+    band.className = 'week-band';
+    band.style.width = (curWeekCount * colW) + 'px';
+    band.style.minWidth = (curWeekCount * colW) + 'px';
+    const inner = document.createElement('div');
+    inner.className = 'week-band-inner';
+    inner.textContent = `S${curWeek}`;
+    band.appendChild(inner);
+    weekRow.appendChild(band);
+  };
+
+  dates.forEach(d => {
+    const ds = dateStr(d);
+    const m = d.getMonth(), y = d.getFullYear();
+    if (m !== curMonth || y !== curYear) {
+      flushMonth();
+      curMonth = m; curYear = y; curCount = 0;
+    }
+    const wn = getWeekNum(d);
+    if (wn !== curWeek) { flushWeek(); curWeek = wn; curWeekCount = 0; }
+    curWeekCount++;
+    curCount++;
+
+    const cell = document.createElement('div');
+    cell.className = 'day-header';
+    if (isToday(d)) cell.classList.add('today');
+    else if (isWeekend(d)) cell.classList.add('weekend');
+    if (isFerie(ds)) cell.classList.add('ferie');
+    if (isTodayPlus(d, 14)) cell.classList.add('marker-14');
+    if (isTodayPlus(d, 35)) cell.classList.add('marker-35');
+    cell.style.width = colW + 'px';
+    cell.style.minWidth = colW + 'px';
+    const ferieInfo = getFerieInfo(ds);
+    if (ferieInfo) cell.title = `${ferieInfo.nom} — ${ferieInfo.cantons}`;
+    cell.innerHTML = `<div class="day-num">${d.getDate()}</div><div class="day-name">${dayNames[d.getDay()]}</div>${ferieInfo ? '<div style="font-size:8px;line-height:1">🏖️</div>' : ''}`;
+    dayRow.appendChild(cell);
+  });
+  flushMonth();
+  flushWeek();
+
+  headerRight.appendChild(monthRow);
+  headerRight.appendChild(weekRow);
+  headerRight.appendChild(dayRow);
+  headerRow.appendChild(headerRight);
+  scroll.appendChild(headerRow);
+
+  // ── PERSON ROWS ──
+  const groups = {};
+  persons.forEach(p => {
+    const g = p.groupe || 'Autre';
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(p);
+  });
+
+  Object.entries(groups).forEach(([groupName, groupPersons]) => {
+    // Group separator row
+    const groupRow = document.createElement('div');
+    groupRow.className = 'gr-group';
+    const groupNameEl = document.createElement('div');
+    groupNameEl.className = 'gr-group-name';
+    groupNameEl.textContent = groupName;
+    const groupFill = document.createElement('div');
+    groupFill.className = 'gr-group-fill';
+    groupFill.style.width = (dates.length * colW) + 'px';
+    groupRow.appendChild(groupNameEl);
+    groupRow.appendChild(groupFill);
+    scroll.appendChild(groupRow);
+
+    groupPersons.forEach(person => {
+      const row = document.createElement('div');
+      row.className = 'gr-row';
+      row.dataset.personId = person.id;
+
+      // Name cell — sticky left
+      const nameCell = document.createElement('div');
+      nameCell.className = 'gr-name';
+      const badge = document.createElement('span');
+      badge.className = 'group-badge';
+      badge.textContent = person.groupe || '?';
+      const info = document.createElement('div');
+      info.className = 'person-info';
+      info.innerHTML = `<div class="person-name"><span class="prenom">${person.prenom}</span> <span class="nom">${person.nom}</span></div><div class="person-role">${person.role}</div>`;
+      nameCell.appendChild(badge);
+      nameCell.appendChild(info);
+      row.appendChild(nameCell);
+
+      // Days area — contains day cells + labels
+      const daysArea = document.createElement('div');
+      daysArea.className = 'gr-days';
+      daysArea.style.width = (dates.length * colW) + 'px';
+
+      dates.forEach(d => {
+        const cell = document.createElement('div');
+        cell.className = 'day-cell';
+        if (isWeekend(d)) cell.classList.add('weekend');
+        if (isFerie(dateStr(d))) cell.classList.add('ferie');
+        if (isToday(d)) cell.classList.add('today');
+        if (isTodayPlus(d, 14)) cell.classList.add('marker-14');
+        if (isTodayPlus(d, 35)) cell.classList.add('marker-35');
+        cell.style.width = colW + 'px';
+        cell.dataset.date = dateStr(d);
+        cell.dataset.personId = person.id;
+        // Double-clic (desktop)
+        cell.addEventListener('dblclick', (e) => {
+          if (!e.target.closest('.label-block'))
+            onCellClick(person.id, dateStr(d));
+        });
+        // Double-tap (mobile)
+        let lastTap = 0;
+        cell.addEventListener('touchend', (e) => {
+          if (e.target.closest('.label-block')) return;
+          const now = Date.now();
+          if (now - lastTap < 350) {
+            e.preventDefault();
+            onCellClick(person.id, dateStr(d));
+          }
+          lastTap = now;
+        });
+        daysArea.appendChild(cell);
+      });
+
+      // Labels
+      const rangeStart = dateStr(dates[0]);
+      const rangeEnd = dateStr(dates[dates.length-1]);
+      const personLabels = state.etiquettes.filter(e => e.personneId === person.id);
+      // Calculer les chevauchements pour empilage vertical
+      const overlapMap = {};
+      personLabels.forEach(a => {
+        personLabels.forEach(b => {
+          if (a.id === b.id) return;
+          if (a.dateDebut <= b.dateFin && a.dateFin >= b.dateDebut) {
+            (overlapMap[a.id] = overlapMap[a.id] || new Set()).add(b.id);
+          }
+        });
+      });
+      // Affecter une "voie" (0 = haut, 1 = bas) à chaque étiquette
+      const lane = {};
+      personLabels.sort((a,b)=>a.dateDebut.localeCompare(b.dateDebut)).forEach(lbl => {
+        const others = overlapMap[lbl.id];
+        if (!others) { lane[lbl.id] = -1; return; }
+        const used = new Set();
+        others.forEach(oid => { if (lane[oid] !== undefined && lane[oid] >= 0) used.add(lane[oid]); });
+        lane[lbl.id] = used.has(0) ? 1 : 0;
+      });
+
+      personLabels.forEach(lbl => {
+        if (!lbl.dateDebut || !lbl.dateFin) return;
+        const lblStart = dateStr(lbl.dateDebut);
+        const lblEnd = dateStr(lbl.dateFin);
+        if (lblStart > rangeEnd || lblEnd < rangeStart) return;
+        const visStart = lblStart < rangeStart ? rangeStart : lblStart;
+        const visEnd = lblEnd > rangeEnd ? rangeEnd : lblEnd;
+        const startIdx = dateMap[visStart];
+        const endIdx = dateMap[visEnd];
+        if (startIdx === undefined || endIdx === undefined) return;
+
+        const typeInfo = LABEL_TYPES[lbl.type] || LABEL_TYPES.autre;
+        const color = lbl.data?.couleurHex || typeInfo.color;
+        const lblEl = document.createElement('div');
+        let stackClass = '';
+        if (lane[lbl.id] === 0) stackClass = ' stack-top';
+        else if (lane[lbl.id] === 1) stackClass = ' stack-bot';
+        lblEl.className = `label-block ${typeInfo.text === 'dark' ? 'dark-text' : 'light-text'}${stackClass}`;
+        lblEl.style.cssText = `left:${startIdx * colW + 1}px;width:${(endIdx - startIdx + 1) * colW - 2}px;background:${color}`;
+        lblEl.dataset.labelId = lbl.id;
+
+        let text = '';
+        if (lbl.type === 'jaune') text = lbl.data?.numeroInstallation || '';
+        else if (lbl.type === 'vert') text = lbl.data?.intitule || 'Congé';
+        else if (lbl.type === 'orange') text = 'Maladie';
+        else if (lbl.type === 'rose') text = lbl.data?.descriptionSAV ? `SAV: ${lbl.data.descriptionSAV}` : 'SAV en cours';
+        else if (lbl.type === 'noir') text = lbl.data?.descriptionSAV ? `🔒 ${lbl.data.descriptionSAV}` : '🔒 SAV bloqué';
+        else if (lbl.type === 'brun') text = lbl.data?.texteBrun || 'Cas particulier';
+        else if (lbl.type === 'autre') text = lbl.data?.texteLibre || 'Autre';
+        else text = `${lbl.data?.numeroInstallation||''} ${lbl.data?.lieu||''}`.trim() || typeInfo.label;
+        if (lbl.verrouille) text = '🔒 ' + text;
+        lblEl.textContent = text;
+        // Ajuster automatiquement la taille de la police pour que le texte tienne entier
+        const blockWidth = (endIdx - startIdx + 1) * colW - 2;
+        const padding = 16; // 8px de chaque côté
+        const avail = Math.max(10, blockWidth - padding);
+        // ~6.2px par caractère à 11px ; ajuster si nécessaire jusqu'à un minimum de 8px
+        const baseFs = 11;
+        const estW = text.length * 6.2;
+        if (estW > avail) {
+          const fs = Math.max(8, Math.floor(baseFs * avail / estW));
+          lblEl.style.fontSize = fs + 'px';
+        }
+        // Tooltip complet (hover desktop / long-press mobile) — sans ouvrir l'étiquette
+        const tipParts = [typeInfo.label];
+        if (lbl.data?.numeroInstallation) tipParts.push('N° ' + lbl.data.numeroInstallation);
+        if (lbl.data?.lieu) tipParts.push(lbl.data.lieu);
+        if (lbl.data?.adresse) tipParts.push(lbl.data.adresse);
+        const dureeOuvr = businessDaysBetween(parseDate(lbl.dateDebut), parseDate(lbl.dateFin));
+        tipParts.push(`${formatDate(lbl.dateDebut)} → ${formatDate(lbl.dateFin)} (${dureeOuvr} j ouvrables)`);
+        if (lbl.data?.intitule) tipParts.push(lbl.data.intitule);
+        if (lbl.data?.descriptionSAV) tipParts.push('SAV: ' + lbl.data.descriptionSAV);
+        if (lbl.data?.texteBrun) tipParts.push(lbl.data.texteBrun);
+        if (lbl.data?.texteLibre) tipParts.push(lbl.data.texteLibre);
+        lblEl.title = tipParts.join('\n');
+
+        // Drag to move : horizontal = changer dates, vertical = changer monteur
+        attachLabelDrag(lblEl, lbl.id, colW);
+        lblEl.addEventListener('dblclick', (e) => { e.stopPropagation(); editLabel(lbl.id); });
+        daysArea.appendChild(lblEl);
+      });
+
+      // ── ÉTIQUETTES SAV liées à cette personne (commonPersonId) ──
+      // Affichage en lecture seule depuis le planning montage. Édition dans le planning SAV.
+      const savLabels = state.etiquettes_sav.filter(e => String(e.commonPersonId) === String(person.id));
+      savLabels.forEach(lbl => {
+        if (!lbl.dateDebut || !lbl.dateFin) return;
+        if (lbl.dateDebut > rangeEnd || lbl.dateFin < rangeStart) return;
+        const visStart = lbl.dateDebut < rangeStart ? rangeStart : lbl.dateDebut;
+        const visEnd   = lbl.dateFin   > rangeEnd   ? rangeEnd   : lbl.dateFin;
+        const startIdx = dateMap[visStart];
+        const endIdx   = dateMap[visEnd];
+        if (startIdx === undefined || endIdx === undefined) return;
+        const typeInfo = SAV_LABEL_TYPES[lbl.type] || { label:lbl.type, color:'#999', text:'light' };
+        const lblEl = document.createElement('div');
+        const isVertIndic = (lbl.type === 'vert');
+        lblEl.className = `label-block ${typeInfo.text === 'dark' ? 'dark-text' : 'light-text'}` + (isVertIndic ? ' vert-indic' : '');
+        // Marquer visuellement comme "venant du SAV" (bordure pointillée)
+        lblEl.style.cssText = `left:${startIdx*colW+1}px;width:${(endIdx-startIdx+1)*colW-2}px;background:${typeInfo.color};border:1px dashed rgba(255,255,255,.5);cursor:default`;
+        lblEl.dataset.labelId = lbl.id;
+        lblEl.dataset.savReadOnly = 'true';
+        let text;
+        if (lbl.type === 'vert') text = lbl.data?.texteLibre || 'IH';
+        else if (lbl.type === 'noir') text = lbl.data?.texteLibre || 'Absent';
+        else if (lbl.type === 'rose') text = `${lbl.data?.texteLibre||'Formation'}${lbl.data?.lieu?' · '+lbl.data.lieu:''}`;
+        else text = `${lbl.data?.numeroInstallation||''}${lbl.data?.adresse?' '+lbl.data.adresse:''}`.trim() || typeInfo.label;
+        lblEl.textContent = '🛠️ ' + text;
+        const tip = ['📋 Étiquette SAV (lecture seule — modifier dans Planning SAV)', typeInfo.label];
+        if (lbl.data?.numeroInstallation) tip.push('N° ' + lbl.data.numeroInstallation);
+        if (lbl.data?.adresse) tip.push(lbl.data.adresse);
+        if (lbl.data?.numeroDevis) tip.push('Devis ' + lbl.data.numeroDevis);
+        if (lbl.data?.texteLibre) tip.push(lbl.data.texteLibre);
+        if (lbl.data?.lieu) tip.push(lbl.data.lieu);
+        tip.push(`${formatDate(lbl.dateDebut)} → ${formatDate(lbl.dateFin)}`);
+        lblEl.title = tip.join('\n');
+        lblEl.addEventListener('click', e => {
+          e.stopPropagation();
+          toast('Étiquette SAV — utilisez le Planning SAV pour la modifier', 'info');
+        });
+        daysArea.appendChild(lblEl);
+      });
+
+      row.appendChild(daysArea);
+      scroll.appendChild(row);
+    });
+  });
+
+  // Infinite scroll : étendre les dates quand on approche d'un bord
+  scroll._datesRef = dates;
+  scroll._colWRef = colW;
+  if (!scroll._scrollBound) {
+    scroll._scrollBound = true;
+    scroll.addEventListener('scroll', onGanttScroll);
+  }
+}
+
+function onGanttScroll(e) {
+  const scroll = e.currentTarget;
+  const colW = scroll._colWRef || getColWidth();
+  const max = scroll.scrollWidth - scroll.clientWidth;
+  const left = scroll.scrollLeft;
+  // Approche bord droit
+  if (max - left < colW * 30) {
+    state.rangeAfter += 180;
+    const sl = scroll.scrollLeft;
+    renderGantt();
+    document.getElementById('gantt-scroll').scrollLeft = sl;
+  } else if (left < colW * 30 && state.rangeBefore < 1800) {
+    const sl = scroll.scrollLeft;
+    state.rangeBefore += 180;
+    renderGantt();
+    document.getElementById('gantt-scroll').scrollLeft = sl + 180 * colW;
+  }
+}
+
+// Centrer le scroll horizontal sur une date donnée à 1/3 de la largeur visible
+function scrollToDate(targetDate) {
+  const scroll = document.getElementById('gantt-scroll');
+  if (!scroll) return;
+  const colW = getColWidth();
+  const dates = scroll._datesRef;
+  if (!dates) return;
+  const ts = dateStr(targetDate);
+  let idx = dates.findIndex(d => dateStr(d) === ts);
+  if (idx < 0) {
+    // Étendre si nécessaire
+    const target = parseDate(ts);
+    const first = dates[0], last = dates[dates.length-1];
+    if (target < first) {
+      state.rangeBefore += Math.ceil((first - target) / 86400000) + 30;
+    } else if (target > last) {
+      state.rangeAfter += Math.ceil((target - last) / 86400000) + 30;
+    }
+    renderGantt();
+    const newDates = document.getElementById('gantt-scroll')._datesRef;
+    idx = newDates.findIndex(d => dateStr(d) === ts);
+    if (idx < 0) return;
+  }
+  // Largeur de la colonne fixe à gauche
+  const fixedW = 180;
+  const visible = scroll.clientWidth - fixedW;
+  scroll.scrollLeft = idx * colW - visible / 3;
+}
+
+// ════════════════════════════════════════════════════
+// DRAG LABELS — déplacement (dates + monteur), pas de redimensionnement
+// ════════════════════════════════════════════════════
+
+// ── DRAG-TO-MOVE : déplacer une étiquette horizontalement (dates) et verticalement (monteur)
+function attachLabelDrag(lblEl, labelId, colW) {
+  let dragMoved = false;
+  let startX = 0, startY = 0;
+  let origStart, origEnd, origPerson, businessDur;
+  let rafId = null;
+  const THRESHOLD = 4;
+
+  let lockedNoDrag = false;
+  const start = (clientX, clientY, e) => {
+    const lbl = state.etiquettes.find(l => l.id === labelId);
+    if (!lbl) return;
+    // Viewer (lecture seule) ou étiquette verrouillée : on autorise le clic (pour ouvrir le détail) mais pas le drag
+    lockedNoDrag = !canEdit() || !!(lbl.verrouille && !state.admin);
+    dragMoved = false;
+    startX = clientX; startY = clientY;
+    origStart = lbl.dateDebut; origEnd = lbl.dateFin; origPerson = lbl.personneId;
+    businessDur = Math.max(1, businessDaysBetween(parseDate(origStart), parseDate(origEnd)));
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    e.preventDefault();
+  };
+
+  const onMove = (ev) => {
+    move(ev.clientX, ev.clientY);
+  };
+
+  const move = (cx, cy) => {
+    const dx = cx - startX, dy = cy - startY;
+    if (!dragMoved && (Math.abs(dx) > THRESHOLD || Math.abs(dy) > THRESHOLD)) {
+      if (lockedNoDrag) {
+        if (!canEdit()) toast('Lecture seule', 'warning');
+        else toast('Étiquette verrouillée — utilisez "→ SAV en cours" depuis le détail pour la déverrouiller', 'warning');
+        return;
+      }
+      dragMoved = true;
+      lblEl.classList.add('dragging');
+      document.body.style.cursor = 'grabbing';
+    }
+    if (!dragMoved) return;
+    const lbl = state.etiquettes.find(l => l.id === labelId);
+    if (!lbl) return;
+    const daysDelta = Math.round(dx / colW);
+    // La date de début fait foi ; la date de fin est recalculée pour conserver
+    // le même nombre de jours ouvrables (s'agrandit/rétrécit selon les fériés/weekends)
+    const newStartDate = addDays(parseDate(origStart), daysDelta);
+    const newEndDate = addBusinessDays(newStartDate, businessDur);
+    lbl.dateDebut = dateStr(newStartDate);
+    lbl.dateFin = dateStr(newEndDate);
+    // Trouver le monteur sous le curseur
+    const elBelow = document.elementFromPoint(cx, cy);
+    const rowBelow = elBelow?.closest('.gr-row');
+    if (rowBelow && rowBelow.dataset.personId) {
+      // L'ID peut être numérique (legacy) ou UUID — on garde le type d'origine
+      const ds = rowBelow.dataset.personId;
+      const matchedPerson = state.personnes.find(p => String(p.id) === ds);
+      lbl.personneId = matchedPerson ? matchedPerson.id : ds;
+    }
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => { try { renderGantt(); } catch(e){} });
+  };
+
+  const onUp = (ev) => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.body.style.cursor = '';
+    if (!dragMoved) {
+      // Pas de drag → simple clic, ouvrir le détail
+      showLabelDetail(labelId);
+      return;
+    }
+    const l = state.etiquettes.find(l => l.id === labelId);
+    if (l) {
+      const movedPerson = (l.personneId !== origPerson);
+      const movedDate = (l.dateDebut !== origStart);
+      // Si cette étiquette a une mère, la marquer comme déplacée manuellement
+      // pour qu'elle conserve son offset au lieu d'être recollée canoniquement.
+      if (l.motherLabelId && (movedDate || movedPerson)) {
+        l.manuallyMoved = true;
+      }
+      pushHistory(l, 'drag', {
+        dateDebut: l.dateDebut, dateFin: l.dateFin, personneId: l.personneId,
+        from: { dateDebut: origStart, dateFin: origEnd, personneId: origPerson }
+      });
+      // Legacy : grays sans motherLabelId synchronisés par n° installation
+      if (['rouge','bleu','violet'].includes(l.type) && l.data?.numeroInstallation) {
+        syncGrisDebutFromInstallation(l);
+      }
+      // Synchro étiquettes filles (jaune auto + gris auto avec motherLabelId === l.id)
+      if (['rouge','bleu','violet'].includes(l.type)) {
+        const personChanged = (l.personneId !== origPerson);
+        state.etiquettes.forEach(child => {
+          if (child.motherLabelId !== l.id) return;
+          let newStartDate, newEndDate;
+          if (child.manuallyMoved) {
+            // L'utilisateur a déplacé manuellement l'enfant → préserver l'offset relatif
+            // (en jours ouvrables) à la fin de la mère
+            const origChildBdDur = Math.max(1, businessDaysBetween(parseDate(child.dateDebut), parseDate(child.dateFin)));
+            const offsetBd = businessDayOffset(origEnd, child.dateDebut);
+            newStartDate = addBusinessDayOffset(l.dateFin, offsetBd);
+            newEndDate = addBusinessDays(newStartDate, origChildBdDur);
+          } else if (child.type === 'jaune') {
+            // Jaune auto jamais déplacée → toujours collée juste après la mère, 2 j ouvrables
+            newStartDate = nextBusinessDay(parseDate(l.dateFin));
+            newEndDate = addBusinessDays(newStartDate, 2);
+          } else if (child.type === 'gris') {
+            // Gris auto jamais déplacé → même date début que la mère, durée stockée préservée
+            const dur = (child.data?.dureeJoursOuvrables) ? parseInt(child.data.dureeJoursOuvrables) : Math.max(1, businessDaysBetween(parseDate(child.dateDebut), parseDate(child.dateFin)));
+            newStartDate = parseDate(l.dateDebut);
+            newEndDate = addBusinessDays(newStartDate, dur);
+          } else {
+            // Autre cas : préserver l'offset (sécurité)
+            const origChildBdDur = Math.max(1, businessDaysBetween(parseDate(child.dateDebut), parseDate(child.dateFin)));
+            const offsetBd = businessDayOffset(origEnd, child.dateDebut);
+            newStartDate = addBusinessDayOffset(l.dateFin, offsetBd);
+            newEndDate = addBusinessDays(newStartDate, origChildBdDur);
+          }
+          child.dateDebut = dateStr(newStartDate);
+          child.dateFin = dateStr(newEndDate);
+          if (personChanged && child.type !== 'gris') {
+            child.personneId = l.personneId;
+          }
+          pushHistory(child, 'follow-mother', { dateDebut: child.dateDebut, dateFin: child.dateFin, personneId: child.personneId });
+          if (child.linkedLabelId) {
+            const linked = state.etiquettes.find(x => x.id === child.linkedLabelId);
+            if (linked) {
+              // La jaune Protocoleur reste sur le DERNIER jour de la jaune monteur
+              linked.dateDebut = child.dateFin;
+              linked.dateFin = child.dateFin;
+              pushHistory(linked, 'sync-follow-mother');
+            }
+          }
+        });
+      }
+      // Sync linked jaune (Protocoleur/TS) — toujours sur le DERNIER jour de la jaune
+      if (l.type === 'jaune' && l.linkedLabelId) {
+        const linked = state.etiquettes.find(x => x.id === l.linkedLabelId);
+        if (linked) {
+          linked.dateDebut = l.dateFin;
+          linked.dateFin = l.dateFin;
+          pushHistory(linked, 'sync-drag');
+        }
+      }
+      const personName = state.personnes.find(p=>p.id===l.personneId);
+      const msg = movedPerson
+        ? `Déplacé chez ${personName ? personName.prenom+' '+personName.nom : '?'}`
+        : (movedDate ? 'Dates mises à jour' : '');
+      if (msg) toast(msg, 'info');
+    }
+    renderGantt();
+    saveToFile();
+  };
+
+  lblEl.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    start(e.clientX, e.clientY, e);
+  });
+
+  // ── TOUCH (mobile) — long-press 2s pour activer le drag flottant
+  let touchTimer = null;
+  let touchStartX = 0, touchStartY = 0;
+  let touchDragActive = false;
+  let touchMoved = false;
+  const TOUCH_LONG_PRESS_MS = 2000;
+  const TOUCH_CANCEL_THRESHOLD = 12; // px : déplacement avant 2s → annule (laisse scroller)
+  const LONG_PRESS_FEEDBACK_MS = 300;
+
+  const cancelTouchPress = () => {
+    if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
+    lblEl.classList.remove('long-pressing');
+  };
+
+  lblEl.addEventListener('touchstart', (e) => {
+    if (!e.touches[0]) return;
+    if (e.touches.length > 1) return; // multi-touch = laisse le navigateur gérer (zoom)
+    e.stopPropagation();
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchDragActive = false;
+    touchMoved = false;
+    // Petit délai avant retour visuel pour ne pas perturber un simple scroll
+    setTimeout(() => {
+      if (touchTimer) lblEl.classList.add('long-pressing');
+    }, LONG_PRESS_FEEDBACK_MS);
+    touchTimer = setTimeout(() => {
+      touchTimer = null;
+      lblEl.classList.remove('long-pressing');
+      // Active le mode flottant
+      const lbl = state.etiquettes.find(l => l.id === labelId);
+      if (!lbl) return;
+      if (lbl.verrouille && !state.admin) {
+        toast('Étiquette verrouillée', 'warning');
+        return;
+      }
+      touchDragActive = true;
+      // Vibration tactile pour signaler l'activation
+      if (navigator.vibrate) try { navigator.vibrate(40); } catch(e){}
+      lblEl.classList.add('floating');
+      origStart = lbl.dateDebut; origEnd = lbl.dateFin; origPerson = lbl.personneId;
+      businessDur = Math.max(1, businessDaysBetween(parseDate(origStart), parseDate(origEnd)));
+      startX = touchStartX; startY = touchStartY;
+      dragMoved = true; // saute le seuil pour entrer directement dans le drag
+    }, TOUCH_LONG_PRESS_MS);
+  }, { passive:true });
+
+  lblEl.addEventListener('touchmove', (e) => {
+    if (!e.touches[0]) return;
+    const cx = e.touches[0].clientX, cy = e.touches[0].clientY;
+    const dx = cx - touchStartX, dy = cy - touchStartY;
+    if (!touchDragActive) {
+      // Avant l'activation : si l'utilisateur bouge significativement, on annule la
+      // détection de long-press et on laisse le navigateur scroller normalement.
+      if (Math.abs(dx) > TOUCH_CANCEL_THRESHOLD || Math.abs(dy) > TOUCH_CANCEL_THRESHOLD) {
+        cancelTouchPress();
+        touchMoved = true;
+      }
+      return; // pas de preventDefault → scroll natif
+    }
+    // Mode drag flottant actif : empêcher le scroll, déplacer l'étiquette
+    e.preventDefault();
+    e.stopPropagation();
+    move(cx, cy);
+  }, { passive:false });
+
+  lblEl.addEventListener('touchend', (e) => {
+    cancelTouchPress();
+    if (touchDragActive) {
+      lblEl.classList.remove('floating');
+      touchDragActive = false;
+      onUp();
+    } else if (!touchMoved) {
+      // Tap court sans drag → ouvrir le détail
+      showLabelDetail(labelId);
+    }
+  });
+
+  lblEl.addEventListener('touchcancel', () => {
+    cancelTouchPress();
+    if (touchDragActive) {
+      lblEl.classList.remove('floating');
+      touchDragActive = false;
+      onUp();
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════
+function setView(v) {
+  state.view = v;
+  document.querySelectorAll('.view-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === v);
+  });
+  renderGantt();
+  // Recentrer sur l'ancre après changement de zoom
+  scrollToDate(state.anchorDate);
+}
+function navPrev() {
+  const d = new Date(state.anchorDate);
+  switch (state.view) {
+    case 'semaine': d.setDate(d.getDate()-7); break;
+    case 'mois': d.setMonth(d.getMonth()-1); break;
+    case 'trimestre': d.setMonth(d.getMonth()-3); break;
+    case 'annee': d.setFullYear(d.getFullYear()-1); break;
+  }
+  state.anchorDate = d;
+  renderGantt();
+  scrollToDate(d);
+}
+function navNext() {
+  const d = new Date(state.anchorDate);
+  switch (state.view) {
+    case 'semaine': d.setDate(d.getDate()+7); break;
+    case 'mois': d.setMonth(d.getMonth()+1); break;
+    case 'trimestre': d.setMonth(d.getMonth()+3); break;
+    case 'annee': d.setFullYear(d.getFullYear()+1); break;
+  }
+  state.anchorDate = d;
+  renderGantt();
+  scrollToDate(d);
+}
+function navToday() {
+  state.anchorDate = new Date();
+  renderGantt();
+  scrollToDate(new Date());
+}
+
+// ════════════════════════════════════════════════════
+// FILTERS
+// ════════════════════════════════════════════════════
+function applyFilters() {
+  state.filterPerson = document.getElementById('filter-person').value;
+  state.filterGroup = document.getElementById('filter-group').value;
+  renderGantt();
+}
+function updatePersonFilter() {
+  const sel = document.getElementById('filter-person');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="all">Toutes les personnes</option>';
+  state.personnes.filter(p => p.actif).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = `${p.prenom} ${p.nom}`;
+    if (String(p.id) === cur) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// ════════════════════════════════════════════════════
+// LABEL DETAIL POPUP
+// ════════════════════════════════════════════════════
+function showLabelDetail(labelId) {
+  closeAllPopups();
+  const lbl = state.etiquettes.find(l => l.id === labelId);
+  if (!lbl) return;
+  const typeInfo = LABEL_TYPES[lbl.type] || LABEL_TYPES.autre;
+  const color = lbl.data?.couleurHex || typeInfo.color;
+  const person = state.personnes.find(p => p.id === lbl.personneId);
+  const personName = person ? `${person.prenom} ${person.nom}` : 'Inconnu';
+
+  const popup = document.createElement('div');
+  popup.className = 'detail-popup';
+  popup.id = 'detail-popup';
+  popup.style.cssText = 'top:50%;left:50%;transform:translate(-50%,-50%);position:fixed;z-index:500';
+
+  const rows = [
+    ['Personne', personName],
+    ['Type', typeInfo.label],
+    ['Du', formatDate(lbl.dateDebut)],
+    ['Au', formatDate(lbl.dateFin)],
+    ['Durée', businessDaysBetween(lbl.dateDebut, lbl.dateFin) + ' jours ouvrables'],
+    ['Créé par', lbl.creePar||'—'],
+  ];
+  if (lbl.data) {
+    const d = lbl.data;
+    if (d.numeroInstallation) rows.push(['N° installation', d.numeroInstallation]);
+    if (d.lieu) rows.push(['Lieu', d.lieu]);
+    if (d.adresse) rows.push(['Adresse', d.adresse]);
+    if (d.vendeur) rows.push(['Vendeur', d.vendeur]);
+    if (d.chefChantier) rows.push(['Chef chantier', d.chefChantier]);
+    if (d.chefProjet) rows.push(['Chef projet', d.chefProjet]);
+    if (d.canton) rows.push(['Canton', d.canton]);
+    if (d.poidsKg) rows.push(['Poids', d.poidsKg + ' kg']);
+    if (d.genre) rows.push(['Genre', d.genre]);
+    if (d.nbArrets) rows.push(['Nb arrêts', d.nbArrets]);
+    if (d.nbAcces) rows.push(['Nb accès', d.nbAcces]);
+    if (d.dureeTotaleJours) rows.push(['Durée totale', d.dureeTotaleJours + ' j']);
+    if (d.heuresTotales) rows.push(['Heures totales', d.heuresTotales + ' h']);
+    if (d.intitule) rows.push(['Intitulé', d.intitule]);
+    if (d.descriptionSAV) rows.push(['Description SAV', d.descriptionSAV]);
+    if (d.travauxRestants) rows.push(['Travaux restants', d.travauxRestants]);
+    if (d.texteBrun) rows.push(['Note', d.texteBrun]);
+    if (d.texteLibre) rows.push(['Note', d.texteLibre]);
+    if (d.dureeJours) rows.push(['Durée', d.dureeJours + ' j']);
+  }
+
+  const showHistory = isAdminUser() && Array.isArray(lbl.history) && lbl.history.length > 0;
+  const historyHtml = showHistory ? `
+    <details style="margin-top:8px">
+      <summary style="cursor:pointer;font-size:11px;font-weight:600;color:var(--text-muted)">Historique (${lbl.history.length})</summary>
+      <div class="history-list">
+        ${lbl.history.slice().reverse().map(h => {
+          const dt = new Date(h.date).toLocaleString('fr-CH');
+          const ch = h.changes ? ' — ' + Object.entries(h.changes).map(([k,v])=>`${k}: ${v}`).join(', ') : '';
+          return `<div class="h-row"><strong>${h.user||'?'}</strong> · ${dt} · ${h.action}${ch}</div>`;
+        }).join('')}
+      </div>
+    </details>
+  ` : '';
+  const isNoir = lbl.type === 'noir';
+  const isRose = lbl.type === 'rose';
+
+  // ── Travaux SAV assignés (rendus depuis le planning SAV via data.travaux_sav) ──
+  const SAV_TYPE_INFO = {
+    cyan:   { label:'Câble-poulie',     color:'#00BCD4' },
+    orange: { label:'Divers',           color:'#FF9800' },
+    jaune:  { label:'Électrique',       color:'#FDD835' },
+    marron: { label:'Fosse',            color:'#5D4037' },
+    orangec:{ label:'Téléalarme',       color:'#FFB74D' },
+    gris:   { label:'Cabine',           color:'#90A4AE' },
+    noir:   { label:'Absent',           color:'#212121' },
+    rose:   { label:'Formation',        color:'#F48FB1' },
+    vert:   { label:'Indicateur horaire', color:'#43A047' },
+  };
+  let travauxSavHtml = '';
+  if (isNoir && Array.isArray(lbl.data?.travaux_sav) && lbl.data.travaux_sav.length > 0) {
+    travauxSavHtml = `
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:700;color:#fca5a5;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">
+          🛠️ Travaux SAV assignés (${lbl.data.travaux_sav.length})
+        </div>
+        ${lbl.data.travaux_sav.slice().sort((a,b)=>a.dateDebut.localeCompare(b.dateDebut)).map(t => {
+          const info = SAV_TYPE_INFO[t.type] || { label:t.type, color:'#999' };
+          return `<div style="font-size:11.5px;padding:6px 0;border-bottom:1px dotted var(--border);color:var(--text-muted)">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${info.color};flex-shrink:0"></span>
+              <strong style="color:var(--text)">${info.label}</strong>
+              ${t.numeroInstallation ? `<span style="color:var(--text-muted)">· N° ${t.numeroInstallation}</span>` : ''}
+            </div>
+            <div style="margin-left:16px;font-size:10.5px">
+              ${formatDate(t.dateDebut)} → ${formatDate(t.dateFin)}${t.creePar ? ` · par ${t.creePar}` : ''}
+            </div>
+            ${t.description ? `<div style="margin-left:16px;font-size:11px;color:var(--text);margin-top:2px">${t.description}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  popup.innerHTML = `
+    <div class="popup-header" style="background:${color}">
+      <span>${typeInfo.label}</span>
+      ${lbl.verrouille ? '<span style="font-size:16px">🔒</span>' : ''}
+    </div>
+    <div class="popup-body">
+      ${rows.map(([k,v]) => `<div class="popup-row"><span class="pkey">${k}</span><span class="pval">${v}</span></div>`).join('')}
+      ${travauxSavHtml}
+      ${historyHtml}
+    </div>
+    <div class="popup-actions">
+      ${canEdit() && isRose ? `<button class="btn btn-sm" style="background:#424242;color:#fff" onclick="convertToNoir('${lbl.id}')">→ SAV Bloqué</button>` : ''}
+      ${canEdit() && isNoir ? `<button class="btn btn-sm" style="background:#EC407A;color:#fff" onclick="convertToRose('${lbl.id}')">→ SAV en cours</button>` : ''}
+      ${canEdit() ? `<button class="btn btn-secondary btn-sm" onclick="copyLabel('${lbl.id}')">📋 Copier</button>` : ''}
+      ${canEdit() && (!lbl.verrouille || state.admin || isNoir) ? `<button class="btn btn-secondary btn-sm" onclick="editLabel('${lbl.id}');closeAllPopups()">✏️ Modifier</button>` : ''}
+      ${canEdit() && (!lbl.verrouille || state.admin) ? `<button class="btn btn-danger btn-sm" onclick="deleteLabel('${lbl.id}')">🗑️ Supprimer</button>` : ''}
+      <button class="btn btn-secondary btn-sm" onclick="closeAllPopups()">Fermer</button>
+    </div>
+  `;
+
+  document.body.appendChild(popup);
+
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', closeOnOutsideClick, { once: true });
+  }, 50);
+}
+
+function closeOnOutsideClick(e) {
+  const popup = document.getElementById('detail-popup');
+  if (popup && !popup.contains(e.target)) closeAllPopups();
+}
+
+function closeAllPopups() {
+  document.getElementById('detail-popup')?.remove();
+  document.getElementById('ctx-menu')?.remove();
+  document.removeEventListener('click', closeOnOutsideClick);
+}
+
+// ════════════════════════════════════════════════════
+// COPIER / COLLER
+// ════════════════════════════════════════════════════
+function copyLabel(labelId) {
+  const lbl = state.etiquettes.find(l => l.id === labelId);
+  if (!lbl) return;
+  // Snapshot complet (sans id ni history) pour coller ailleurs
+  state.clipboard = {
+    type: lbl.type,
+    data: JSON.parse(JSON.stringify(lbl.data || {})),
+    bdDuration: Math.max(1, businessDaysBetween(parseDate(lbl.dateDebut), parseDate(lbl.dateFin))),
+    verrouille: false
+  };
+  closeAllPopups();
+  toast(`Étiquette copiée — clic droit sur une cellule ou Ctrl+V pour coller`, 'info');
+}
+
+function pasteLabel(personId, dateStrAt) {
+  if (!state.clipboard) { toast('Rien à coller', 'warning'); return; }
+  const cb = state.clipboard;
+  const startDate = parseDate(dateStrAt);
+  const endDate = addBusinessDays(startDate, cb.bdDuration);
+  const uid = () => Math.random().toString(36).slice(2,10) + Math.random().toString(36).slice(2,10);
+  const newLbl = {
+    id: uid(),
+    personneId: personId,
+    type: cb.type,
+    dateDebut: dateStrAt,
+    dateFin: dateStr(endDate),
+    data: JSON.parse(JSON.stringify(cb.data || {})),
+    verrouille: false,
+    creePar: getCurrentUser(),
+    history: []
+  };
+  pushHistory(newLbl, 'paste');
+  state.etiquettes.push(newLbl);
+  renderGantt();
+  saveToFile();
+  const personName = state.personnes.find(p=>p.id===personId);
+  toast(`Étiquette collée chez ${personName?personName.prenom+' '+personName.nom:'?'}`, 'success');
+}
+
+// Menu contextuel (clic droit) sur une cellule du planning
+function showCellContextMenu(e, personId, dateStrAt) {
+  e.preventDefault();
+  closeAllPopups();
+  const menu = document.createElement('div');
+  menu.id = 'ctx-menu';
+  menu.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;z-index:1500;background:var(--bg-elev-2);border:1px solid var(--border-strong);border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.6);min-width:200px;overflow:hidden;color:var(--text);font-size:13px`;
+  const hasClipboard = !!state.clipboard;
+  const cbInfo = hasClipboard ? (LABEL_TYPES[state.clipboard.type]?.label || state.clipboard.type) : '';
+  menu.innerHTML = `
+    <div style="padding:6px 4px">
+      <div class="ctx-item" data-act="paste" style="padding:8px 12px;cursor:${hasClipboard?'pointer':'not-allowed'};opacity:${hasClipboard?'1':'.4'};border-radius:4px">📋 Coller${hasClipboard?` <span style="color:var(--text-faint);font-size:11px;margin-left:4px">(${cbInfo})</span>`:''}</div>
+      <div class="ctx-item" data-act="new" style="padding:8px 12px;cursor:pointer;border-radius:4px">＋ Nouvelle étiquette ici</div>
+    </div>`;
+  menu.querySelectorAll('.ctx-item').forEach(it => {
+    it.addEventListener('mouseenter', () => it.style.background = 'var(--bg-elev-3)');
+    it.addEventListener('mouseleave', () => it.style.background = '');
+    it.addEventListener('click', () => {
+      const act = it.dataset.act;
+      menu.remove();
+      if (act === 'paste' && hasClipboard) pasteLabel(personId, dateStrAt);
+      else if (act === 'new') onCellClick(personId, dateStrAt);
+    });
+  });
+  document.body.appendChild(menu);
+  setTimeout(() => {
+    document.addEventListener('click', () => menu.remove(), { once:true });
+  }, 50);
+}
+
+function onCellClick(personId, dateStr) {
+  if (!canEdit()) return;
+  closeAllPopups();
+  addLabel(personId, dateStr);
+}
+
+// ════════════════════════════════════════════════════
+// TYPE CHOOSER MODAL
+// ════════════════════════════════════════════════════
+function addLabel(personId, defaultDate) {
+  const modal = createModal('Nouvelle étiquette');
+  const body = modal.querySelector('.modal-body');
+
+  // Si une étiquette est dans le presse-papier, proposer de la coller
+  if (state.clipboard) {
+    const cb = state.clipboard;
+    const info = LABEL_TYPES[cb.type] || LABEL_TYPES.autre;
+    const summary = (cb.data?.numeroInstallation ? cb.data.numeroInstallation + ' — ' : '') + (cb.data?.lieu || cb.data?.intitule || cb.data?.texteLibre || '');
+    const pasteBlock = document.createElement('div');
+    pasteBlock.style.cssText = 'margin-bottom:14px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev-1);display:flex;align-items:center;gap:12px';
+    pasteBlock.innerHTML = `
+      <div style="width:6px;align-self:stretch;border-radius:3px;background:${info.color}"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">📋 Presse-papier</div>
+        <div style="font-weight:600;font-size:13px">${info.label}${summary ? ' · '+summary : ''}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:1px">${cb.bdDuration} j ouvrables</div>
+      </div>
+      <button class="btn btn-primary btn-sm" id="paste-here-btn">Coller ici</button>
+      <button class="btn btn-ghost btn-sm" id="clear-clip-btn" title="Vider le presse-papier">✕</button>`;
+    body.appendChild(pasteBlock);
+    pasteBlock.querySelector('#paste-here-btn').addEventListener('click', () => {
+      closeModal();
+      pasteLabel(personId, defaultDate || dateStr(new Date()));
+    });
+    pasteBlock.querySelector('#clear-clip-btn').addEventListener('click', () => {
+      state.clipboard = null;
+      closeModal();
+      addLabel(personId, defaultDate);
+    });
+    const sep = document.createElement('div');
+    sep.style.cssText = 'text-align:center;font-size:11px;color:var(--text-faint);margin:12px 0;letter-spacing:.05em';
+    sep.textContent = '— ou créer une nouvelle étiquette —';
+    body.appendChild(sep);
+  }
+
+  const typeGrid = document.createElement('div');
+  typeGrid.className = 'type-grid';
+  Object.entries(LABEL_TYPES).forEach(([key, info]) => {
+    const opt = document.createElement('div');
+    opt.className = 'type-option';
+    opt.style.color = info.color;
+    opt.innerHTML = `<div class="type-swatch" style="background:${info.color}"></div><div class="type-name">${info.label}</div>`;
+    opt.addEventListener('click', () => {
+      closeModal();
+      showLabelForm(null, key, personId, defaultDate);
+    });
+    typeGrid.appendChild(opt);
+  });
+  body.appendChild(typeGrid);
+
+  const footer = modal.querySelector('.modal-footer');
+  footer.innerHTML = '<button class="btn btn-secondary" onclick="closeModal()">Annuler</button>';
+  document.body.appendChild(modal);
+}
+
+// ════════════════════════════════════════════════════
+// LABEL FORM
+// ════════════════════════════════════════════════════
+function showLabelForm(labelId, forceType, prePersonId, preDate) {
+  const existing = labelId ? state.etiquettes.find(l => l.id === labelId) : null;
+  const type = existing?.type || forceType || 'rouge';
+  const typeInfo = LABEL_TYPES[type] || LABEL_TYPES.autre;
+  const color = typeInfo.color;
+
+  // Une étiquette verrouillée n'est éditable que par l'admin OU si c'est un SAV bloqué (noir),
+  // pour permettre la réversion vers SAV en cours.
+  if (existing?.verrouille && !state.admin && existing.type !== 'noir') {
+    toast('Cette étiquette est verrouillée. Accès admin requis.', 'warning');
+    return;
+  }
+
+  const modal = createModal(existing ? `Modifier : ${typeInfo.label}` : `Nouvelle étiquette : ${typeInfo.label}`);
+  const header = modal.querySelector('.modal-header');
+  const dot = document.createElement('div');
+  dot.className = 'type-dot';
+  dot.style.background = color;
+  header.insertBefore(dot, header.firstChild);
+
+  const body = modal.querySelector('.modal-body');
+  const today = dateStr(new Date());
+
+  // Person selector
+  const selectedPersonId = existing?.personneId || prePersonId || '';
+  const activePersons = state.personnes.filter(p => p.actif);
+  const selectedPerson = activePersons.find(p => p.id == selectedPersonId);
+  const selectedLabel = selectedPerson ? `${selectedPerson.prenom} ${selectedPerson.nom}` : '— Choisir une personne —';
+
+  let formHTML = `
+    <div class="form-group">
+      <label>Personne</label>
+      <div class="csel" id="csel-person">
+        <input type="hidden" id="f-person" value="${selectedPersonId}">
+        <button type="button" class="csel-trigger" id="csel-person-trigger">
+          <span id="csel-person-label">${selectedLabel}</span>
+          <span style="font-size:10px;opacity:.6">▾</span>
+        </button>
+        <div class="csel-list" id="csel-person-list">
+          <input class="csel-search" type="text" placeholder="Rechercher…" id="csel-person-search" oninput="cselFilter('csel-person')">
+          ${activePersons.map(p => `<div class="csel-item${p.id==selectedPersonId?' csel-selected':''}" data-val="${p.id}" data-label="${p.prenom} ${p.nom}">${p.prenom} ${p.nom}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date début</label>
+        <input type="date" id="f-debut" value="${existing?.dateDebut||preDate||today}">
+      </div>
+      <div class="form-group">
+        <label>Durée (jours ouvrables)</label>
+        <input type="number" id="f-duree-ouvrable" min="1" value="${existing ? businessDaysBetween(existing.dateDebut, existing.dateFin) : 1}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Date de fin (calculée automatiquement)</label>
+      <input type="text" id="f-fin-auto" readonly style="background:var(--bg-elev-1);color:var(--text-muted)">
+      <input type="hidden" id="f-fin" value="${existing?.dateFin||preDate||today}">
+    </div>
+    <div id="f-error" class="form-error"></div>
+  `;
+
+  // Type-specific fields
+  const d = existing?.data || {};
+  if (['rouge','bleu','violet'].includes(type)) {
+    formHTML += `
+      <div class="form-row">
+        <div class="form-group"><label>N° installation</label><input id="f-num" value="${d.numeroInstallation||''}"></div>
+        <div class="form-group"><label>Lieu</label><input id="f-lieu" value="${d.lieu||''}"></div>
+      </div>
+      <div class="form-group"><label>Adresse</label><input id="f-adresse" value="${d.adresse||''}"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Vendeur</label><input id="f-vendeur" value="${d.vendeur||''}"></div>
+        <div class="form-group"><label>Chef chantier</label><input id="f-chef-chantier" value="${d.chefChantier||''}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Chef projet</label><input id="f-chef-projet" value="${d.chefProjet||''}"></div>
+        <div class="form-group"><label>Canton</label><input id="f-canton" maxlength="2" value="${d.canton||''}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Poids (kg)</label><input type="number" id="f-poids" value="${d.poidsKg||''}"></div>
+        <div class="form-group"><label>Genre</label>
+          <select id="f-genre">
+            <option value="électrique" ${d.genre==='électrique'?'selected':''}>Électrique</option>
+            <option value="hydraulique" ${d.genre==='hydraulique'?'selected':''}>Hydraulique</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Nb arrêts</label><input type="number" id="f-arrets" value="${d.nbArrets||''}"></div>
+        <div class="form-group"><label>Nb accès</label><input type="number" id="f-acces" value="${d.nbAcces||''}"></div>
+      </div>
+      <div class="form-group"><label>Heures totales</label><input type="number" id="f-heures" value="${d.heuresTotales||''}"></div>
+      <div class="form-group">
+        <label>Jours d'aide montage (gris auto-créé)</label>
+        <input type="number" id="f-jours-aide" value="${d.joursAide||''}" min="1" placeholder="Par défaut = durée du chantier">
+        <div class="form-note">Laissez vide pour que le gris couvre toute la période du chantier</div>
+      </div>
+    `;
+  } else if (type === 'gris') {
+    formHTML += `
+      <div class="form-group">
+        <label>N° installation</label>
+        <input id="f-num" value="${d.numeroInstallation||''}">
+        <div class="form-note">Doit correspondre à une étiquette rouge/bleu/violet existante</div>
+      </div>
+    `;
+  } else if (type === 'jaune') {
+    formHTML += `<div class="form-group"><label>N° installation</label><input id="f-num" value="${d.numeroInstallation||''}"></div>`;
+  } else if (type === 'vert') {
+    formHTML += `<div class="form-group"><label>Intitulé</label><input id="f-intitule" value="${d.intitule||'Congé'}"></div>`;
+  } else if (type === 'rose' || type === 'noir') {
+    formHTML += `
+      <div class="form-group"><label>Description SAV</label><textarea id="f-desc-sav" rows="3">${d.descriptionSAV||''}</textarea></div>
+      <div class="form-group"><label>Travaux restants</label><textarea id="f-travaux" rows="2">${d.travauxRestants||''}</textarea></div>
+    `;
+  } else if (type === 'brun') {
+    formHTML += `<div class="form-group"><label>Texte</label><textarea id="f-texte-brun" rows="3">${d.texteBrun||''}</textarea></div>`;
+  } else if (type === 'autre') {
+    formHTML += `
+      <div class="form-group"><label>Texte libre</label><textarea id="f-texte-libre" rows="2">${d.texteLibre||''}</textarea></div>
+      <div class="form-group"><label>Couleur</label><input type="color" id="f-couleur" value="${d.couleurHex||'#9C27B0'}" style="height:36px;padding:2px;cursor:pointer;width:100%"></div>
+    `;
+  }
+
+  // L'auteur est automatique (utilisateur courant) — pas de champ visible
+
+  body.innerHTML = formHTML;
+  document.body.appendChild(modal);
+  cselInit('csel-person');
+
+  // Calcul automatique de la date de fin à partir de "date début" + "durée (jours ouvrables)"
+  const calcFinAuto = () => {
+    const ds = document.getElementById('f-debut')?.value;
+    const dur = parseInt(document.getElementById('f-duree-ouvrable')?.value) || 1;
+    const finHidden = document.getElementById('f-fin');
+    const finView = document.getElementById('f-fin-auto');
+    if (ds && dur > 0) {
+      const fin = addBusinessDays(parseDate(ds), dur);
+      if (finHidden) finHidden.value = dateStr(fin);
+      if (finView) finView.value = formatDate(dateStr(fin)) + ` (${dur} j ouvrables)`;
+    }
+  };
+  document.getElementById('f-debut')?.addEventListener('input', calcFinAuto);
+  document.getElementById('f-duree-ouvrable')?.addEventListener('input', calcFinAuto);
+  calcFinAuto();
+
+  const footer = modal.querySelector('.modal-footer');
+  footer.innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+    <button class="btn btn-primary" onclick="submitLabelForm('${labelId||''}','${type}')">
+      ${existing ? 'Enregistrer' : 'Créer'}
+    </button>
+  `;
+}
+
+function editLabel(labelId) {
+  closeAllPopups();
+  showLabelForm(labelId, null, null, null);
+}
+
+function submitLabelForm(labelId, type) {
+  const errorEl = document.getElementById('f-error');
+  if (!errorEl) { toast('Erreur interne : formulaire introuvable', 'error'); return; }
+  errorEl.textContent = '';
+  try { _submitLabelFormInner(labelId, type); } catch(e) {
+    errorEl.textContent = 'Erreur inattendue : ' + e.message;
+    console.error(e);
+  }
+}
+function _submitLabelFormInner(labelId, type) {
+  const errorEl = document.getElementById('f-error');
+  errorEl.textContent = '';
+
+  // Récupération de l'ID personne — peut être numérique (legacy) ou UUID
+  const personIdRaw = document.getElementById('f-person').value;
+  const matchedPerson = state.personnes.find(p => String(p.id) === String(personIdRaw));
+  const personId = matchedPerson ? matchedPerson.id : personIdRaw;
+  const debut = document.getElementById('f-debut').value;
+  const dureeOuvr = Math.max(1, parseInt(document.getElementById('f-duree-ouvrable')?.value) || 1);
+  const fin = dateStr(addBusinessDays(parseDate(debut), dureeOuvr));
+
+  if (!debut || !fin) { errorEl.textContent = 'Dates obligatoires'; return; }
+  if (fin < debut) { errorEl.textContent = 'La date de fin doit être après la date de début'; return; }
+
+  // Build data object
+  const data = {};
+  const g = (id) => document.getElementById(id);
+  if (g('f-num')) data.numeroInstallation = g('f-num').value;
+  if (g('f-lieu')) data.lieu = g('f-lieu').value;
+  if (g('f-adresse')) data.adresse = g('f-adresse').value;
+  if (g('f-vendeur')) data.vendeur = g('f-vendeur').value;
+  if (g('f-chef-chantier')) data.chefChantier = g('f-chef-chantier').value;
+  if (g('f-chef-projet')) data.chefProjet = g('f-chef-projet').value;
+  if (g('f-canton')) data.canton = g('f-canton').value.toUpperCase();
+  if (g('f-poids')) data.poidsKg = parseInt(g('f-poids').value)||0;
+  if (g('f-genre')) data.genre = g('f-genre').value;
+  if (g('f-arrets')) data.nbArrets = parseInt(g('f-arrets').value)||0;
+  if (g('f-acces')) data.nbAcces = parseInt(g('f-acces').value)||0;
+  if (g('f-duree-totale')) data.dureeTotaleJours = parseInt(g('f-duree-totale').value)||0;
+  if (g('f-heures')) data.heuresTotales = parseInt(g('f-heures').value)||0;
+  data.dureeJoursOuvrables = dureeOuvr;
+  if (g('f-intitule')) data.intitule = g('f-intitule').value;
+  if (g('f-desc-sav')) data.descriptionSAV = g('f-desc-sav').value;
+  if (g('f-travaux')) data.travauxRestants = g('f-travaux').value;
+  if (g('f-texte-brun')) data.texteBrun = g('f-texte-brun').value;
+  if (g('f-texte-libre')) data.texteLibre = g('f-texte-libre').value;
+  if (g('f-couleur')) data.couleurHex = g('f-couleur').value;
+  if (g('f-jours-aide')) data.joursAide = parseInt(g('f-jours-aide').value) || 0;
+  const creePar = getCurrentUser();
+
+  // Conflit (sauf fusion gérée plus bas)
+  const conflictWarning = checkConflict(personId, debut, fin, labelId);
+  if (conflictWarning) {
+    if (!confirm(`⚠️ Conflit détecté :\n${conflictWarning}\n\nEnregistrer quand même ?`)) return;
+  }
+
+  // Fusion d'étiquettes du même type/couleur qui se chevauchent ou se suivent
+  const typesWithInstall = ['gris','rouge','bleu','violet','jaune'];
+  const mergeable = state.etiquettes.filter(e =>
+    e.id !== labelId &&
+    e.personneId === personId &&
+    e.type === type &&
+    (type !== 'autre' || (e.data?.couleurHex||'') === (data.couleurHex||'')) &&
+    (!typesWithInstall.includes(type) || ((e.data?.numeroInstallation||'') === (data.numeroInstallation||'')))
+  );
+  let mergedTargets = [];
+  let mDebut = debut, mFin = fin;
+  mergeable.forEach(e => {
+    const overlap = e.dateDebut <= mFin && e.dateFin >= mDebut;
+    const consecAfter = dateStr(nextBusinessDay(parseDate(mFin))) === e.dateDebut;
+    const consecBefore = dateStr(nextBusinessDay(parseDate(e.dateFin))) === mDebut;
+    if (overlap || consecAfter || consecBefore) {
+      if (e.dateDebut < mDebut) mDebut = e.dateDebut;
+      if (e.dateFin > mFin) mFin = e.dateFin;
+      mergedTargets.push(e.id);
+    }
+  });
+
+  const uid = () => Math.random().toString(36).slice(2,10) + Math.random().toString(36).slice(2,10);
+
+  let savedLabel = null;
+  if (labelId) {
+    const idx = state.etiquettes.findIndex(l => l.id === labelId);
+    if (idx >= 0) {
+      const before = state.etiquettes[idx];
+      // Empêche réversion noir → autre que rose ailleurs : ici autorisé via convertToRose seulement
+      const updated = { ...before, personneId: personId, dateDebut:mDebut, dateFin:mFin, data:{...before.data, ...data} };
+      state.etiquettes[idx] = updated;
+      pushHistory(updated, 'modif', { dateDebut:mDebut, dateFin:mFin, personneId: personId });
+      savedLabel = updated;
+    }
+  } else {
+    const newLabel = { id:uid(), personneId: personId, type, dateDebut:mDebut, dateFin:mFin, data, verrouille:false, creePar, history:[] };
+    pushHistory(newLabel, 'creation', { dateDebut:mDebut, dateFin:mFin });
+    state.etiquettes.push(newLabel);
+    savedLabel = newLabel;
+
+    // Business rules auto pour rouge/bleu/violet
+    if (['rouge','bleu','violet'].includes(type) && data.numeroInstallation) {
+      // JAUNE = 2 derniers jours ouvrables qui REMPLACENT la fin du chantier.
+      // Total visuel = dureeOuvr (donnée saisie). Principal = dureeOuvr - 2, Jaune = 2.
+      const yellowDays = 2;
+      let jauneStart, jauneEnd;
+      if (dureeOuvr > yellowDays) {
+        const mainDur = dureeOuvr - yellowDays;
+        const mainEndDate = addBusinessDays(parseDate(mDebut), mainDur);
+        const mainEndStr = dateStr(mainEndDate);
+        // Raccourcir le rouge/bleu/violet
+        newLabel.dateFin = mainEndStr;
+        const idxNL = state.etiquettes.findIndex(l => l.id === newLabel.id);
+        if (idxNL >= 0) state.etiquettes[idxNL] = newLabel;
+        // Jaune commence au prochain jour ouvrable après la fin du principal
+        const ys = nextBusinessDay(mainEndDate);
+        jauneStart = dateStr(ys);
+        jauneEnd = dateStr(addBusinessDays(ys, yellowDays));
+        // Mettre à jour mFin global pour la suite (gris, etc.)
+        mFin = jauneEnd;
+      } else {
+        // Durée trop courte : jaune sur les derniers jours ouvrables sans raccourcir
+        jauneStart = mDebut;
+        jauneEnd = mFin;
+      }
+      const jaune = {
+        id: uid(), personneId: personId, type: 'jaune',
+        dateDebut: jauneStart, dateFin: jauneEnd,
+        data: { numeroInstallation: data.numeroInstallation },
+        verrouille: false, creePar: 'AUTO', history:[],
+        // Lien automatique vers l'étiquette mère (rouge/bleu/violet) — la jaune suit
+        // la mère lors d'un déplacement manuel, jusqu'à ce que la jaune soit déplacée
+        // elle-même (auquel cas elle conserve son nouvel offset).
+        motherLabelId: newLabel.id
+      };
+      pushHistory(jaune, 'creation-auto');
+      state.etiquettes.push(jaune);
+      // Lien synchronisé sur Protocoleur/TS
+      createLinkedJauneOnProtocoleur(jaune);
+
+      // GRIS — DOIT obligatoirement aller sur un rôle "Monteur" (pas un autre rôle)
+      const isMonteurRole = (p) => (p.role||'').toLowerCase().includes('monteur') && !(p.role||'').toLowerCase().includes('pré') && !(p.role||'').toLowerCase().includes('pre-');
+      const originIsMonteur = isMonteurRole(state.personnes.find(p=>p.id===personId)||{});
+      const equipe = state.personnes.find(p=>p.id===personId)?.groupe;
+      const equipeMonteurs = state.personnes.filter(p=>p.actif && p.groupe===equipe && p.id!==personId && isMonteurRole(p));
+      const freeMonteur = equipeMonteurs.find(m =>
+        !state.etiquettes.some(e => e.personneId===m.id && e.dateDebut<=mFin && e.dateFin>=mDebut)
+      );
+      let targetGrisPersonId;
+      if (freeMonteur) {
+        targetGrisPersonId = freeMonteur.id;
+      } else if (equipeMonteurs.length > 0) {
+        // Aucun monteur libre dans l'équipe — proposer le 1er monteur (avec conflit) ou l'originaire si Monteur
+        const choix = confirm(`Aucun monteur libre dans l'équipe ${equipe}.\nOK = Placer l'aide montage sur ${equipeMonteurs[0].prenom} ${equipeMonteurs[0].nom} (Monteur, avec conflit)\nAnnuler = Créer manuellement plusieurs morceaux`);
+        if (choix) {
+          targetGrisPersonId = equipeMonteurs[0].id;
+        } else {
+          toast('Créez manuellement les morceaux gris sur les monteurs disponibles', 'warning');
+          targetGrisPersonId = equipeMonteurs[0].id; // tout de même un Monteur
+        }
+      } else if (originIsMonteur) {
+        // Pas d'autre monteur dans l'équipe → fallback sur l'originaire (qui est Monteur)
+        targetGrisPersonId = personId;
+      } else {
+        // Aucun monteur dans l'équipe et l'originaire n'est pas Monteur → chercher hors équipe
+        const allMonteurs = state.personnes.filter(p=>p.actif && isMonteurRole(p));
+        const freeAny = allMonteurs.find(m =>
+          !state.etiquettes.some(e => e.personneId===m.id && e.dateDebut<=mFin && e.dateFin>=mDebut)
+        );
+        if (freeAny) {
+          targetGrisPersonId = freeAny.id;
+          toast(`Aide montage placée sur ${freeAny.prenom} ${freeAny.nom} (hors équipe ${equipe})`, 'warning');
+        } else if (allMonteurs.length > 0) {
+          targetGrisPersonId = allMonteurs[0].id;
+          toast(`Aucun monteur libre — aide montage placée avec conflit sur ${allMonteurs[0].prenom} ${allMonteurs[0].nom}`, 'warning');
+        } else {
+          toast(`Impossible : aucune personne avec rôle "Monteur" dans le planning`, 'error');
+          targetGrisPersonId = null;
+        }
+      }
+      if (targetGrisPersonId != null) {
+      // Durée du gris : si "joursAide" est précisé, l'utiliser ; sinon = durée totale du chantier
+      const grisDuration = (data.joursAide && data.joursAide > 0) ? parseInt(data.joursAide) : dureeOuvr;
+      const grisFinDate = addBusinessDays(parseDate(mDebut), grisDuration);
+      const grisFinStr = dateStr(grisFinDate);
+      const gris = {
+        id: uid(), personneId: targetGrisPersonId, type: 'gris',
+        dateDebut: mDebut, dateFin: grisFinStr,
+        data: { numeroInstallation: data.numeroInstallation, dureeJoursOuvrables: grisDuration },
+        verrouille: false, creePar: 'AUTO', history:[],
+        motherLabelId: newLabel.id // lien vers la mère pour suppression en cascade
+      };
+      pushHistory(gris, 'creation-auto');
+      // Fusion avec gris existants (même personne, même n° install, chevauchant ou consécutif)
+      const grisMergeable = state.etiquettes.filter(e =>
+        e.personneId === gris.personneId && e.type === 'gris' &&
+        (e.data?.numeroInstallation||'') === (gris.data?.numeroInstallation||'')
+      );
+      const grisToRemove = [];
+      grisMergeable.forEach(e => {
+        const overlap = e.dateDebut <= gris.dateFin && e.dateFin >= gris.dateDebut;
+        const consecAfter = dateStr(nextBusinessDay(parseDate(gris.dateFin))) === e.dateDebut;
+        const consecBefore = dateStr(nextBusinessDay(parseDate(e.dateFin))) === gris.dateDebut;
+        if (overlap || consecAfter || consecBefore) {
+          if (e.dateDebut < gris.dateDebut) gris.dateDebut = e.dateDebut;
+          if (e.dateFin > gris.dateFin) gris.dateFin = e.dateFin;
+          grisToRemove.push(e.id);
+        }
+      });
+      if (grisToRemove.length) state.etiquettes = state.etiquettes.filter(e => !grisToRemove.includes(e.id));
+      state.etiquettes.push(gris);
+      toast(`Protocole (jaune) + Aide montage (gris) créés automatiquement${grisToRemove.length?` (${grisToRemove.length} gris fusionné(s))`:''}`, 'info');
+      } // fin if targetGrisPersonId
+    }
+
+    // JAUNE manuel : créer également le lien Protocoleur/TS
+    if (type === 'jaune' && data.numeroInstallation) {
+      createLinkedJauneOnProtocoleur(savedLabel);
+    }
+  }
+
+  // Si fusion : supprimer les autres étiquettes mergées
+  if (mergedTargets.length > 0) {
+    state.etiquettes = state.etiquettes.filter(e => !mergedTargets.includes(e.id));
+    toast(`${mergedTargets.length} étiquette(s) fusionnée(s)`, 'info');
+  }
+
+  // Synchronisation date début gris ↔ rouge/bleu/violet sur même n° installation
+  if (savedLabel && ['rouge','bleu','violet'].includes(savedLabel.type) && savedLabel.data?.numeroInstallation) {
+    syncGrisDebutFromInstallation(savedLabel);
+  }
+
+  // Si étiquette jaune sur monteur a été déplacée → mettre à jour étiquette liée Protocoleur/TS
+  if (savedLabel && savedLabel.type === 'jaune' && savedLabel.linkedLabelId) {
+    const linked = state.etiquettes.find(l => l.id === savedLabel.linkedLabelId);
+    if (linked) {
+      linked.dateDebut = savedLabel.dateDebut;
+      linked.dateFin = savedLabel.dateFin;
+      pushHistory(linked, 'sync-auto-from-monteur');
+    }
+  }
+
+  closeModal();
+  state.anchorDate = parseDate(debut);
+  renderGantt();
+  scrollToDate(parseDate(debut));
+  saveToFile();
+  toast(labelId ? 'Étiquette modifiée' : 'Étiquette créée', 'success');
+}
+
+// Décale la date de début d'une étiquette grise pour matcher l'installation parente
+function syncGrisDebutFromInstallation(parent) {
+  const num = parent.data?.numeroInstallation;
+  if (!num) return;
+  state.etiquettes.forEach(e => {
+    // Les gris liés via motherLabelId sont gérés par le drag (preserve leur offset).
+    // Cette fonction ne traite que les gris hérités sans motherLabelId.
+    if (e.motherLabelId === parent.id) return;
+    if (e.type === 'gris' && e.data?.numeroInstallation === num && e.id !== parent.id) {
+      if (e.dateDebut !== parent.dateDebut) {
+        const grisBd = Math.max(1, businessDaysBetween(parseDate(e.dateDebut), parseDate(e.dateFin)));
+        e.dateDebut = parent.dateDebut;
+        e.dateFin = dateStr(addBusinessDays(parseDate(parent.dateDebut), grisBd));
+        pushHistory(e, 'sync-debut-from-installation', { dateDebut: e.dateDebut, dateFin: e.dateFin });
+      }
+    }
+  });
+}
+
+// Crée une étiquette jaune liée sur une personne libre du groupe Protocoleur/TS
+// Important : la jaune Protocoleur ne dure qu'UN seul jour ouvrable — le DERNIER
+// jour de la jaune monteur (jour de la mise en service / protocole final).
+function createLinkedJauneOnProtocoleur(jauneLabel) {
+  const protos = state.personnes.filter(p => p.actif && p.groupe === 'Protocoleur/TS');
+  if (protos.length === 0) {
+    toast('Aucune personne dans le groupe Protocoleur/TS — pas de synchro', 'warning');
+    return;
+  }
+  // Position : dernier jour ouvrable de la jaune monteur
+  const linkedDate = jauneLabel.dateFin;
+  let target = protos.find(p =>
+    !state.etiquettes.some(e => e.personneId===p.id && e.dateDebut<=linkedDate && e.dateFin>=linkedDate)
+  );
+  if (!target) {
+    toast(`Conflit : aucun Protocoleur/TS libre — assignation à ${protos[0].prenom} ${protos[0].nom}`, 'warning');
+    target = protos[0];
+  }
+  const uid = () => Math.random().toString(36).slice(2,10) + Math.random().toString(36).slice(2,10);
+  const linked = {
+    id: uid(), personneId: target.id, type: 'jaune',
+    dateDebut: linkedDate, dateFin: linkedDate,
+    data: { numeroInstallation: jauneLabel.data?.numeroInstallation || '' },
+    verrouille: false, creePar: 'AUTO-LINK', history:[],
+    linkedFromId: jauneLabel.id
+  };
+  pushHistory(linked, 'creation-auto-link');
+  state.etiquettes.push(linked);
+  jauneLabel.linkedLabelId = linked.id;
+}
+
+function deleteLabel(labelId) {
+  const lbl = state.etiquettes.find(l => l.id === labelId);
+  if (!lbl) return;
+  if (lbl.verrouille && !state.admin) { toast('Étiquette verrouillée — accès admin requis', 'warning'); return; }
+  // Suppression en cascade : si la mère (rouge/bleu/violet) est supprimée,
+  // ses étiquettes auto-créées (jaune + gris) doivent disparaître aussi,
+  // ainsi que les jaunes liées Protocoleur/TS.
+  const isMother = ['rouge','bleu','violet'].includes(lbl.type);
+  let cascadeIds = [];
+  if (isMother) {
+    cascadeIds = state.etiquettes.filter(e => e.motherLabelId === labelId).map(e => e.id);
+    // Inclure les jaunes liées Protocoleur/TS (linkedLabelId) des enfants
+    state.etiquettes.forEach(e => {
+      if (e.motherLabelId === labelId && e.linkedLabelId) cascadeIds.push(e.linkedLabelId);
+    });
+  }
+  // Si on supprime une jaune avec une linkedLabelId, supprimer aussi la liée
+  if (lbl.type === 'jaune' && lbl.linkedLabelId) cascadeIds.push(lbl.linkedLabelId);
+  const totalToDelete = 1 + cascadeIds.length;
+  const confirmMsg = totalToDelete > 1
+    ? `Supprimer cette étiquette et ses ${cascadeIds.length} étiquette(s) liée(s) (jaune/gris auto) ?`
+    : 'Supprimer cette étiquette ?';
+  if (!confirm(confirmMsg)) return;
+  closeAllPopups();
+  const toDeleteSet = new Set([labelId, ...cascadeIds]);
+  state.etiquettes = state.etiquettes.filter(l => !toDeleteSet.has(l.id));
+  renderGantt();
+  saveToFile();
+  toast(totalToDelete > 1 ? `${totalToDelete} étiquettes supprimées` : 'Étiquette supprimée', 'success');
+}
+
+function convertToNoir(labelId) {
+  const lbl = state.etiquettes.find(l => l.id === labelId);
+  if (!lbl || lbl.type !== 'rose') return;
+  if (!confirm('Convertir ce SAV en "SAV Bloqué" (noir verrouillé) ?')) return;
+  lbl.type = 'noir';
+  lbl.verrouille = true;
+  pushHistory(lbl, 'convertToNoir', { from:'rose', to:'noir' });
+  closeAllPopups();
+  renderGantt();
+  saveToFile();
+  toast('SAV converti en SAV Bloqué 🔒', 'info');
+}
+
+function convertToRose(labelId) {
+  const lbl = state.etiquettes.find(l => l.id === labelId);
+  if (!lbl || lbl.type !== 'noir') return;
+  if (!confirm('Réouvrir ce SAV bloqué en "SAV en cours" ?')) return;
+  lbl.type = 'rose';
+  lbl.verrouille = false;
+  pushHistory(lbl, 'convertToRose', { from:'noir', to:'rose' });
+  closeAllPopups();
+  renderGantt();
+  saveToFile();
+  toast('SAV bloqué rouvert en SAV en cours', 'info');
+}
+
+// ════════════════════════════════════════════════════
+// BUSINESS RULES
+// ════════════════════════════════════════════════════
+function checkConflict(personId, debut, fin, excludeId) {
+  const conflicts = state.etiquettes.filter(l =>
+    l.id !== excludeId &&
+    l.personneId === personId &&
+    !['vert','orange','rose','noir','brun','autre'].includes(l.type) && // softer types
+    l.dateDebut <= fin && l.dateFin >= debut
+  );
+  if (conflicts.length === 0) return null;
+  return conflicts.map(c => {
+    const t = LABEL_TYPES[c.type]?.label || c.type;
+    return `${t} du ${formatDate(c.dateDebut)} au ${formatDate(c.dateFin)}`;
+  }).join(', ');
+}
+
+// ════════════════════════════════════════════════════
+// MODAL HELPER
+// ════════════════════════════════════════════════════
+function createModal(title) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'modal-overlay';
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-header">
+        <h2>${title}</h2>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body"></div>
+      <div class="modal-footer"></div>
+    </div>
+  `;
+  return overlay;
+}
+
+function closeModal() {
+  cselCloseAll();
+  document.getElementById('modal-overlay')?.remove();
+}
+
+// ════════════════════════════════════════════════════
+// CUSTOM SELECT
+// ════════════════════════════════════════════════════
+let _cselActive = null;
+
+function cselInit(cselId) {
+  const trigger = document.getElementById(cselId + '-trigger');
+  const list    = document.getElementById(cselId + '-list');
+  if (!trigger || !list) return;
+  trigger.addEventListener('click', (e) => { e.stopPropagation(); cselToggle(cselId); });
+  list.querySelectorAll('.csel-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cselPick(cselId, item.dataset.val, item.dataset.label);
+    });
+  });
+}
+
+function cselToggle(cselId) {
+  const list    = document.getElementById(cselId + '-list');
+  const trigger = document.getElementById(cselId + '-trigger');
+  if (!list) return;
+  if (_cselActive && _cselActive !== list) cselCloseAll();
+  if (list.style.display === 'block') { cselCloseAll(); return; }
+
+  const rect = trigger.getBoundingClientRect();
+  list.style.left  = rect.left + 'px';
+  list.style.width = rect.width + 'px';
+  const spaceBelow = window.innerHeight - rect.bottom;
+  if (spaceBelow >= 200) {
+    list.style.top    = (rect.bottom + 2) + 'px';
+    list.style.bottom = 'auto';
+  } else {
+    list.style.bottom = (window.innerHeight - rect.top + 2) + 'px';
+    list.style.top    = 'auto';
+  }
+  list.style.display = 'block';
+  trigger.classList.add('open');
+  _cselActive = list;
+  const search = list.querySelector('.csel-search');
+  if (search) { search.value = ''; cselFilter(cselId); search.focus(); }
+}
+
+function cselPick(cselId, value, label) {
+  const input = document.getElementById('f-' + cselId.replace('csel-',''));
+  const lbl   = document.getElementById(cselId + '-label');
+  const list  = document.getElementById(cselId + '-list');
+  if (input) input.value = value;
+  if (lbl)   lbl.textContent = label;
+  list.querySelectorAll('.csel-item').forEach(i => i.classList.toggle('csel-selected', i.dataset.val == value));
+  cselCloseAll();
+}
+
+function cselFilter(cselId) {
+  const q    = document.getElementById(cselId + '-search')?.value.toLowerCase() || '';
+  const list = document.getElementById(cselId + '-list');
+  list.querySelectorAll('.csel-item').forEach(i => {
+    i.style.display = i.dataset.label.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function cselCloseAll() {
+  document.querySelectorAll('.csel-list').forEach(l => l.style.display = 'none');
+  document.querySelectorAll('.csel-trigger').forEach(t => t.classList.remove('open'));
+  _cselActive = null;
+}
+
+document.addEventListener('click', () => cselCloseAll());
+
+// ════════════════════════════════════════════════════
+// TEAM MANAGEMENT
+// ════════════════════════════════════════════════════
+function renderTeam() {
+  const el = document.getElementById('team-list');
+  if (!el) return;
+  const sorted = [...state.personnes].sort((a,b) =>
+    (a.groupe+a.nom+a.prenom).localeCompare(b.groupe+b.nom+b.prenom)
+  );
+  el.innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Groupe</th><th>Prénom Nom</th><th>Rôle</th><th>Statut</th><th style="text-align:right">Actions</th>
+      </tr></thead>
+      <tbody>
+        ${sorted.map(p => `
+          <tr>
+            <td><span class="badge" style="background:#dbeafe;color:#1e40af">${p.groupe||'?'}</span></td>
+            <td><strong>${p.prenom} ${p.nom}</strong></td>
+            <td>${p.role}</td>
+            <td><span class="badge ${p.actif?'badge-actif':'badge-inactif'}">${p.actif?'Actif':'Inactif'}</span></td>
+            <td style="text-align:right;white-space:nowrap">
+              ${canAdmin() ? `<button class="btn btn-secondary btn-sm" onclick="showPersonForm('${p.id}')">✏️</button>
+              <button class="btn btn-secondary btn-sm" onclick="togglePersonActive('${p.id}')">${p.actif?'Désactiver':'Activer'}</button>
+              <button class="btn btn-danger btn-sm" onclick="deletePerson('${p.id}')">🗑️</button>` : '<span style="color:var(--text-faint);font-size:11px">Lecture seule</span>'}
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function showPersonForm(personId) {
+  const existing = personId ? state.personnes.find(p => String(p.id) === String(personId)) : null;
+  const modal = createModal(existing ? 'Modifier personne' : 'Ajouter une personne');
+  const body = modal.querySelector('.modal-body');
+  body.innerHTML = `
+    <div class="form-row">
+      <div class="form-group"><label>Prénom</label><input id="p-prenom" value="${existing?.prenom||''}"></div>
+      <div class="form-group"><label>Nom</label><input id="p-nom" value="${existing?.nom||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Groupe</label>
+        <select id="p-groupe">
+          ${['JSG','SS','DSG','Protocoleur/TS','Externe','Autre'].map(g =>
+            `<option value="${g}" ${existing?.groupe===g?'selected':''}>${g}</option>`
+          ).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Rôle</label><input id="p-role" value="${existing?.role||'Monteur'}"></div>
+    </div>
+  `;
+  const footer = modal.querySelector('.modal-footer');
+  footer.innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+    <button class="btn btn-primary" onclick="submitPersonForm('${personId||''}')">${existing?'Enregistrer':'Ajouter'}</button>
+  `;
+  document.body.appendChild(modal);
+}
+
+function submitPersonForm(personId) {
+  const prenom = document.getElementById('p-prenom').value.trim();
+  const nom = document.getElementById('p-nom').value.trim();
+  const groupe = document.getElementById('p-groupe').value;
+  const role = document.getElementById('p-role').value.trim();
+  if (!prenom || !nom) { alert('Prénom et nom requis'); return; }
+
+  if (personId) {
+    const p = state.personnes.find(p => String(p.id) === String(personId));
+    if (p) Object.assign(p, { prenom, nom, groupe, role });
+  } else {
+    // Nouvel ID : UUID si l'app utilise déjà des UUIDs, sinon incrément numérique (legacy)
+    const allNumeric = state.personnes.every(p => typeof p.id === 'number' || /^\d+$/.test(String(p.id)));
+    let newId;
+    if (state.personnes.length === 0 || !allNumeric) {
+      newId = (crypto?.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+    } else {
+      const maxId = state.personnes.reduce((m,p) => Math.max(m, parseInt(p.id) || 0), 0);
+      newId = maxId + 1;
+    }
+    state.personnes.push({ id: newId, prenom, nom, groupe, role, actif: true });
+  }
+  closeModal();
+  renderTeam();
+  renderGantt();
+  updatePersonFilter();
+  saveToFile();
+  toast(personId ? 'Personne modifiée' : 'Personne ajoutée', 'success');
+}
+
+function togglePersonActive(personId) {
+  const p = state.personnes.find(p => String(p.id) === String(personId));
+  if (p) {
+    p.actif = !p.actif;
+    renderTeam();
+    renderGantt();
+    updatePersonFilter();
+    saveToFile();
+    toast(`${p.prenom} ${p.nom} ${p.actif?'réactivé':'désactivé'}`, 'info');
+  }
+}
+
+function deletePerson(personId) {
+  const p = state.personnes.find(p => String(p.id) === String(personId));
+  if (!p) return;
+  const hasLabels = state.etiquettes.some(e => String(e.personneId) === String(p.id));
+  if (hasLabels && !confirm(`${p.prenom} ${p.nom} a des étiquettes. Les supprimer aussi ?`)) return;
+  if (!confirm(`Supprimer ${p.prenom} ${p.nom} ?`)) return;
+  state.personnes = state.personnes.filter(x => String(x.id) !== String(p.id));
+  if (hasLabels) state.etiquettes = state.etiquettes.filter(e => String(e.personneId) !== String(p.id));
+  renderTeam();
+  renderGantt();
+  updatePersonFilter();
+  saveToFile();
+  toast('Personne supprimée', 'success');
+}
+
+// ════════════════════════════════════════════════════
+// STATISTICS
+// ════════════════════════════════════════════════════
+function calcStats() {
+  const start = document.getElementById('stats-start').value;
+  const end = document.getElementById('stats-end').value;
+  if (!start || !end) { toast('Sélectionnez une période', 'warning'); return; }
+
+  // Filtrer les étiquettes orphelines (personne introuvable) — ne jamais les compter dans les stats
+  const validPersonIds = new Set(state.personnes.map(p => String(p.id)));
+  const etq = state.etiquettes.filter(e =>
+    e.dateDebut <= end && e.dateFin >= start &&
+    e.personneId != null && validPersonIds.has(String(e.personneId))
+  );
+  // Compte uniquement les jours OUVRABLES (exclut weekends et jours fériés/ponts)
+  const inRange = (e) => {
+    const s = e.dateDebut > start ? e.dateDebut : start;
+    const fn = e.dateFin < end ? e.dateFin : end;
+    if (s > fn) return 0;
+    return businessDaysBetween(parseDate(s), parseDate(fn));
+  };
+
+  const rouge = etq.filter(e=>e.type==='rouge');
+  const bleu = etq.filter(e=>e.type==='bleu');
+  const violet = etq.filter(e=>e.type==='violet');
+  const orange = etq.filter(e=>e.type==='orange');
+  const vert = etq.filter(e=>e.type==='vert');
+  const sav = etq.filter(e=>['rose','noir'].includes(e.type));
+
+  // Monthly chart data
+  const months = {};
+  etq.filter(e=>['rouge','bleu','violet'].includes(e.type)).forEach(e => {
+    const m = e.dateFin.slice(0,7);
+    if (!months[m]) months[m] = {rouge:0,bleu:0,violet:0};
+    months[m][e.type]++;
+  });
+  const monthKeys = Object.keys(months).sort();
+
+  // Canton stats
+  const cantons = {};
+  [...rouge,...bleu,...violet].forEach(e => {
+    const c = e.data?.canton||'?';
+    cantons[c] = (cantons[c]||0)+1;
+  });
+
+  // Genre stats
+  const genres = { électrique:0, hydraulique:0, autre:0 };
+  [...rouge,...bleu,...violet].forEach(e => {
+    const g = e.data?.genre||'autre';
+    if (g in genres) genres[g]++; else genres.autre++;
+  });
+
+  // Charge par monteur
+  const chargeMap = {};
+  state.personnes.filter(p=>p.actif).forEach(p => { chargeMap[p.id] = {nom:`${p.prenom} ${p.nom}`,rouge:0,bleu:0,violet:0,gris:0,maladie:0,conge:0,sav:0}; });
+  etq.forEach(e => {
+    if (!chargeMap[e.personneId]) return;
+    const j = inRange(e);
+    const c = chargeMap[e.personneId];
+    if (e.type==='rouge') c.rouge+=j;
+    else if (e.type==='bleu') c.bleu+=j;
+    else if (e.type==='violet') c.violet+=j;
+    else if (e.type==='gris') c.gris+=j;
+    else if (e.type==='orange') c.maladie+=j;
+    else if (e.type==='vert') c.conge+=j;
+    else if (['rose','noir'].includes(e.type)) c.sav+=j;
+  });
+
+  // Taux occupation
+  const totalOuvres = countOuvres(start, end);
+  const totalJoursTravailles = Object.values(chargeMap).reduce((s,c)=>s+c.rouge+c.bleu+c.violet+c.gris,0);
+  const nbPersonnes = Object.keys(chargeMap).length;
+  const tauxOccupation = nbPersonnes > 0 ? Math.round(totalJoursTravailles / (totalOuvres * nbPersonnes) * 100) : 0;
+
+  // Durée moyenne par type
+  const durMoy = (arr) => arr.length ? Math.round(arr.reduce((s,e)=>s+inRange(e),0)/arr.length) : 0;
+
+  // Helpers pour générer les infobulles détaillées
+  const personName = id => {
+    const p = state.personnes.find(x => String(x.id) === String(id));
+    return p ? `${p.prenom} ${p.nom}` : '?';
+  };
+  const listChantiers = arr => arr.length
+    ? arr.map(e => `• ${e.data?.numeroInstallation||'?'}${e.data?.lieu?' – '+e.data.lieu:''}${e.data?.canton?' ('+e.data.canton+')':''}`).join('\n')
+    : 'Aucun';
+  const listJoursParPersonne = arr => {
+    const m = {};
+    arr.forEach(e => { const j = inRange(e); if (j>0) m[e.personneId] = (m[e.personneId]||0) + j; });
+    const rows = Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([id,j]) => `• ${personName(id)} : ${j} j`);
+    return rows.length ? rows.join('\n') : 'Aucun';
+  };
+  const tipBleu = `${bleu.length} installation(s) neuve(s) :\n` + listChantiers(bleu);
+  const tipRouge = `${rouge.length} remplacement(s) :\n` + listChantiers(rouge);
+  const tipViolet = `${violet.length} modernisation(s) :\n` + listChantiers(violet);
+  const tipTotal = `Détail des chantiers :\n` + listChantiers([...bleu,...rouge,...violet]);
+  const tipMaladie = `Jours maladie par personne :\n` + listJoursParPersonne(orange);
+  const tipConge = `Jours de congé par personne :\n` + listJoursParPersonne(vert);
+  const tipSAV = `Jours SAV par personne :\n` + listJoursParPersonne(sav);
+  const tipOcc = `Charge par personne :\n` + Object.values(chargeMap)
+      .map(c => ({nom:c.nom, j:c.rouge+c.bleu+c.violet+c.gris}))
+      .sort((a,b)=>b.j-a.j)
+      .map(c => `• ${c.nom} : ${c.j}/${totalOuvres} j (${totalOuvres?Math.round(c.j/totalOuvres*100):0}%)`).join('\n');
+
+  const content = document.getElementById('stats-content');
+  content.innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi-card" style="cursor:help" title="${tipBleu.replace(/"/g,'&quot;')}"><div class="kpi-label">Installations neuves</div><div class="kpi-value" style="color:var(--bleu)">${bleu.length}</div></div>
+      <div class="kpi-card" style="cursor:help" title="${tipRouge.replace(/"/g,'&quot;')}"><div class="kpi-label">Remplacements</div><div class="kpi-value" style="color:var(--rouge)">${rouge.length}</div></div>
+      <div class="kpi-card" style="cursor:help" title="${tipViolet.replace(/"/g,'&quot;')}"><div class="kpi-label">Modernisations</div><div class="kpi-value" style="color:var(--violet)">${violet.length}</div></div>
+      <div class="kpi-card" style="cursor:help" title="${tipTotal.replace(/"/g,'&quot;')}"><div class="kpi-label">Total chantiers</div><div class="kpi-value">${rouge.length+bleu.length+violet.length}</div></div>
+      <div class="kpi-card" style="cursor:help" title="${tipMaladie.replace(/"/g,'&quot;')}"><div class="kpi-label">Jours maladie (total)</div><div class="kpi-value" style="color:var(--orange)">${orange.reduce((s,e)=>s+inRange(e),0)}</div></div>
+      <div class="kpi-card" style="cursor:help" title="${tipConge.replace(/"/g,'&quot;')}"><div class="kpi-label">Jours congé (total)</div><div class="kpi-value" style="color:#00a844">${vert.reduce((s,e)=>s+inRange(e),0)}</div></div>
+      <div class="kpi-card" style="cursor:help" title="${tipSAV.replace(/"/g,'&quot;')}"><div class="kpi-label">Jours SAV</div><div class="kpi-value" style="color:var(--rose)">${sav.reduce((s,e)=>s+inRange(e),0)}</div></div>
+      <div class="kpi-card" style="cursor:help" title="${tipOcc.replace(/"/g,'&quot;')}"><div class="kpi-label">Taux d'occupation</div><div class="kpi-value">${tauxOccupation}%</div><div class="kpi-sub">${totalOuvres} jours ouvrés</div></div>
+    </div>
+
+    <div class="chart-section">
+      <h3>Mises en service par mois</h3>
+      <canvas id="bar-chart" height="180"></canvas>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="chart-section">
+        <h3>Répartition par canton</h3>
+        <table class="stats-table">
+          <thead><tr><th>Canton</th><th>Nb</th></tr></thead>
+          <tbody>${Object.entries(cantons).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<tr><td>${c}</td><td><strong>${n}</strong></td></tr>`).join('')||'<tr><td colspan="2" style="color:var(--text-muted)">Aucune donnée</td></tr>'}</tbody>
+        </table>
+      </div>
+      <div class="chart-section">
+        <h3>Électrique vs Hydraulique</h3>
+        <table class="stats-table">
+          <thead><tr><th>Genre</th><th>Nb</th></tr></thead>
+          <tbody>
+            <tr><td>Électrique</td><td><strong>${genres.électrique}</strong></td></tr>
+            <tr><td>Hydraulique</td><td><strong>${genres.hydraulique}</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="chart-section">
+      <h3>Durée moyenne par type</h3>
+      <table class="stats-table">
+        <thead><tr><th>Type</th><th>Durée moy. (j)</th><th>Nb</th></tr></thead>
+        <tbody>
+          <tr><td>Installation neuve</td><td>${durMoy(bleu)}</td><td>${bleu.length}</td></tr>
+          <tr><td>Remplacement</td><td>${durMoy(rouge)}</td><td>${rouge.length}</td></tr>
+          <tr><td>Modernisation</td><td>${durMoy(violet)}</td><td>${violet.length}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-section">
+      <h3>Charge par monteur</h3>
+      <table class="stats-table">
+        <thead><tr><th>Monteur</th><th>Rouge</th><th>Bleu</th><th>Violet</th><th>Gris</th><th>Maladie</th><th>Congé</th><th>SAV</th><th>Total chantier</th></tr></thead>
+        <tbody>
+          ${Object.values(chargeMap).sort((a,b)=>a.nom.localeCompare(b.nom)).map(c=>`
+            <tr>
+              <td><strong>${c.nom}</strong></td>
+              <td style="color:var(--rouge)">${c.rouge}</td>
+              <td style="color:var(--bleu)">${c.bleu}</td>
+              <td style="color:var(--violet)">${c.violet}</td>
+              <td style="color:var(--gris-lbl)">${c.gris}</td>
+              <td style="color:var(--orange)">${c.maladie}</td>
+              <td style="color:#00a844">${c.conge}</td>
+              <td style="color:var(--rose)">${c.sav}</td>
+              <td><strong>${c.rouge+c.bleu+c.violet+c.gris}</strong></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  // Draw bar chart
+  drawBarChart('bar-chart', monthKeys, months);
+}
+
+function countOuvres(start, end) {
+  let count = 0;
+  let d = parseDate(start);
+  const e = parseDate(end);
+  while (d <= e) {
+    if (!isWeekend(d) && !isFerie(dateStr(d))) count++;
+    d = addDays(d, 1);
+  }
+  return count;
+}
+
+function drawBarChart(canvasId, labels, data) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0,0,W,H);
+  if (!labels.length) { ctx.fillStyle='#a1a1a8'; ctx.textAlign='center'; ctx.fillText('Aucune donnée',W/2,H/2); return; }
+
+  const maxVal = Math.max(...labels.map(m => (data[m]?.rouge||0)+(data[m]?.bleu||0)+(data[m]?.violet||0)), 1);
+  const pad = { t:10, r:10, b:30, l:20 };
+  const chartW = W - pad.l - pad.r;
+  const chartH = H - pad.t - pad.b;
+  const barW = Math.max(8, (chartW / labels.length) * 0.7);
+  const gap = (chartW / labels.length) * 0.3;
+
+  labels.forEach((m, i) => {
+    const x = pad.l + i * (chartW / labels.length) + gap/2;
+    const d = data[m] || {};
+    const total = (d.rouge||0)+(d.bleu||0)+(d.violet||0);
+    let y = pad.t + chartH;
+
+    [[d.rouge||0,'#E53935'],[d.bleu||0,'#1E88E5'],[d.violet||0,'#8E24AA']].forEach(([val,color])=>{
+      if (!val) return;
+      const bH = (val/maxVal)*chartH;
+      y -= bH;
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, barW, bH);
+    });
+
+    ctx.fillStyle = '#a1a1a8';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(m.slice(5), x + barW/2, H - 10);
+    if (total) {
+      ctx.fillStyle = '#ededee';
+      ctx.fillText(total, x + barW/2, y - 3);
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════
+// EXCEL EXPORT
+// ════════════════════════════════════════════════════
+function exportExcel() {
+  const start = document.getElementById('stats-start').value;
+  const end = document.getElementById('stats-end').value;
+  if (!start || !end) { toast('Sélectionnez une période d\'abord', 'warning'); return; }
+  if (typeof XLSX === 'undefined') { toast('SheetJS non chargé — vérifiez votre connexion internet', 'error'); return; }
+
+  const wb = XLSX.utils.book_new();
+  const etq = state.etiquettes.filter(e =>
+    ['rouge','bleu','violet'].includes(e.type) &&
+    e.dateDebut <= end && e.dateFin >= start
+  );
+
+  // Sheet 1: Détail chantiers
+  const rows1 = [['N° installation','Type','Personne','Début','Fin','Lieu','Canton','Genre','Nb arrêts','Nb accès','Durée (j)','Heures','Chef chantier','Chef projet','Vendeur']];
+  etq.forEach(e => {
+    const p = state.personnes.find(p=>p.id===e.personneId);
+    rows1.push([
+      e.data?.numeroInstallation||'',
+      LABEL_TYPES[e.type]?.label||e.type,
+      p ? `${p.prenom} ${p.nom}` : 'Inconnu',
+      e.dateDebut, e.dateFin,
+      e.data?.lieu||'', e.data?.canton||'', e.data?.genre||'',
+      e.data?.nbArrets||'', e.data?.nbAcces||'',
+      e.data?.dureeTotaleJours||'', e.data?.heuresTotales||'',
+      e.data?.chefChantier||'', e.data?.chefProjet||'', e.data?.vendeur||'',
+    ]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows1), 'Chantiers');
+
+  // Sheet 2: KPIs résumé
+  const validPersonIdsX = new Set(state.personnes.map(p => String(p.id)));
+  const etqAll = state.etiquettes.filter(e =>
+    e.dateDebut <= end && e.dateFin >= start &&
+    e.personneId != null && validPersonIdsX.has(String(e.personneId))
+  );
+  const inRange = (e) => {
+    const s = e.dateDebut > start ? e.dateDebut : start;
+    const f = e.dateFin < end ? e.dateFin : end;
+    return Math.max(0, daysBetween(s, f) + 1);
+  };
+  const rows2 = [
+    ['Indicateur','Valeur'],
+    ['Période', `${start} au ${end}`],
+    ['Installations neuves', etqAll.filter(e=>e.type==='bleu').length],
+    ['Remplacements', etqAll.filter(e=>e.type==='rouge').length],
+    ['Modernisations', etqAll.filter(e=>e.type==='violet').length],
+    ['Total chantiers', etqAll.filter(e=>['rouge','bleu','violet'].includes(e.type)).length],
+    ['Jours maladie total', etqAll.filter(e=>e.type==='orange').reduce((s,e)=>s+inRange(e),0)],
+    ['Jours congé total', etqAll.filter(e=>e.type==='vert').reduce((s,e)=>s+inRange(e),0)],
+    ['Jours SAV total', etqAll.filter(e=>['rose','noir'].includes(e.type)).reduce((s,e)=>s+inRange(e),0)],
+    ['Jours ouvrés période', countOuvres(start, end)],
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows2), 'KPIs');
+
+  // Sheet 3: Détail par monteur
+  const rows3 = [['Monteur','Groupe','Rouge (j)','Bleu (j)','Violet (j)','Gris (j)','Maladie (j)','Congé (j)','SAV (j)','Total chantier (j)']];
+  state.personnes.filter(p=>p.actif).sort((a,b)=>a.nom.localeCompare(b.nom)).forEach(p => {
+    const pe = etqAll.filter(e=>e.personneId===p.id);
+    const sum = (type) => pe.filter(e=>e.type===type).reduce((s,e)=>s+inRange(e),0);
+    const rouge=sum('rouge'),bleu=sum('bleu'),violet=sum('violet'),gris=sum('gris');
+    rows3.push([`${p.prenom} ${p.nom}`,p.groupe,rouge,bleu,violet,gris,sum('orange'),sum('vert'),pe.filter(e=>['rose','noir'].includes(e.type)).reduce((s,e)=>s+inRange(e),0),rouge+bleu+violet+gris]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows3), 'Monteurs');
+
+  XLSX.writeFile(wb, `planning_menetrey_${start}_${end}.xlsx`);
+  toast('Export Excel généré', 'success');
+}
+
+// ════════════════════════════════════════════════════
+// TOAST NOTIFICATIONS
+// ════════════════════════════════════════════════════
+function toast(msg, type='info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ════════════════════════════════════════════════════
+// TAB SWITCHING
+// ════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  const ganttEl = document.getElementById('tab-gantt');
+  const statsEl = document.getElementById('tab-stats');
+  const teamEl = document.getElementById('tab-team');
+  const eventsEl = document.getElementById('tab-events');
+
+  ganttEl.style.display = name === 'gantt' ? 'flex' : 'none';
+  statsEl.style.display = name === 'stats' ? 'flex' : 'none';
+  teamEl.style.display = name === 'team' ? 'flex' : 'none';
+  if (eventsEl) eventsEl.style.display = name === 'events' ? 'flex' : 'none';
+
+  if (name === 'team') renderTeam();
+  if (name === 'events') renderEvents();
+}
+
+// ════════════════════════════════════════════════════
+// ÉVÉNEMENTS GLOBAUX (Ponts + Réunions d'équipe)
+// ════════════════════════════════════════════════════
+function renderEvents() {
+  const pontsTbl = document.getElementById('ponts-table');
+  const ponts = (state.ponts || []).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const thStyle = `padding:8px 12px;text-align:left;font-size:12px;border-bottom:1px solid var(--border);color:var(--text-muted)`;
+  const tdStyle = `padding:8px 12px;font-size:13px;border-bottom:1px solid var(--border)`;
+  pontsTbl.innerHTML = `
+    <thead><tr style="background:var(--bg-elev-2)"><th style="${thStyle}">Date</th><th style="${thStyle}">Nom</th><th style="${thStyle};text-align:right">Action</th></tr></thead>
+    <tbody>
+    ${ponts.length === 0 ? `<tr><td colspan="3" style="${tdStyle};color:var(--text-muted);font-style:italic">Aucun pont enregistré</td></tr>` : ponts.map(p => `
+      <tr><td style="${tdStyle}">${formatDate(p.date)}</td><td style="${tdStyle}">${p.nom||''}</td><td style="${tdStyle};text-align:right">${canEdit() ? `<button class="btn btn-danger btn-sm" onclick="deletePont('${p.id}')">Supprimer</button>` : ''}</td></tr>
+    `).join('')}
+    </tbody>`;
+
+  const reuTbl = document.getElementById('reunions-table');
+  const reunions = (state.reunions || []).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  reuTbl.innerHTML = `
+    <thead><tr style="background:var(--bg-elev-2)"><th style="${thStyle}">Date</th><th style="${thStyle}">Durée</th><th style="${thStyle}">Texte</th><th style="${thStyle}">Personnes</th><th style="${thStyle};text-align:right">Action</th></tr></thead>
+    <tbody>
+    ${reunions.length === 0 ? `<tr><td colspan="5" style="${tdStyle};color:var(--text-muted);font-style:italic">Aucune réunion enregistrée</td></tr>` : reunions.map(r => {
+      const noms = (r.personnes||[]).map(id => {
+        const p = state.personnes.find(x=>x.id===id);
+        return p ? `${p.prenom} ${p.nom}` : '?';
+      }).join(', ');
+      return `<tr><td style="${tdStyle}">${formatDate(r.date)}</td><td style="${tdStyle}">${r.dureeOuvr} j</td><td style="${tdStyle}">${r.texte||''}</td><td style="${tdStyle};font-size:12px">${noms}</td><td style="${tdStyle};text-align:right">${canEdit() ? `<button class="btn btn-danger btn-sm" onclick="deleteReunion('${r.id}')">Supprimer</button>` : ''}</td></tr>`;
+    }).join('')}
+    </tbody>`;
+}
+
+function showPontForm() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal">
+      <div class="modal-header"><span class="type-dot" style="background:#fef3c7"></span><h2>🌉 Nouveau pont offert</h2><button class="btn btn-secondary btn-sm" onclick="this.closest('.modal-overlay').remove()">✕</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>Date du pont</label><input type="date" id="pont-date" value="${dateStr(new Date())}"></div>
+        <div class="form-group"><label>Nom (optionnel)</label><input id="pont-nom" placeholder="Ex: Pont du 1er mai" value="Pont offert"></div>
+        <div class="form-note">Ce jour sera affiché comme un jour férié sur tout le planning.</div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Annuler</button><button class="btn btn-primary" onclick="savePont()">Enregistrer</button></div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+function savePont() {
+  const date = document.getElementById('pont-date').value;
+  const nom = document.getElementById('pont-nom').value.trim() || 'Pont offert';
+  if (!date) { toast('Date requise', 'error'); return; }
+  if (!state.ponts) state.ponts = [];
+  state.ponts.push({ id: Math.random().toString(36).slice(2,12), date, nom });
+  document.querySelector('.modal-overlay')?.remove();
+  renderEvents();
+  if (typeof renderGantt === 'function') renderGantt();
+  saveToFile();
+  toast('Pont enregistré', 'success');
+}
+function deletePont(id) {
+  if (!confirm('Supprimer ce pont ?')) return;
+  state.ponts = (state.ponts||[]).filter(p => p.id !== id);
+  renderEvents();
+  if (typeof renderGantt === 'function') renderGantt();
+  saveToFile();
+  toast('Pont supprimé', 'info');
+}
+
+function showReunionForm() {
+  const persons = state.personnes.filter(p=>p.actif).slice().sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom));
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:600px">
+      <div class="modal-header"><span class="type-dot" style="background:#009688"></span><h2>👥 Nouvelle réunion d'équipe</h2><button class="btn btn-secondary btn-sm" onclick="this.closest('.modal-overlay').remove()">✕</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label>Date début</label><input type="date" id="reu-date" value="${dateStr(new Date())}"></div>
+          <div class="form-group"><label>Durée (jours ouvrables)</label><input type="number" id="reu-duree" value="1" min="1"></div>
+        </div>
+        <div class="form-group"><label>Texte / objet</label><input id="reu-texte" placeholder="Ex: Réunion sécurité" value="Réunion d'équipe"></div>
+        <div class="form-group">
+          <label>Personnes concernées</label>
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <button class="btn btn-secondary btn-sm" type="button" onclick="reuToggleAll(true)">Tout cocher</button>
+            <button class="btn btn-secondary btn-sm" type="button" onclick="reuToggleAll(false)">Tout décocher</button>
+          </div>
+          <div style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;background:var(--bg-elev-1)">
+            ${persons.map(p => `<label style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px;cursor:pointer"><input type="checkbox" class="reu-pers" value="${p.id}"> <span style="font-weight:600">${p.prenom} ${p.nom}</span> <span style="color:var(--text-muted);font-size:11px">— ${p.role||''} (${p.groupe||''})</span></label>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Annuler</button><button class="btn btn-primary" onclick="saveReunion()">Créer les étiquettes</button></div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+function reuToggleAll(check) {
+  document.querySelectorAll('.reu-pers').forEach(c => c.checked = check);
+}
+function saveReunion() {
+  const date = document.getElementById('reu-date').value;
+  const dureeOuvr = Math.max(1, parseInt(document.getElementById('reu-duree').value) || 1);
+  const texte = document.getElementById('reu-texte').value.trim() || "Réunion d'équipe";
+  // ID personne : conserver le type natif (numérique legacy ou UUID)
+  const ids = Array.from(document.querySelectorAll('.reu-pers:checked'))
+    .map(c => state.personnes.find(p => String(p.id) === String(c.value))?.id)
+    .filter(x => x != null);
+  if (!date) { toast('Date requise', 'error'); return; }
+  if (ids.length === 0) { toast('Sélectionnez au moins une personne', 'error'); return; }
+  const fin = dateStr(addBusinessDays(parseDate(date), dureeOuvr));
+  const reuId = Math.random().toString(36).slice(2,12);
+  if (!state.reunions) state.reunions = [];
+  state.reunions.push({ id: reuId, date, dureeOuvr, texte, personnes: ids });
+  ids.forEach(personneId => {
+    const lbl = {
+      id: Math.random().toString(36).slice(2,10) + Math.random().toString(36).slice(2,10),
+      personneId, type: 'autre',
+      dateDebut: date, dateFin: fin,
+      data: { texteLibre: texte, couleurHex: '#009688', reunionId: reuId },
+      verrouille: false, creePar: getCurrentUser(), history:[]
+    };
+    pushHistory(lbl, 'creation-reunion');
+    state.etiquettes.push(lbl);
+  });
+  document.querySelector('.modal-overlay')?.remove();
+  renderEvents();
+  if (typeof renderGantt === 'function') renderGantt();
+  saveToFile();
+  toast(`Réunion créée pour ${ids.length} personne(s)`, 'success');
+}
+function deleteReunion(id) {
+  if (!confirm("Supprimer cette réunion et toutes les étiquettes associées ?")) return;
+  state.etiquettes = state.etiquettes.filter(e => e.data?.reunionId !== id);
+  state.reunions = (state.reunions||[]).filter(r => r.id !== id);
+  renderEvents();
+  if (typeof renderGantt === 'function') renderGantt();
+  saveToFile();
+  toast('Réunion supprimée', 'info');
+}
+
+// ════════════════════════════════════════════════════
+// COMPACT MODE
+// ════════════════════════════════════════════════════
+function toggleCompact() {
+  document.body.classList.toggle('compact');
+  if (typeof renderGantt === 'function' && document.getElementById('tab-gantt')?.style.display !== 'none') {
+    requestAnimationFrame(() => { try { renderGantt(); } catch(e){} });
+  }
+}
+
+// ════════════════════════════════════════════════════
+// PERMISSIONS UI — applique le rôle aux contrôles
+// ════════════════════════════════════════════════════
+function applyRolePermissionsToUI() {
+  const isEditor = canEdit();
+  const isAdmin  = canAdmin();
+  document.body.classList.toggle('role-readonly', !isEditor);
+  document.body.classList.toggle('role-editor', isEditor && !isAdmin);
+  document.body.classList.toggle('role-admin', isAdmin);
+}
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+async function init() {
+  // Dates de stats par défaut (année courante)
+  const y = new Date().getFullYear();
+  document.getElementById('stats-start').value = `${y}-01-01`;
+  document.getElementById('stats-end').value = `${y}-12-31`;
+
+  // Vérifier que la lib Supabase est chargée
+  if (!window.supabase) {
+    document.getElementById('auth-screen').innerHTML =
+      '<div style="font-size:48px">⚠️</div><h2>Supabase indisponible</h2>' +
+      '<p>Vérifiez votre connexion internet et rechargez la page.</p>';
+    showAuthScreen();
+    return;
+  }
+
+  // Initialiser le client Supabase
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true },
+    realtime: { params: { eventsPerSecond: 5 } }
+  });
+
+  // Auto-login si une session est déjà en cache
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    await onAuthSuccess(session);
+  } else {
+    showAuthScreen();
+  }
+
+  // Réagir aux changements d'état d'authentification (token expiré, etc.)
+  sb.auth.onAuthStateChange((event, sess) => {
+    if (event === 'SIGNED_OUT') showAuthScreen();
+  });
+}
+
+init();
+</script>
+</body>
+</html>
