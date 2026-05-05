@@ -80,9 +80,12 @@ select.filter-sel:focus{outline:none;border-color:var(--primary);box-shadow:0 0 
 .gantt-scroll{flex:1;overflow:auto}
 /* Header row — sticky top */
 .gr-header{position:sticky;top:0;z-index:25;display:flex;background:var(--bg-elev-1);border-bottom:1px solid var(--border)}
-.gr-corner{position:sticky;left:0;z-index:30;width:180px;min-width:180px;flex-shrink:0;background:var(--bg-elev-1);border-right:1px solid var(--border);display:flex;align-items:center;padding:0 12px;font-weight:600;font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;height:60px}
+.gr-corner{position:sticky;left:0;z-index:30;width:180px;min-width:180px;flex-shrink:0;background:var(--bg-elev-1);border-right:1px solid var(--border);display:flex;align-items:center;padding:0 12px;font-weight:600;font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;height:76px}
 .gr-header-right{display:flex;flex-direction:column;flex-shrink:0}
 .gr-month-row{display:flex;height:22px;background:var(--bg-elev-2);border-bottom:1px solid var(--border);flex-shrink:0}
+.gr-week-row{display:flex;height:16px;background:var(--bg-elev-1);border-bottom:1px solid var(--border);flex-shrink:0}
+.week-band{display:flex;align-items:center;font-size:9.5px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;border-right:1px solid var(--border);background:var(--bg-elev-1);white-space:nowrap;flex-shrink:0}
+.week-band-inner{position:sticky;left:188px;padding:0 6px}
 .gr-day-row{display:flex;height:38px;flex-shrink:0}
 .gr-row,.gr-group{min-width:max-content}
 .month-band{display:flex;align-items:center;font-size:10.5px;font-weight:600;color:var(--primary-hover);text-transform:uppercase;letter-spacing:.08em;border-right:1px solid var(--border);flex-shrink:0;white-space:nowrap;background:var(--bg-elev-2)}
@@ -350,6 +353,7 @@ body.compact #compact-chev{transform:rotate(-90deg);display:inline-block}
     <div class="tab" data-tab="team" onclick="switchTab('team')">👥 Équipe</div>
     <div class="tab" data-tab="events" onclick="switchTab('events')">🎉 Événements</div>
   </div>
+  <a href="index-sav.html" class="btn btn-ghost btn-sm" style="margin-left:16px;text-decoration:none;background:rgba(220,38,38,.1);color:#fca5a5;border-color:rgba(220,38,38,.3)">📋 Planning SAV →</a>
   <div class="spacer"></div>
   <span id="sync-indicator" class="file-status" title="Synchronisation Supabase"></span>
   <span id="user-info" class="file-status"></span>
@@ -524,12 +528,26 @@ const SUPABASE_URL = 'https://nnkthgxbcslkhkdayjvg.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_zX0P2GxSqIlh3Lqb_-PtCw_ydCahuhp';
 let sb = null; // client Supabase, initialisé dans init()
 
+// Catalogue des types SAV (rendus sur les rangées des personnes communes)
+const SAV_LABEL_TYPES = {
+  cyan:    { label:'Câble-poulie',     color:'#00BCD4', text:'light' },
+  orange:  { label:'Divers (SAV)',     color:'#FF9800', text:'dark'  },
+  jaune:   { label:'Électrique (SAV)', color:'#FDD835', text:'dark'  },
+  marron:  { label:'Fosse',            color:'#5D4037', text:'light' },
+  orangec: { label:'Téléalarme',       color:'#FFB74D', text:'dark'  },
+  gris:    { label:'Cabine',           color:'#90A4AE', text:'dark'  },
+  noir:    { label:'Absent (SAV)',     color:'#212121', text:'light' },
+  rose:    { label:'Formation',        color:'#F48FB1', text:'dark'  },
+  vert:    { label:'Indicateur horaire', color:'#43A047', text:'light' },
+};
+
 // ════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════
 let state = {
   personnes: [],
   etiquettes: [],
+  etiquettes_sav: [], // étiquettes SAV (rendues sur les personnes communes Menétrey/Burgy)
   ponts: [],        // [{id, date:'YYYY-MM-DD', nom}]
   reunions: [],     // [{id, date, dureeOuvr, texte, personnes:[ids]}]
   admin: false,     // alias compat : true si userRole === 'admin'
@@ -649,16 +667,26 @@ function hideAuthScreen() {
 // SUPABASE — CHARGEMENT
 // ════════════════════════════════════════════════════
 async function loadStateFromSupabase() {
-  const [p, e, po, r] = await Promise.all([
+  const [p, e, po, r, es] = await Promise.all([
     sb.from('personnes').select('body'),
     sb.from('etiquettes').select('body'),
     sb.from('ponts').select('body'),
     sb.from('reunions').select('body'),
+    sb.from('etiquettes_sav').select('body'),
   ]);
   if (p.error)  throw new Error('personnes : '  + p.error.message);
   if (e.error)  throw new Error('etiquettes : ' + e.error.message);
   if (po.error) throw new Error('ponts : '      + po.error.message);
   if (r.error)  throw new Error('reunions : '   + r.error.message);
+  // Pas d'erreur fatale si etiquettes_sav indisponible (table peut ne pas exister)
+  if (!es.error) {
+    state.etiquettes_sav = (es.data||[])
+      .map(x => x.body)
+      .filter(b => b.commonPersonId != null) // on ne garde que celles liées à une personne commune
+      .map(b => ({...b, commonPersonId: String(b.commonPersonId)}));
+  } else {
+    state.etiquettes_sav = [];
+  }
   // Normalisation des IDs en string : évite les mismatch UUID vs numérique legacy
   state.personnes = (p.data || []).map(x => ({ ...x.body, id: String(x.body.id) }));
   state.etiquettes = (e.data || []).map(x => {
@@ -776,7 +804,7 @@ function subscribeRealtime() {
       } catch (e) { console.warn('Realtime reload error:', e); }
     }, 250);
   };
-  ['personnes','etiquettes','ponts','reunions'].forEach(t => {
+  ['personnes','etiquettes','ponts','reunions','etiquettes_sav'].forEach(t => {
     const ch = sb.channel('rt-' + t)
       .on('postgres_changes', { event: '*', schema: 'public', table: t }, debouncedReload)
       .subscribe();
@@ -1114,12 +1142,16 @@ function renderGantt() {
   const monthRow = document.createElement('div');
   monthRow.className = 'gr-month-row';
   monthRow.style.width = totalDaysWidth + 'px';
+  const weekRow = document.createElement('div');
+  weekRow.className = 'gr-week-row';
+  weekRow.style.width = totalDaysWidth + 'px';
   const dayRow = document.createElement('div');
   dayRow.className = 'gr-day-row';
   dayRow.style.width = totalDaysWidth + 'px';
 
-  // Group consecutive dates by year-month
+  // Group consecutive dates by year-month + week
   let curMonth = null, curYear = null, curCount = 0;
+  let curWeek = null, curWeekCount = 0;
   const flushMonth = () => {
     if (curCount === 0) return;
     const band = document.createElement('div');
@@ -1132,6 +1164,18 @@ function renderGantt() {
     band.appendChild(inner);
     monthRow.appendChild(band);
   };
+  const flushWeek = () => {
+    if (curWeekCount === 0) return;
+    const band = document.createElement('div');
+    band.className = 'week-band';
+    band.style.width = (curWeekCount * colW) + 'px';
+    band.style.minWidth = (curWeekCount * colW) + 'px';
+    const inner = document.createElement('div');
+    inner.className = 'week-band-inner';
+    inner.textContent = `S${curWeek}`;
+    band.appendChild(inner);
+    weekRow.appendChild(band);
+  };
 
   dates.forEach(d => {
     const ds = dateStr(d);
@@ -1140,6 +1184,9 @@ function renderGantt() {
       flushMonth();
       curMonth = m; curYear = y; curCount = 0;
     }
+    const wn = getWeekNum(d);
+    if (wn !== curWeek) { flushWeek(); curWeek = wn; curWeekCount = 0; }
+    curWeekCount++;
     curCount++;
 
     const cell = document.createElement('div');
@@ -1157,8 +1204,10 @@ function renderGantt() {
     dayRow.appendChild(cell);
   });
   flushMonth();
+  flushWeek();
 
   headerRight.appendChild(monthRow);
+  headerRight.appendChild(weekRow);
   headerRight.appendChild(dayRow);
   headerRow.appendChild(headerRight);
   scroll.appendChild(headerRow);
@@ -1321,6 +1370,46 @@ function renderGantt() {
         // Drag to move : horizontal = changer dates, vertical = changer monteur
         attachLabelDrag(lblEl, lbl.id, colW);
         lblEl.addEventListener('dblclick', (e) => { e.stopPropagation(); editLabel(lbl.id); });
+        daysArea.appendChild(lblEl);
+      });
+
+      // ── ÉTIQUETTES SAV liées à cette personne (commonPersonId) ──
+      // Affichage en lecture seule depuis le planning montage. Édition dans le planning SAV.
+      const savLabels = state.etiquettes_sav.filter(e => String(e.commonPersonId) === String(person.id));
+      savLabels.forEach(lbl => {
+        if (!lbl.dateDebut || !lbl.dateFin) return;
+        if (lbl.dateDebut > rangeEnd || lbl.dateFin < rangeStart) return;
+        const visStart = lbl.dateDebut < rangeStart ? rangeStart : lbl.dateDebut;
+        const visEnd   = lbl.dateFin   > rangeEnd   ? rangeEnd   : lbl.dateFin;
+        const startIdx = dateMap[visStart];
+        const endIdx   = dateMap[visEnd];
+        if (startIdx === undefined || endIdx === undefined) return;
+        const typeInfo = SAV_LABEL_TYPES[lbl.type] || { label:lbl.type, color:'#999', text:'light' };
+        const lblEl = document.createElement('div');
+        const isVertIndic = (lbl.type === 'vert');
+        lblEl.className = `label-block ${typeInfo.text === 'dark' ? 'dark-text' : 'light-text'}` + (isVertIndic ? ' vert-indic' : '');
+        // Marquer visuellement comme "venant du SAV" (bordure pointillée)
+        lblEl.style.cssText = `left:${startIdx*colW+1}px;width:${(endIdx-startIdx+1)*colW-2}px;background:${typeInfo.color};border:1px dashed rgba(255,255,255,.5);cursor:default`;
+        lblEl.dataset.labelId = lbl.id;
+        lblEl.dataset.savReadOnly = 'true';
+        let text;
+        if (lbl.type === 'vert') text = lbl.data?.texteLibre || 'IH';
+        else if (lbl.type === 'noir') text = lbl.data?.texteLibre || 'Absent';
+        else if (lbl.type === 'rose') text = `${lbl.data?.texteLibre||'Formation'}${lbl.data?.lieu?' · '+lbl.data.lieu:''}`;
+        else text = `${lbl.data?.numeroInstallation||''}${lbl.data?.adresse?' '+lbl.data.adresse:''}`.trim() || typeInfo.label;
+        lblEl.textContent = '🛠️ ' + text;
+        const tip = ['📋 Étiquette SAV (lecture seule — modifier dans Planning SAV)', typeInfo.label];
+        if (lbl.data?.numeroInstallation) tip.push('N° ' + lbl.data.numeroInstallation);
+        if (lbl.data?.adresse) tip.push(lbl.data.adresse);
+        if (lbl.data?.numeroDevis) tip.push('Devis ' + lbl.data.numeroDevis);
+        if (lbl.data?.texteLibre) tip.push(lbl.data.texteLibre);
+        if (lbl.data?.lieu) tip.push(lbl.data.lieu);
+        tip.push(`${formatDate(lbl.dateDebut)} → ${formatDate(lbl.dateFin)}`);
+        lblEl.title = tip.join('\n');
+        lblEl.addEventListener('click', e => {
+          e.stopPropagation();
+          toast('Étiquette SAV — utilisez le Planning SAV pour la modifier', 'info');
+        });
         daysArea.appendChild(lblEl);
       });
 
@@ -1763,6 +1852,43 @@ function showLabelDetail(labelId) {
   ` : '';
   const isNoir = lbl.type === 'noir';
   const isRose = lbl.type === 'rose';
+
+  // ── Travaux SAV assignés (rendus depuis le planning SAV via data.travaux_sav) ──
+  const SAV_TYPE_INFO = {
+    cyan:   { label:'Câble-poulie',     color:'#00BCD4' },
+    orange: { label:'Divers',           color:'#FF9800' },
+    jaune:  { label:'Électrique',       color:'#FDD835' },
+    marron: { label:'Fosse',            color:'#5D4037' },
+    orangec:{ label:'Téléalarme',       color:'#FFB74D' },
+    gris:   { label:'Cabine',           color:'#90A4AE' },
+    noir:   { label:'Absent',           color:'#212121' },
+    rose:   { label:'Formation',        color:'#F48FB1' },
+    vert:   { label:'Indicateur horaire', color:'#43A047' },
+  };
+  let travauxSavHtml = '';
+  if (isNoir && Array.isArray(lbl.data?.travaux_sav) && lbl.data.travaux_sav.length > 0) {
+    travauxSavHtml = `
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:700;color:#fca5a5;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">
+          🛠️ Travaux SAV assignés (${lbl.data.travaux_sav.length})
+        </div>
+        ${lbl.data.travaux_sav.slice().sort((a,b)=>a.dateDebut.localeCompare(b.dateDebut)).map(t => {
+          const info = SAV_TYPE_INFO[t.type] || { label:t.type, color:'#999' };
+          return `<div style="font-size:11.5px;padding:6px 0;border-bottom:1px dotted var(--border);color:var(--text-muted)">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${info.color};flex-shrink:0"></span>
+              <strong style="color:var(--text)">${info.label}</strong>
+              ${t.numeroInstallation ? `<span style="color:var(--text-muted)">· N° ${t.numeroInstallation}</span>` : ''}
+            </div>
+            <div style="margin-left:16px;font-size:10.5px">
+              ${formatDate(t.dateDebut)} → ${formatDate(t.dateFin)}${t.creePar ? ` · par ${t.creePar}` : ''}
+            </div>
+            ${t.description ? `<div style="margin-left:16px;font-size:11px;color:var(--text);margin-top:2px">${t.description}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
   popup.innerHTML = `
     <div class="popup-header" style="background:${color}">
       <span>${typeInfo.label}</span>
@@ -1770,6 +1896,7 @@ function showLabelDetail(labelId) {
     </div>
     <div class="popup-body">
       ${rows.map(([k,v]) => `<div class="popup-row"><span class="pkey">${k}</span><span class="pval">${v}</span></div>`).join('')}
+      ${travauxSavHtml}
       ${historyHtml}
     </div>
     <div class="popup-actions">
