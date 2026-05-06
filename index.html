@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Planning — Ascenseurs Menétrey SA</title>
+<link rel="icon" href="https://menetrey-lift.ch/wp-content/uploads/2022/05/logo-menetrey-mobile.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ───────── Design tokens (palette Menétrey + inspirations Batchfrigo) ───────── */
+:root{
+  --bg:#0A0F1E;
+  --surface:#111827;
+  --surface-2:#0F1626;
+  --border:#1F2937;
+  --border-strong:#2A3648;
+  --text:#F9FAFB;
+  --text-muted:#9CA3AF;
+  --text-faint:#6B7280;
+  --primary:#3B82F6;
+  --primary-strong:#1B3A6B;
+  --primary-soft:rgba(59,130,246,.12);
+  --success:#10B981;
+  --danger:#EF4444;
+  --warning:#F59E0B;
+  --tab-h:44px;
+  --radius:14px;
+  --shadow-sm:0 1px 0 rgba(0,0,0,.4);
+  --shadow-md:0 8px 24px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-size:13px;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ───────── Tab bar (shell header) ───────── */
+.shell-bar{
+  flex-shrink:0;
+  height:var(--tab-h);
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:0 12px;
+  background:rgba(10,15,30,.85);
+  backdrop-filter:saturate(140%) blur(10px);
+  -webkit-backdrop-filter:saturate(140%) blur(10px);
+  border-bottom:1px solid var(--border);
+  position:relative;
+  z-index:10;
+  padding-top:env(safe-area-inset-top, 0px);
+  height:calc(var(--tab-h) + env(safe-area-inset-top, 0px));
+}
+.shell-logo{
+  display:flex;align-items:center;gap:8px;
+  font-weight:700;font-size:12px;letter-spacing:.04em;
+  color:var(--text);
+  padding-right:10px;
+  border-right:1px solid var(--border);
+  margin-right:6px;
+  white-space:nowrap;
+}
+.shell-logo img{height:18px;filter:brightness(0) invert(1);opacity:.9}
+.shell-logo .tag{
+  font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-muted);
+  padding:2px 6px;border-radius:999px;
+  border:1px solid var(--border-strong);
+  background:var(--surface-2);
+}
+
+.tabs{display:flex;gap:4px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  appearance:none;border:none;background:transparent;
+  color:var(--text-muted);
+  font:inherit;font-weight:600;font-size:12.5px;
+  padding:8px 14px;border-radius:10px;
+  cursor:pointer;
+  transition:background .15s, color .15s, transform .15s;
+  display:inline-flex;align-items:center;gap:8px;
+  white-space:nowrap;
+}
+.tab:hover{background:var(--surface);color:var(--text)}
+.tab.active{
+  background:var(--primary-soft);
+  color:var(--text);
+  box-shadow:inset 0 0 0 1px rgba(59,130,246,.35);
+}
+.tab .dot{
+  width:6px;height:6px;border-radius:999px;background:currentColor;opacity:.65;
+}
+.tab.active .dot{background:var(--primary);opacity:1;box-shadow:0 0 8px var(--primary)}
+
+.shell-actions{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0}
+.icon-btn{
+  width:32px;height:32px;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text-muted);cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:.15s;font-size:14px;
+}
+.icon-btn:hover{color:var(--text);background:var(--surface-2);border-color:var(--border-strong)}
+
+/* ───────── Frame container ───────── */
+.shell-frame{
+  flex:1;min-height:0;position:relative;background:var(--bg);
+}
+.shell-frame iframe{
+  position:absolute;inset:0;width:100%;height:100%;border:0;
+  background:var(--bg);
+}
+.shell-frame iframe[hidden]{display:none}
+
+/* ───────── Splash de chargement ───────── */
+.shell-splash{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:14px;pointer-events:none;
+  background:var(--bg);
+  transition:opacity .25s;
+}
+.shell-splash.hidden{opacity:0;visibility:hidden}
+.spinner{
+  width:32px;height:32px;border-radius:50%;
+  border:2px solid var(--border-strong);
+  border-top-color:var(--primary);
+  animation:spin 700ms linear infinite;
+}
+.shell-splash .label{
+  font-size:11px;color:var(--text-faint);letter-spacing:.06em;text-transform:uppercase;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ───────── Mobile ajustements ───────── */
+@media (max-width:640px){
+  .shell-bar{padding:0 8px}
+  .shell-logo{font-size:11px;padding-right:8px;margin-right:4px}
+  .shell-logo .tag{display:none}
+  .tab{padding:7px 10px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<div class="shell-bar" role="tablist" aria-label="Plannings">
+  <div class="shell-logo">
+    <img src="https://menetrey-lift.ch/wp-content/uploads/2022/05/logotest-web.png" alt="Menétrey">
+    <span class="tag">Planning</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab" data-target="montage" role="tab" aria-selected="true">
+      <span class="dot"></span>Montage
+    </button>
+    <button class="tab" data-target="sav" role="tab" aria-selected="false">
+      <span class="dot"></span>SAV
+    </button>
+  </div>
+
+  <div class="shell-actions">
+    <button class="icon-btn" id="reload-btn" title="Recharger l'onglet courant" aria-label="Recharger">⟳</button>
+    <button class="icon-btn" id="open-btn" title="Ouvrir dans un nouvel onglet" aria-label="Ouvrir dans un nouvel onglet">↗</button>
+  </div>
+</div>
+
+<div class="shell-frame">
+  <div class="shell-splash" id="splash">
+    <div class="spinner"></div>
+    <div class="label" id="splash-label">Chargement…</div>
+  </div>
+  <iframe id="frame-montage" data-target="montage" src="about:blank" title="Planning Montage" loading="lazy" hidden></iframe>
+  <iframe id="frame-sav"     data-target="sav"     src="about:blank" title="Planning SAV"     loading="lazy" hidden></iframe>
+</div>
+
+<script>
+(() => {
+  const TARGETS = {
+    montage: { src: 'planning-montage.html', label: 'Planning Montage' },
+    sav:     { src: 'planning-sav.html',     label: 'Planning SAV' },
+  };
+  const STORAGE_KEY = 'planning.shell.activeTab';
+  const tabs   = document.querySelectorAll('.tab');
+  const frames = { montage: document.getElementById('frame-montage'), sav: document.getElementById('frame-sav') };
+  const splash = document.getElementById('splash');
+  const splashLabel = document.getElementById('splash-label');
+  const reloadBtn = document.getElementById('reload-btn');
+  const openBtn   = document.getElementById('open-btn');
+  const loadedFlags = { montage: false, sav: false };
+
+  function targetFromHash() {
+    const h = (location.hash || '').replace(/^#/, '').toLowerCase();
+    if (TARGETS[h]) return h;
+    return null;
+  }
+  function targetFromStorage() {
+    try {
+      const v = localStorage.getItem(STORAGE_KEY);
+      if (v && TARGETS[v]) return v;
+    } catch(e){}
+    return null;
+  }
+  const initial = targetFromHash() || targetFromStorage() || 'montage';
+
+  function activate(target, opts = {}) {
+    if (!TARGETS[target]) target = 'montage';
+
+    // Tabs
+    tabs.forEach(t => {
+      const on = t.dataset.target === target;
+      t.classList.toggle('active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+
+    // Lazy-load iframe la première fois
+    const frame = frames[target];
+    if (!loadedFlags[target]) {
+      splashLabel.textContent = 'Chargement ' + TARGETS[target].label + '…';
+      splash.classList.remove('hidden');
+      frame.addEventListener('load', () => {
+        loadedFlags[target] = true;
+        if (currentTarget() === target) splash.classList.add('hidden');
+      }, { once: true });
+      frame.src = TARGETS[target].src;
+    } else {
+      splash.classList.add('hidden');
+    }
+
+    // Affichage : on cache les autres iframes plutôt que de les détruire (état + auth préservés)
+    Object.keys(frames).forEach(k => {
+      frames[k].hidden = (k !== target);
+    });
+
+    // URL + storage
+    if (!opts.fromHash) {
+      const newHash = '#' + target;
+      if (location.hash !== newHash) history.replaceState(null, '', newHash);
+    }
+    try { localStorage.setItem(STORAGE_KEY, target); } catch(e){}
+
+    document.title = TARGETS[target].label + ' — Menétrey';
+  }
+
+  function currentTarget() {
+    const t = document.querySelector('.tab.active');
+    return t ? t.dataset.target : 'montage';
+  }
+
+  // Click tabs
+  tabs.forEach(t => t.addEventListener('click', () => activate(t.dataset.target)));
+
+  // Hash sync (bouton retour navigateur, etc.)
+  window.addEventListener('hashchange', () => {
+    const t = targetFromHash();
+    if (t) activate(t, { fromHash: true });
+  });
+
+  // Reload
+  reloadBtn.addEventListener('click', () => {
+    const t = currentTarget();
+    splashLabel.textContent = 'Rechargement…';
+    splash.classList.remove('hidden');
+    loadedFlags[t] = false;
+    frames[t].addEventListener('load', () => {
+      loadedFlags[t] = true;
+      splash.classList.add('hidden');
+    }, { once: true });
+    try { frames[t].contentWindow.location.reload(); }
+    catch(e) { frames[t].src = TARGETS[t].src + '?_=' + Date.now(); }
+  });
+
+  // Open in new tab
+  openBtn.addEventListener('click', () => {
+    const t = currentTarget();
+    window.open(TARGETS[t].src, '_blank', 'noopener');
+  });
+
+  // Boot
+  activate(initial, { fromHash: !!targetFromHash() });
+})();
+</script>
+</body>
+</html>

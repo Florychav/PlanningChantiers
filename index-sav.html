@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Redirection — Planning SAV</title>
+<meta http-equiv="refresh" content="0; url=index.html#sav">
+<link rel="canonical" href="index.html#sav">
+<style>
+  html,body{height:100%;margin:0;background:#0A0F1E;color:#9CA3AF;font-family:-apple-system,Segoe UI,Inter,sans-serif;display:flex;align-items:center;justify-content:center}
+  a{color:#3B82F6;text-decoration:none}
+  a:hover{text-decoration:underline}
+  .box{text-align:center;padding:24px;font-size:13px}
+  .spinner{width:24px;height:24px;border-radius:50%;border:2px solid #2A3648;border-top-color:#3B82F6;animation:spin .7s linear infinite;margin:0 auto 12px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="spinner"></div>
+  Redirection vers le nouveau Planning unifié…<br>
+  <a href="index.html#sav">Cliquez ici si la redirection ne se fait pas</a>
+</div>
+<script>
+// Force la récupération de la nouvelle version du shell même si le navigateur a en cache l'ancien index.html
+location.replace('index.html?v=' + Date.now() + '#sav');
+</script>
+</body>
+</html>

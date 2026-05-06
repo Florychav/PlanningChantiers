@@ -1,0 +1,869 @@
+{
+  "personnes": [
+    {
+      "id": 1,
+      "prenom": "Jean-Nicolas",
+      "nom": "Gasparini",
+      "groupe": "JSG",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 2,
+      "prenom": "Anthony",
+      "nom": "Vuetaz",
+      "groupe": "JSG",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 3,
+      "prenom": "Fredéric",
+      "nom": "Burgy",
+      "groupe": "Protocoleur/TS",
+      "role": "Protocoleur",
+      "actif": true
+    },
+    {
+      "id": 4,
+      "prenom": "Pierre-André",
+      "nom": "Berset",
+      "groupe": "JSG",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 5,
+      "prenom": "Jean-Luc",
+      "nom": "Chevalley",
+      "groupe": "JSG",
+      "role": "Pré-Protocoleur",
+      "actif": true
+    },
+    {
+      "id": 6,
+      "prenom": "Manuel",
+      "nom": "Lopes",
+      "groupe": "JSG",
+      "role": "Pré-Protocoleur",
+      "actif": true
+    },
+    {
+      "id": 7,
+      "prenom": "Emmanuel",
+      "nom": "Perdereau",
+      "groupe": "JSG",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 8,
+      "prenom": "Etienne",
+      "nom": "Laville",
+      "groupe": "JSG",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 9,
+      "prenom": "Nathan",
+      "nom": "Deguergue",
+      "groupe": "JSG",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 10,
+      "prenom": "Léo",
+      "nom": "Bulliard",
+      "groupe": "JSG",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 11,
+      "prenom": "Jean-Sébastien",
+      "nom": "Gravier",
+      "groupe": "JSG",
+      "role": "Chef de Chantier",
+      "actif": true
+    },
+    {
+      "id": 12,
+      "prenom": "Simon",
+      "nom": "Sentinelli",
+      "groupe": "SS",
+      "role": "Chef de Chantier",
+      "actif": true
+    },
+    {
+      "id": 13,
+      "prenom": "Samuel",
+      "nom": "Rochat",
+      "groupe": "SS",
+      "role": "Pré-Protocoleur",
+      "actif": true
+    },
+    {
+      "id": 14,
+      "prenom": "Jonas",
+      "nom": "Laplace",
+      "groupe": "SS",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 15,
+      "prenom": "Abdelaziz",
+      "nom": "Naim",
+      "groupe": "SS",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 16,
+      "prenom": "Dany",
+      "nom": "Monney",
+      "groupe": "SS",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 17,
+      "prenom": "Aleksandar",
+      "nom": "Petrovic",
+      "groupe": "SS",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 18,
+      "prenom": "Goran",
+      "nom": "Obradovic",
+      "groupe": "SS",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 19,
+      "prenom": "Dalibor",
+      "nom": "Lukic",
+      "groupe": "SS",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 20,
+      "prenom": "Giuseppe",
+      "nom": "Cimino",
+      "groupe": "SS",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 21,
+      "prenom": "Grégory",
+      "nom": "Déglise",
+      "groupe": "Externe",
+      "role": "DSG",
+      "actif": true
+    },
+    {
+      "id": 22,
+      "prenom": "Patrice",
+      "nom": "Favre",
+      "groupe": "Externe",
+      "role": "PatLift",
+      "actif": true
+    },
+    {
+      "id": 23,
+      "prenom": "Christophe",
+      "nom": "Menétrey",
+      "groupe": "Protocoleur/TS",
+      "role": "TS",
+      "actif": true
+    },
+    {
+      "id": 24,
+      "prenom": "à",
+      "nom": "planifier",
+      "groupe": "Autre",
+      "role": "Monteur",
+      "actif": true
+    },
+    {
+      "id": 25,
+      "prenom": "à",
+      "nom": "planifier",
+      "groupe": "Autre",
+      "role": "Monteur",
+      "actif": true
+    }
+  ],
+  "etiquettes": [
+    {
+      "id": "y6ijcmvl",
+      "personneId": 1,
+      "type": "rouge",
+      "dateDebut": "2026-04-27",
+      "dateFin": "2026-05-11",
+      "data": {
+        "numeroInstallation": "02-1111",
+        "lieu": "Genève",
+        "adresse": "Rue du Rhône 12",
+        "vendeur": "Dupont",
+        "chefChantier": "Gravier",
+        "chefProjet": "Martin",
+        "canton": "GE",
+        "poidsKg": 1200,
+        "genre": "électrique",
+        "nbArrets": 8,
+        "nbAcces": 10,
+        "dureeTotaleJours": 15,
+        "heuresTotales": 120
+      },
+      "verrouille": false,
+      "creePar": "Flory"
+    },
+    {
+      "id": "2tvgsejb",
+      "personneId": 1,
+      "type": "jaune",
+      "dateDebut": "2026-05-12",
+      "dateFin": "2026-05-13",
+      "data": {
+        "numeroInstallation": "02-1111"
+      },
+      "verrouille": false,
+      "creePar": "AUTO"
+    },
+    {
+      "id": "mznbi0is",
+      "personneId": 19,
+      "type": "bleu",
+      "dateDebut": "2026-04-27",
+      "dateFin": "2026-05-21",
+      "data": {
+        "numeroInstallation": "03-2222",
+        "lieu": "Lausanne",
+        "adresse": "Av. de la Gare 5",
+        "vendeur": "Rochat",
+        "chefChantier": "Sentinelli",
+        "chefProjet": "Dupuis",
+        "canton": "VD",
+        "poidsKg": 2000,
+        "genre": "hydraulique",
+        "nbArrets": 4,
+        "nbAcces": 5,
+        "dureeTotaleJours": 16,
+        "heuresTotales": 128,
+        "joursAide": 0
+      },
+      "verrouille": false,
+      "creePar": "Flory"
+    },
+    {
+      "id": "ynm5yiov",
+      "personneId": 19,
+      "type": "jaune",
+      "dateDebut": "2026-05-22",
+      "dateFin": "2026-05-26",
+      "data": {
+        "numeroInstallation": "03-2222"
+      },
+      "verrouille": false,
+      "creePar": "AUTO",
+      "history": [
+        {
+          "date": "2026-05-02T21:05:53.376Z",
+          "user": "Flory",
+          "action": "drag",
+          "changes": {
+            "dateDebut": "2026-05-22",
+            "dateFin": "2026-05-26",
+            "personneId": 19,
+            "from": {
+              "dateDebut": "2026-05-20",
+              "dateFin": "2026-05-21",
+              "personneId": 19
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "hf6tyq7u",
+      "personneId": 5,
+      "type": "violet",
+      "dateDebut": "2026-05-06",
+      "dateFin": "2026-05-21",
+      "data": {
+        "numeroInstallation": "04-3333",
+        "lieu": "Fribourg",
+        "adresse": "Grand Rue 8",
+        "vendeur": "Kolly",
+        "chefChantier": "Schütz",
+        "chefProjet": "Blanc",
+        "canton": "FR",
+        "poidsKg": 800,
+        "genre": "électrique",
+        "nbArrets": 5,
+        "nbAcces": 6,
+        "dureeTotaleJours": 15,
+        "heuresTotales": 115
+      },
+      "verrouille": false,
+      "creePar": "Alex"
+    },
+    {
+      "id": "mdj0fqne",
+      "personneId": 5,
+      "type": "jaune",
+      "dateDebut": "2026-05-22",
+      "dateFin": "2026-05-23",
+      "data": {
+        "numeroInstallation": "04-3333"
+      },
+      "verrouille": false,
+      "creePar": "AUTO"
+    },
+    {
+      "id": "gbp9ok9a",
+      "personneId": 2,
+      "type": "gris",
+      "dateDebut": "2026-04-30",
+      "dateFin": "2026-05-09",
+      "data": {
+        "numeroInstallation": "02-1111",
+        "dureeJours": 4
+      },
+      "verrouille": false,
+      "creePar": "Flory",
+      "history": [
+        {
+          "date": "2026-05-01T20:56:32.833Z",
+          "user": "Flory",
+          "action": "resize",
+          "changes": {
+            "dateDebut": "2026-04-30",
+            "dateFin": "2026-05-09"
+          }
+        },
+        {
+          "date": "2026-05-01T20:56:40.334Z",
+          "user": "Flory",
+          "action": "resize",
+          "changes": {
+            "dateDebut": "2026-04-26",
+            "dateFin": "2026-05-09"
+          }
+        },
+        {
+          "date": "2026-05-01T20:56:45.863Z",
+          "user": "Flory",
+          "action": "resize",
+          "changes": {
+            "dateDebut": "2026-04-30",
+            "dateFin": "2026-05-09"
+          }
+        }
+      ]
+    },
+    {
+      "id": "oe0dotib",
+      "personneId": 6,
+      "type": "vert",
+      "dateDebut": "2026-05-15",
+      "dateFin": "2026-05-22",
+      "data": {
+        "intitule": "Congé été"
+      },
+      "verrouille": false,
+      "creePar": "Alex"
+    },
+    {
+      "id": "68odf37t",
+      "personneId": 2,
+      "type": "noir",
+      "dateDebut": "2026-05-13",
+      "dateFin": "2026-05-17",
+      "data": {
+        "descriptionSAV": "Remplacement moteur cabine",
+        "travauxRestants": "Réglage final + contrôle"
+      },
+      "verrouille": true,
+      "creePar": "Flory"
+    },
+    {
+      "id": "xvgi03gk",
+      "personneId": 1,
+      "type": "noir",
+      "dateDebut": "2026-05-16",
+      "dateFin": "2026-05-20",
+      "data": {
+        "descriptionSAV": "Panne tableau électrique",
+        "travauxRestants": "Attente pièces détachées"
+      },
+      "verrouille": true,
+      "creePar": "Alex",
+      "history": [
+        {
+          "date": "2026-05-01T20:54:32.329Z",
+          "user": "Flory",
+          "action": "convertToRose",
+          "changes": {
+            "from": "noir",
+            "to": "rose"
+          }
+        },
+        {
+          "date": "2026-05-01T20:54:42.753Z",
+          "user": "Flory",
+          "action": "convertToNoir",
+          "changes": {
+            "from": "rose",
+            "to": "noir"
+          }
+        }
+      ]
+    },
+    {
+      "id": "b8tr9i109lpgs3fe",
+      "personneId": 5,
+      "type": "rose",
+      "dateDebut": "2026-04-28",
+      "dateFin": "2026-05-05",
+      "data": {
+        "descriptionSAV": "",
+        "travauxRestants": "",
+        "dureeJoursOuvrables": 5
+      },
+      "verrouille": false,
+      "creePar": "",
+      "history": [
+        {
+          "date": "2026-05-02T21:05:23.575Z",
+          "user": "Flory",
+          "action": "modif",
+          "changes": {
+            "dateDebut": "2026-04-27",
+            "dateFin": "2026-05-04",
+            "personneId": 11
+          }
+        },
+        {
+          "date": "2026-05-02T21:05:26.345Z",
+          "user": "Flory",
+          "action": "drag",
+          "changes": {
+            "dateDebut": "2026-04-28",
+            "dateFin": "2026-05-05",
+            "personneId": 5,
+            "from": {
+              "dateDebut": "2026-04-27",
+              "dateFin": "2026-05-04",
+              "personneId": 11
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "0w22qm3iemuh8abk",
+      "personneId": 8,
+      "type": "bleu",
+      "dateDebut": "2026-04-27",
+      "dateFin": "2026-05-27",
+      "data": {
+        "numeroInstallation": "",
+        "lieu": "",
+        "adresse": "",
+        "vendeur": "",
+        "chefChantier": "",
+        "chefProjet": "",
+        "canton": "",
+        "poidsKg": 0,
+        "genre": "électrique",
+        "nbArrets": 0,
+        "nbAcces": 0,
+        "dureeTotaleJours": 0,
+        "heuresTotales": 0
+      },
+      "verrouille": false,
+      "creePar": ""
+    },
+    {
+      "id": "zx4s9mph7uz94795",
+      "personneId": 20,
+      "type": "rouge",
+      "dateDebut": "2026-04-27",
+      "dateFin": "2026-05-27",
+      "data": {
+        "numeroInstallation": "02-9999",
+        "lieu": "",
+        "adresse": "",
+        "vendeur": "",
+        "chefChantier": "",
+        "chefProjet": "",
+        "canton": "",
+        "poidsKg": 0,
+        "genre": "électrique",
+        "nbArrets": 0,
+        "nbAcces": 0,
+        "dureeTotaleJours": 0,
+        "heuresTotales": 0
+      },
+      "verrouille": false,
+      "creePar": "flo"
+    },
+    {
+      "id": "ehdcrl5ycw5d925l",
+      "personneId": 20,
+      "type": "jaune",
+      "dateDebut": "2026-05-28",
+      "dateFin": "2026-05-29",
+      "data": {
+        "numeroInstallation": "02-9999"
+      },
+      "verrouille": false,
+      "creePar": "AUTO",
+      "history": [
+        {
+          "date": "2026-05-02T21:05:56.121Z",
+          "user": "Flory",
+          "action": "drag",
+          "changes": {
+            "dateDebut": "2026-05-28",
+            "dateFin": "2026-05-29",
+            "personneId": 20,
+            "from": {
+              "dateDebut": "2026-05-26",
+              "dateFin": "2026-05-27",
+              "personneId": 20
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "f548x65q7zbzjetd",
+      "personneId": 14,
+      "type": "gris",
+      "dateDebut": "2026-04-27",
+      "dateFin": "2026-05-10",
+      "data": {
+        "numeroInstallation": "02-9999",
+        "dureeJours": 20
+      },
+      "verrouille": false,
+      "creePar": "AUTO"
+    },
+    {
+      "id": "uv7ue4rf08edx60k",
+      "personneId": 9,
+      "type": "bleu",
+      "dateDebut": "2026-04-27",
+      "dateFin": "2026-05-12",
+      "data": {
+        "numeroInstallation": "02-9876",
+        "lieu": "pomy",
+        "adresse": "dndzjdzdzm",
+        "vendeur": "prout",
+        "chefChantier": "JSG",
+        "chefProjet": "AG",
+        "canton": "GE",
+        "poidsKg": 1630,
+        "genre": "électrique",
+        "nbArrets": 3,
+        "nbAcces": 3,
+        "dureeTotaleJours": 12,
+        "heuresTotales": 362,
+        "joursAide": 5
+      },
+      "verrouille": false,
+      "creePar": "flo"
+    },
+    {
+      "id": "h83shoukz8uweyg5",
+      "personneId": 9,
+      "type": "jaune",
+      "dateDebut": "2026-05-13",
+      "dateFin": "2026-05-15",
+      "data": {
+        "numeroInstallation": "02-9876"
+      },
+      "verrouille": false,
+      "creePar": "AUTO",
+      "history": [
+        {
+          "date": "2026-05-02T21:06:00.858Z",
+          "user": "Flory",
+          "action": "drag",
+          "changes": {
+            "dateDebut": "2026-05-13",
+            "dateFin": "2026-05-15",
+            "personneId": 9,
+            "from": {
+              "dateDebut": "2026-05-11",
+              "dateFin": "2026-05-12",
+              "personneId": 9
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "wf92q10k4ysexnlc",
+      "personneId": 6,
+      "type": "gris",
+      "dateDebut": "2026-04-27",
+      "dateFin": "2026-04-30",
+      "data": {
+        "numeroInstallation": "02-9876",
+        "dureeJours": 5
+      },
+      "verrouille": false,
+      "creePar": "AUTO",
+      "history": [
+        {
+          "date": "2026-05-02T21:06:06.288Z",
+          "user": "Flory",
+          "action": "drag",
+          "changes": {
+            "dateDebut": "2026-04-27",
+            "dateFin": "2026-04-30",
+            "personneId": 6,
+            "from": {
+              "dateDebut": "2026-04-27",
+              "dateFin": "2026-05-01",
+              "personneId": 9
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "819zud7lv4ee6d91",
+      "personneId": 11,
+      "type": "autre",
+      "dateDebut": "2026-05-21",
+      "dateFin": "2026-05-25",
+      "data": {
+        "texteLibre": "",
+        "couleurHex": "#fa0000"
+      },
+      "verrouille": false,
+      "creePar": ""
+    },
+    {
+      "id": "cq1ouphiyrwub8vd",
+      "personneId": 10,
+      "type": "bleu",
+      "dateDebut": "2026-04-27",
+      "dateFin": "2026-06-01",
+      "data": {
+        "numeroInstallation": "02-789654",
+        "lieu": "",
+        "adresse": "",
+        "vendeur": "",
+        "chefChantier": "",
+        "chefProjet": "",
+        "canton": "",
+        "poidsKg": 0,
+        "genre": "électrique",
+        "nbArrets": 0,
+        "nbAcces": 0,
+        "heuresTotales": 0,
+        "dureeJoursOuvrables": 25,
+        "joursAide": 10
+      },
+      "verrouille": false,
+      "creePar": "Flory",
+      "history": [
+        {
+          "date": "2026-05-02T21:02:40.049Z",
+          "user": "Flory",
+          "action": "creation",
+          "changes": {
+            "dateDebut": "2026-05-04",
+            "dateFin": "2026-06-09"
+          }
+        },
+        {
+          "date": "2026-05-02T21:02:58.020Z",
+          "user": "Flory",
+          "action": "drag",
+          "changes": {
+            "dateDebut": "2026-04-26",
+            "dateFin": "2026-06-01",
+            "personneId": 10,
+            "from": {
+              "dateDebut": "2026-05-04",
+              "dateFin": "2026-06-05",
+              "personneId": 10
+            }
+          }
+        },
+        {
+          "date": "2026-05-02T21:03:08.283Z",
+          "user": "Flory",
+          "action": "drag",
+          "changes": {
+            "dateDebut": "2026-04-27",
+            "dateFin": "2026-06-01",
+            "personneId": 10,
+            "from": {
+              "dateDebut": "2026-04-26",
+              "dateFin": "2026-06-01",
+              "personneId": 10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "qcephmg39cr6xz2g",
+      "personneId": 10,
+      "type": "jaune",
+      "dateDebut": "2026-06-02",
+      "dateFin": "2026-06-03",
+      "data": {
+        "numeroInstallation": "02-789654"
+      },
+      "verrouille": false,
+      "creePar": "AUTO",
+      "history": [
+        {
+          "date": "2026-05-02T21:02:40.049Z",
+          "user": "Flory",
+          "action": "creation-auto",
+          "changes": null
+        },
+        {
+          "date": "2026-05-02T21:02:58.021Z",
+          "user": "Flory",
+          "action": "follow-mother",
+          "changes": {
+            "dateDebut": "2026-06-02",
+            "dateFin": "2026-06-03",
+            "personneId": 10
+          }
+        },
+        {
+          "date": "2026-05-02T21:03:08.283Z",
+          "user": "Flory",
+          "action": "follow-mother",
+          "changes": {
+            "dateDebut": "2026-06-02",
+            "dateFin": "2026-06-03",
+            "personneId": 10
+          }
+        }
+      ],
+      "motherLabelId": "cq1ouphiyrwub8vd",
+      "linkedLabelId": "a7i6cb90xsge8d4h"
+    },
+    {
+      "id": "a7i6cb90xsge8d4h",
+      "personneId": 3,
+      "type": "jaune",
+      "dateDebut": "2026-06-03",
+      "dateFin": "2026-06-03",
+      "data": {
+        "numeroInstallation": "02-789654"
+      },
+      "verrouille": false,
+      "creePar": "AUTO-LINK",
+      "history": [
+        {
+          "date": "2026-05-02T21:02:40.049Z",
+          "user": "Flory",
+          "action": "creation-auto-link",
+          "changes": null
+        },
+        {
+          "date": "2026-05-02T21:02:58.021Z",
+          "user": "Flory",
+          "action": "sync-follow-mother",
+          "changes": null
+        },
+        {
+          "date": "2026-05-02T21:03:08.283Z",
+          "user": "Flory",
+          "action": "sync-follow-mother",
+          "changes": null
+        }
+      ],
+      "linkedFromId": "qcephmg39cr6xz2g"
+    },
+    {
+      "id": "dsqrfmdzlvxm5yel",
+      "personneId": 7,
+      "type": "gris",
+      "dateDebut": "2026-04-27",
+      "dateFin": "2026-05-11",
+      "data": {
+        "numeroInstallation": "02-789654",
+        "dureeJoursOuvrables": 10
+      },
+      "verrouille": false,
+      "creePar": "AUTO",
+      "history": [
+        {
+          "date": "2026-05-02T21:02:40.049Z",
+          "user": "Flory",
+          "action": "creation-auto",
+          "changes": null
+        },
+        {
+          "date": "2026-05-02T21:02:58.021Z",
+          "user": "Flory",
+          "action": "follow-mother",
+          "changes": {
+            "dateDebut": "2026-04-26",
+            "dateFin": "2026-05-11",
+            "personneId": 7
+          }
+        },
+        {
+          "date": "2026-05-02T21:03:08.283Z",
+          "user": "Flory",
+          "action": "follow-mother",
+          "changes": {
+            "dateDebut": "2026-04-27",
+            "dateFin": "2026-05-11",
+            "personneId": 7
+          }
+        }
+      ],
+      "motherLabelId": "cq1ouphiyrwub8vd"
+    },
+    {
+      "id": "slg7xgmqijk97m6u",
+      "personneId": 4,
+      "type": "orange",
+      "dateDebut": "2026-04-27",
+      "dateFin": "2026-05-10",
+      "data": {
+        "dureeJoursOuvrables": 3
+      },
+      "verrouille": false,
+      "creePar": "Flory",
+      "history": [
+        {
+          "date": "2026-05-03T06:32:01.357Z",
+          "user": "Flory",
+          "action": "creation",
+          "changes": {
+            "dateDebut": "2026-04-27",
+            "dateFin": "2026-05-10"
+          }
+        }
+      ]
+    }
+  ],
+  "ponts": [],
+  "reunions": [],
+  "admin": false
+}

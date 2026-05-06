@@ -1,0 +1,2709 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Planning SAV — Ascenseurs Menétrey SA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="https://menetrey-lift.ch/wp-content/uploads/2022/05/logo-menetrey-mobile.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{height:100%;overflow:hidden}
+:root{
+  --bg:#16161a;--bg-elev-1:#1d1d22;--bg-elev-2:#23232a;--bg-elev-3:#2a2a32;
+  --border:#33333a;--border-strong:#33333a;
+  --text:#ededee;--text-muted:#a1a1a8;--text-faint:#6e6e76;
+  --primary:#1B3A6B;--primary-hover:#2c5494;--primary-soft:rgba(27,58,107,.18);
+  /* Couleurs étiquettes SAV */
+  --sav-cyan:#00BCD4;--sav-orange:#FF9800;--sav-jaune:#FDD835;
+  --sav-marron:#5D4037;--sav-orangec:#FFB74D;--sav-gris:#90A4AE;
+  --sav-noir:#212121;--sav-rose:#F48FB1;--sav-vert:#43A047;
+  /* Couleurs étiquettes montage (pour lignes communes) */
+  --rouge:#dc4c4c;--bleu:#3b6cc4;--violet:#9d4cb6;
+  --gris-lbl:#7e8893;--jaune:#d4b73a;--vert:#33c777;
+  --orange:#e8901a;--rose:#d8568a;--noir-lbl:#3a3a3e;--brun:#8d6e63;
+  --col-w:32px;--row-h:48px;
+}
+body{font-family:'Inter',sans-serif;font-size:13px;background:var(--bg);color:var(--text);height:100%;max-height:100%;display:flex;flex-direction:column;overflow:hidden}
+header{background:var(--bg-elev-1);padding:0 16px;display:flex;align-items:center;height:52px;flex-shrink:0;gap:12px;border-bottom:1px solid var(--border);position:relative}
+header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(27,58,107,.4),transparent)}
+header img.brand-logo{height:30px;filter:brightness(0) invert(1) opacity(.95);transition:.2s}
+header img.brand-logo:hover{filter:none}
+header h1{font-size:14px;font-weight:600;white-space:nowrap;letter-spacing:-.01em}
+header .spacer{flex:1}
+header .file-status{font-size:11px;color:var(--text-muted);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid transparent;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;font-family:inherit;transition:.15s}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-secondary{background:var(--bg-elev-2);color:var(--text);border-color:var(--border)}
+.btn-secondary:hover{background:var(--bg-elev-3)}
+.btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg-elev-2);color:var(--text)}
+.btn-sm{padding:4px 9px;font-size:11px}
+.btn-danger{background:#3a1e1e;color:#f87171;border-color:#5a2929}
+.btn-danger:hover{background:#4a2424;color:#fca5a5}
+.btn-link{background:rgba(27,58,107,.15);color:#93c5fd;border:1px solid rgba(27,58,107,.4);font-weight:500}
+.btn-link:hover{background:rgba(27,58,107,.25);color:#bfdbfe}
+.gantt-toolbar{background:var(--bg-elev-1);border-bottom:1px solid var(--border);padding:8px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.view-btn{padding:4px 12px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:11.5px;background:var(--bg-elev-2);color:var(--text-muted);font-weight:500;transition:.15s;font-family:inherit}
+.view-btn:hover{background:var(--bg-elev-3);color:var(--text)}
+.view-btn.active{background:var(--primary-soft);color:#93c5fd;border-color:var(--primary)}
+.nav-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--bg-elev-2);color:var(--text-muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.nav-btn:hover{background:var(--bg-elev-3);color:var(--text)}
+#period-label{font-size:12px;font-weight:500;color:var(--text-muted);min-width:160px}
+.gantt-wrap{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;max-height:100%}
+.gantt-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 60px)}
+.gr-header{position:sticky;top:0;z-index:25;display:flex;background:var(--bg-elev-1)!important;border-bottom:1px solid var(--border)}
+.gr-corner{position:sticky;left:0;z-index:30;width:200px;min-width:200px;flex-shrink:0;background:var(--bg-elev-1);border-right:1px solid var(--border);display:flex;align-items:center;padding:0 12px;font-weight:600;font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;height:76px}
+.gr-header-right{display:flex;flex-direction:column;flex-shrink:0}
+.gr-month-row{display:flex;height:22px;background:var(--bg-elev-2);border-bottom:1px solid var(--border)}
+.gr-week-row{display:flex;height:16px;background:var(--bg-elev-1);border-bottom:1px solid var(--border)}
+.week-band{display:flex;align-items:center;font-size:9.5px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;border-right:1px solid var(--border);background:var(--bg-elev-1);white-space:nowrap}
+.week-band-inner{position:sticky;left:208px;padding:0 6px}
+.gr-day-row{display:flex;height:38px}
+.month-band{display:flex;align-items:center;font-size:10.5px;font-weight:600;color:#93c5fd;text-transform:uppercase;letter-spacing:.08em;border-right:1px solid var(--border);background:var(--bg-elev-2);white-space:nowrap}
+.month-band-inner{position:sticky;left:208px;padding:0 8px}
+.day-header{min-width:var(--col-w);width:var(--col-w);height:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;border-right:1px solid var(--border);user-select:none;background:var(--bg-elev-1);color:var(--text-muted)}
+.day-header .day-num{font-weight:600;font-size:13px;color:var(--text)}
+.day-header .day-name{font-size:9px;text-transform:uppercase;color:var(--text-faint);letter-spacing:.05em}
+.day-header.weekend{background:#0d0d0f}
+.day-header.weekend .day-num,.day-header.weekend .day-name{color:var(--text-faint)}
+.day-header.ferie{background:#3d3318;color:#fde68a}
+.day-header.ferie .day-num{color:#fde68a;font-weight:700}
+.day-header.today{background:#1f3a78;color:#fff}
+.day-header.today .day-num{color:#fff;font-weight:800}
+.day-header.marker-14{background:rgba(96,165,250,.18);color:#bfdbfe}
+.day-header.marker-35{background:rgba(147,197,253,.15);color:#dbeafe}
+.gr-block-header{display:flex;background:var(--bg-elev-2);border-bottom:1px solid var(--border);border-top:1px solid var(--border);height:34px;align-items:center;min-width:max-content}
+.gr-block-name{position:sticky;left:0;z-index:20;width:200px;min-width:200px;flex-shrink:0;background:var(--bg-elev-2);border-right:1px solid var(--border);padding:0 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#93c5fd;letter-spacing:.08em;display:flex;align-items:center;gap:6px;height:34px}
+.gr-block-fill{flex:1;background:var(--bg-elev-2)}
+.gr-row{display:flex;border-bottom:1px solid var(--border);height:var(--row-h);background:#15151a;min-width:max-content}
+.gr-row:hover{background:#1a1a20}
+.gr-row.commune{background:#16202b}
+.gr-row.commune:hover{background:#1a2535}
+.gr-row.monteur-zone{background:#2a1212}
+.gr-row.monteur-zone:hover{background:#341818}
+.gr-name{position:sticky;left:0;z-index:10;width:200px;min-width:200px;flex-shrink:0;background:inherit;border-right:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px}
+.gr-name .group-badge{font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--bg-elev-3);color:var(--text-muted);border:1px solid var(--border);letter-spacing:.03em;flex-shrink:0}
+.gr-name .group-badge.sav-bloque{background:rgba(220,38,38,.2);color:#fca5a5;border-color:rgba(220,38,38,.4)}
+.gr-name .person-info{overflow:hidden;flex:1;min-width:0}
+.gr-name .person-name{font-weight:500;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.gr-name .person-role{font-size:10.5px;color:var(--text-faint);margin-top:1px}
+.gr-days{display:flex;position:relative;flex-shrink:0}
+.day-cell{min-width:var(--col-w);width:var(--col-w);height:var(--row-h);border-right:1px solid var(--border);cursor:pointer;position:relative;background:#15151a}
+.gr-row:hover .day-cell{background:#1a1a20}
+.gr-row.commune .day-cell{background:#16202b}
+.gr-row.commune:hover .day-cell{background:#1a2535}
+.gr-row.monteur-zone .day-cell{background:#2a1212}
+.gr-row.monteur-zone:hover .day-cell{background:#341818}
+.day-cell:hover,.gr-row:hover .day-cell:hover{background:#22222a}
+.day-cell.weekend{background:#08080a!important}
+.day-cell.ferie{background:rgba(212,183,58,.16);box-shadow:inset 1px 0 0 rgba(212,183,58,.5),inset -1px 0 0 rgba(212,183,58,.5)}
+.day-cell.today{background:rgba(59,108,196,.32);box-shadow:inset 3px 0 0 #60a5fa,inset -3px 0 0 #60a5fa,0 0 12px rgba(96,165,250,.25)}
+.day-cell.marker-14{background:rgba(96,165,250,.13);box-shadow:inset 1px 0 0 #60a5fa,inset -1px 0 0 #60a5fa}
+.day-cell.marker-35{background:rgba(147,197,253,.12);box-shadow:inset 1px 0 0 #93c5fd,inset -1px 0 0 #93c5fd}
+.noir-watermark{position:absolute;top:0;height:100%;background:repeating-linear-gradient(45deg,rgba(220,38,38,.08) 0,rgba(220,38,38,.08) 8px,rgba(220,38,38,.18) 8px,rgba(220,38,38,.18) 16px);box-shadow:inset 0 0 0 1px rgba(220,38,38,.4);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1;overflow:hidden}
+.noir-watermark span{font-size:13px;font-weight:700;color:rgba(252,165,165,.4);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.label-block{position:absolute;top:4px;height:calc(var(--row-h) - 8px);border-radius:6px;display:flex;align-items:center;padding:0 9px;font-size:11px;font-weight:500;cursor:grab;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;z-index:5;border:1px solid rgba(255,255,255,.06);transition:.15s;user-select:none;box-shadow:0 1px 0 rgba(0,0,0,.4);touch-action:pan-x pan-y;letter-spacing:-.005em}
+.label-block.dragging{cursor:grabbing;opacity:.85;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.6);transform:scale(1.02)}
+.label-block:hover{filter:brightness(1.15);box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.label-block.dark-text{color:#1a1a1c}
+.label-block.light-text{color:#fff}
+.label-block.vert-indic{height:14px;top:auto;bottom:3px;font-size:10px;padding:0 6px;border-radius:4px;font-weight:600}
+/* Étiquettes empilées (chevauchement) */
+.label-block.stack-top{top:4px;height:calc((var(--row-h) - 8px) / 2 - 1px)}
+.label-block.stack-bot{top:calc(var(--row-h) / 2 + 2px);height:calc((var(--row-h) - 8px) / 2 - 1px)}
+/* Mode flottant (drag tactile) */
+.label-block.floating{cursor:grabbing;opacity:.92;z-index:60;transform:scale(1.06);box-shadow:0 12px 32px rgba(0,0,0,.7),0 0 0 2px var(--primary),0 0 18px rgba(96,165,250,.6);touch-action:none}
+.label-block.long-pressing{transform:scale(.97);box-shadow:0 0 0 2px var(--primary),0 0 12px rgba(96,165,250,.5);transition:transform .15s,box-shadow .15s}
+/* Mode compact — masque toolbar/légende, réduit le header et les colonnes noms */
+body.compact .gantt-toolbar,
+body.compact .legend-sav{display:none!important}
+body.compact header{min-height:38px;height:auto;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden}
+body.compact header h1{font-size:14px;line-height:1}
+body.compact header > div:first-child > div:first-child{display:none}
+body.compact .gr-corner,
+body.compact .gr-name,
+body.compact .gr-block-name{width:75px;min-width:75px;padding:0 4px}
+body.compact .gr-name{align-items:stretch;gap:0}
+body.compact .gr-name .person-info{display:flex;flex-direction:column;justify-content:center;padding:2px 0;overflow:hidden}
+body.compact .gr-name .person-name{font-size:10px;white-space:normal;line-height:1.1;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+body.compact .gr-name .person-role{font-size:9px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+body.compact .gr-name .group-badge{display:none}
+#compact-chev{transition:transform .2s}
+body.compact #compact-chev{transform:rotate(-90deg);display:inline-block}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--bg-elev-2);border:1px solid var(--border-strong);border-radius:12px;max-width:540px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.6);color:var(--text)}
+.modal-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.modal-header h2{font-size:15px;font-weight:600;flex:1;letter-spacing:-.01em}
+.modal-header .type-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.modal-body{padding:20px 22px}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--bg-elev-1)}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:11.5px;font-weight:500;color:var(--text-muted);margin-bottom:5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;background:var(--bg-elev-1);color:var(--text)}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);background:var(--bg-elev-2)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-error{color:#f87171;font-size:12px;margin-top:4px;font-weight:500;min-height:16px}
+.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:4px 0}
+.type-option{border:2px solid transparent;border-radius:8px;padding:10px;cursor:pointer;text-align:center;background:var(--bg-elev-1)}
+.type-option:hover{border-color:currentColor;background:var(--bg-elev-3)}
+.type-option .type-swatch{width:28px;height:28px;border-radius:6px;margin:0 auto 6px}
+.type-option .type-name{font-size:12px;font-weight:600;color:var(--text)}
+.detail-popup{position:fixed;z-index:500;background:var(--bg-elev-2);border:1px solid var(--border-strong);border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.7);min-width:300px;max-width:380px;overflow:hidden;color:var(--text)}
+.detail-popup .popup-header{padding:14px 16px;color:#fff;font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,.1)}
+.detail-popup .popup-body{padding:14px 16px}
+.detail-popup .popup-row{display:flex;gap:6px;margin-bottom:7px;font-size:12px}
+.detail-popup .popup-row .pkey{color:var(--text-faint);min-width:120px;flex-shrink:0;font-weight:500}
+.detail-popup .popup-row .pval{font-weight:400;word-break:break-word}
+.detail-popup .popup-actions{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:6px;justify-content:flex-end;background:var(--bg-elev-1)}
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:2000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:11px 16px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:340px;border:1px solid rgba(255,255,255,.08);animation:slideIn .2s ease}
+.toast.success{background:rgba(22,163,74,.95)}
+.toast.error{background:rgba(220,38,38,.95)}
+.toast.warning{background:rgba(217,119,6,.95)}
+.toast.info{background:rgba(27,58,107,.95)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
+.legend-sav{display:flex;flex-wrap:wrap;gap:8px;padding:6px 12px;background:var(--bg-elev-1);border-bottom:1px solid var(--border);flex-shrink:0;font-size:11px;color:var(--text-muted)}
+.legend-item{display:flex;align-items:center;gap:4px}
+.legend-dot{width:10px;height:10px;border-radius:3px;border:1px solid rgba(255,255,255,.08)}
+#auth-screen{position:fixed;inset:0;background:radial-gradient(ellipse at top,#0f1c33 0%,var(--bg) 60%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:3000;color:var(--text);gap:18px;padding:24px}
+#auth-screen.visible{display:flex}
+#auth-screen img.fs-logo{max-width:260px;filter:brightness(0) invert(1) opacity(.95)}
+#auth-screen h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
+#auth-screen p{color:var(--text-muted);text-align:center;max-width:420px;font-size:13px}
+#auth-screen .auth-form{display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px;margin-top:6px}
+#auth-screen .auth-form input{padding:11px 13px;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev-2);color:var(--text);font-size:14px;font-family:inherit}
+#auth-screen .auth-form input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.btn-white{background:var(--primary);color:#fff;font-weight:500;padding:11px 22px;border-radius:8px;border:1px solid var(--primary);cursor:pointer;font-size:14px;font-family:inherit}
+.btn-white:hover{background:var(--primary-hover)}
+.btn-white:disabled{opacity:.6;cursor:wait}
+#sync-indicator{font-size:11px;color:var(--text-faint)}
+#sync-indicator::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 6px rgba(16,185,129,.5);margin-right:4px;vertical-align:middle}
+#sync-indicator.syncing::before{background:#fbbf24;animation:pulse 1s infinite}
+#sync-indicator.error::before{background:#ef4444}
+@keyframes pulse{50%{opacity:.4}}
+.role-badge{display:inline-block;padding:1px 6px;border-radius:10px;font-size:9px;font-weight:600;text-transform:uppercase;margin-left:6px;border:1px solid var(--border)}
+.role-admin{background:rgba(220,76,76,.15);color:#fca5a5;border-color:rgba(220,76,76,.3)}
+.role-editor{background:rgba(59,108,196,.15);color:#93c5fd;border-color:rgba(59,108,196,.3)}
+.role-viewer{background:var(--bg-elev-3);color:var(--text-muted)}
+body.role-readonly .editor-only,
+body.role-readonly .admin-only,
+body:not(.role-admin) .admin-only{display:none!important}
+body.role-readonly .label-block{cursor:default}
+body.role-readonly .day-cell{cursor:default}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:4px;border:2px solid var(--bg)}
+.empty-monteur-zone{padding:14px 12px;color:var(--text-faint);font-style:italic;font-size:12px;text-align:center;border-bottom:1px solid var(--border)}
+.travaux-sav-list{margin-top:8px;border-top:1px solid var(--border);padding-top:8px}
+.travaux-sav-list .ts-item{font-size:11px;padding:4px 0;color:var(--text-muted);border-bottom:1px dotted var(--border)}
+.travaux-sav-list .ts-item:last-child{border-bottom:none}
+.travaux-sav-list .ts-type{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle}
+
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN SYSTEM BATCHFRIGO — Override (étape B)
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#0A0F1E;
+  --bg-elev-1:#111827;
+  --bg-elev-2:#0F1626;
+  --bg-elev-3:#1A2233;
+  --surface:#111827;
+  --surface-2:#0F1626;
+  --surface-3:#1A2233;
+  --border:#1F2937;
+  --border-strong:#2A3648;
+  --text:#F9FAFB;
+  --text-muted:#9CA3AF;
+  --text-faint:#6B7280;
+  --primary:#1B3A6B;
+  --primary-hover:#2C5494;
+  --primary-soft:rgba(59,130,246,.12);
+  --accent-blue:#3B82F6;
+  --success:#10B981;
+  --danger:#EF4444;
+  --warning:#F59E0B;
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:16px;
+  --radius-pill:999px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow-md:0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg:0 16px 48px rgba(0,0,0,.45);
+}
+header{background:rgba(17,24,39,.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+header h1{font-size:15px;font-weight:700}
+.gantt-toolbar{background:var(--surface);border-bottom:1px solid var(--border)}
+@media (max-width:768px){
+  .gantt-toolbar{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+  .gantt-toolbar::-webkit-scrollbar{display:none}
+  /* Harmonisation avec planning-montage : colonne nom = 110px en tablette/mobile */
+  .gr-corner,.gr-name,.gr-block-name{width:110px;min-width:110px;padding:0 4px}
+  .gr-name .person-name{font-size:11px;white-space:normal;line-height:1.15}
+  .gr-name .person-role{font-size:9px}
+}
+/* ── BOUTONS ── */
+.btn{border-radius:var(--radius-sm);font-weight:500;transition:background .15s,border-color .15s,color .15s,box-shadow .15s,transform .05s;letter-spacing:-.005em}
+.btn:active{transform:translateY(1px)}
+.btn:disabled,.btn[disabled]{opacity:.5;cursor:not-allowed;pointer-events:none}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 12px rgba(27,58,107,.4)}
+.btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 16px rgba(44,84,148,.5)}
+.btn-secondary{background:var(--surface-3);color:var(--text);border-color:var(--border-strong);box-shadow:var(--shadow-sm)}
+.btn-secondary:hover{background:#22304A;border-color:#3A4A66}
+.btn-ghost{background:transparent;color:var(--text-muted);border-color:var(--border)}
+.btn-ghost:hover{background:var(--surface-3);color:var(--text);border-color:var(--border-strong)}
+.btn-danger{background:rgba(239,68,68,.12);color:#fca5a5;border-color:rgba(239,68,68,.35)}
+.btn-danger:hover{background:rgba(239,68,68,.2);color:#fecaca;border-color:rgba(239,68,68,.55)}
+.btn-link{background:rgba(59,130,246,.12);color:#93c5fd;border-color:rgba(59,130,246,.35)}
+.btn-link:hover{background:rgba(59,130,246,.22);color:#bfdbfe}
+.btn-sm{padding:4px 10px;font-size:11px;border-radius:var(--radius-sm)}
+.btn-lg{padding:9px 18px;font-size:13.5px;border-radius:10px}
+.view-btn{border-radius:var(--radius-sm)}
+.view-btn.active{background:var(--primary-soft);color:#93C5FD;border-color:rgba(59,130,246,.45)}
+.nav-btn{border-radius:var(--radius-sm)}
+/* ── BADGES groupes / séparateurs ── */
+.gr-name .group-badge{background:var(--surface-3);color:var(--text-muted);border:1px solid var(--border-strong);border-radius:var(--radius-pill);padding:2px 8px;font-size:9.5px;letter-spacing:.04em}
+.gr-name .group-badge.sav-bloque{background:rgba(239,68,68,.18);color:#fca5a5;border-color:rgba(239,68,68,.4)}
+.gr-block-header{background:var(--surface-2)}
+.gr-block-name{background:var(--surface-2);color:#93C5FD;font-size:11px;letter-spacing:.08em;font-weight:700;text-transform:uppercase}
+.gr-block-fill{background:var(--surface-2)}
+/* ── LIGNES ── */
+.gr-row{background:var(--surface)}
+.gr-row:hover{background:var(--surface-3)}
+.day-cell{background:var(--surface);border-right-color:var(--border)}
+.gr-row:hover .day-cell{background:var(--surface-3)}
+.gr-row.commune{background:#16202B}
+.gr-row.commune:hover{background:#1B2738}
+.gr-row.commune .day-cell{background:#16202B}
+.gr-row.commune:hover .day-cell{background:#1B2738}
+/* Zone "monteurs SAV bloqués" — fond rouge sombre + liseré rouge gauche + ombre interne */
+.gr-row.monteur-zone{background:#2A1212;box-shadow:inset 4px 0 0 var(--danger),inset 0 1px 0 rgba(0,0,0,.3)}
+.gr-row.monteur-zone:hover{background:#341818}
+.gr-row.monteur-zone .day-cell{background:#2A1212}
+.gr-row.monteur-zone:hover .day-cell{background:#341818}
+.gr-block-header.monteur-zone-header,
+.gr-block-name.monteur-zone-header{background:#2A1212;color:#fca5a5;box-shadow:inset 4px 0 0 var(--danger)}
+/* Week-end — teinte subtile */
+.day-cell.weekend{background:rgba(255,255,255,.02)!important}
+.day-header.weekend{background:rgba(255,255,255,.02)}
+/* ── HEADER GANTT ── */
+.gr-header{background:var(--surface)!important}
+.gr-header .day-header{background:var(--surface)}
+.gr-corner{background:var(--surface)}
+.gr-month-row{background:var(--surface-2)}
+.gr-week-row{background:var(--surface)}
+/* ── AUJOURD'HUI — glow ── */
+.day-cell.today{background:rgba(59,130,246,.18);box-shadow:inset 3px 0 0 var(--accent-blue),inset -3px 0 0 var(--accent-blue),0 0 16px rgba(59,130,246,.35)}
+.day-header.today,
+.gr-header .day-header.today{background:rgba(59,130,246,.32)!important;box-shadow:inset 3px 0 0 var(--accent-blue),inset -3px 0 0 var(--accent-blue),inset 0 -3px 0 var(--accent-blue),0 0 16px rgba(59,130,246,.4)}
+.day-header.today .day-num{text-shadow:0 0 12px rgba(96,165,250,.85)}
+/* ── ÉTIQUETTES ── */
+.label-block{border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.4),0 1px 0 rgba(255,255,255,.04) inset;border:1px solid rgba(255,255,255,.07)}
+.label-block:hover{filter:brightness(1.12);box-shadow:0 4px 10px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.08)}
+/* ── MODALES ── */
+.modal-overlay{background:rgba(8,12,22,.65);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.modal{background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg),0 0 0 1px rgba(255,255,255,.04);max-width:560px}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border)}
+.modal-header h2{font-size:16px;font-weight:700}
+.modal-body{padding:22px 24px}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);background:var(--surface-2)}
+.form-group input,.form-group select,.form-group textarea{background:var(--surface-2);border-color:var(--border-strong);border-radius:var(--radius-sm)}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent-blue);box-shadow:0 0 0 3px var(--primary-soft);background:var(--surface-3)}
+.form-group label{font-size:12px;color:var(--text-muted)}
+/* Detail popup */
+.detail-popup{background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius);box-shadow:var(--shadow-lg)}
+.detail-popup .popup-actions{background:var(--surface-2)}
+/* ── TOAST ── */
+.toast{background:var(--surface-3);color:var(--text);border:1px solid var(--border-strong);border-left:3px solid var(--accent-blue);border-radius:10px;box-shadow:var(--shadow-lg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.toast.success{background:var(--surface-3);border-left-color:var(--success);color:var(--text)}
+.toast.error{background:var(--surface-3);border-left-color:var(--danger);color:var(--text)}
+.toast.warning{background:var(--surface-3);border-left-color:var(--warning);color:var(--text)}
+.toast.info{background:var(--surface-3);border-left-color:var(--accent-blue);color:var(--text)}
+/* ── LEGEND ── */
+.legend-sav{background:var(--surface);border-bottom:1px solid var(--border)}
+/* ── BOTTOM-SHEET MOBILE ── */
+@keyframes sheetSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@media (max-width:640px){
+  .modal-overlay{padding:0;align-items:flex-end}
+  .modal{max-width:100%;width:100%;max-height:85vh;height:auto;border-radius:var(--radius-lg) var(--radius-lg) 0 0;border-bottom:none;animation:sheetSlideUp .25s cubic-bezier(.2,.8,.2,1);box-shadow:var(--shadow-lg)}
+  .modal-header{padding:18px 18px 14px;position:relative}
+  .modal-header::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:38px;height:4px;border-radius:2px;background:var(--border-strong)}
+  .modal-body{padding:16px 18px}
+  .modal-footer{padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));position:sticky;bottom:0}
+}
+::-webkit-scrollbar-thumb{background:var(--border-strong)}
+::-webkit-scrollbar-thumb:hover{background:#3A4A66}
+/* AUTH */
+#auth-screen{background:radial-gradient(ellipse at top,#0F1C33 0%,var(--bg) 60%)}
+#auth-screen .auth-form input{background:var(--surface);border-color:var(--border-strong);border-radius:10px}
+#auth-screen .auth-form input:focus{border-color:var(--accent-blue);box-shadow:0 0 0 3px var(--primary-soft);background:var(--surface-3)}
+.btn-white{background:var(--primary);border-color:var(--primary);border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 16px rgba(27,58,107,.5)}
+.btn-white:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+</style>
+</head>
+<body class="compact">
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <img class="fs-logo" src="https://menetrey-lift.ch/wp-content/uploads/2022/05/logotest-web.png" alt="Menétrey">
+  <h2>Planning SAV</h2>
+  <p>Connectez-vous pour accéder au planning SAV partagé.</p>
+  <form class="auth-form" onsubmit="event.preventDefault(); doLogin();">
+    <input type="email" id="login-email" placeholder="Email" required autocomplete="username">
+    <input type="password" id="login-password" placeholder="Mot de passe" required autocomplete="current-password">
+    <button type="submit" class="btn-white" id="login-btn">Se connecter</button>
+    <div id="login-error" class="form-error"></div>
+  </form>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div id="header-title-block" onclick="toggleCompact()" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:10px" title="Cliquer pour masquer/afficher les options">
+    <img class="brand-logo" src="https://menetrey-lift.ch/wp-content/uploads/2022/05/logotest-web.png" alt="Menétrey">
+    <div style="display:flex;flex-direction:column;line-height:1.1">
+      <span style="font-size:9px;color:var(--text-faint);letter-spacing:.1em;text-transform:uppercase">Planning <span id="compact-chev">▾</span></span>
+      <h1>SAV</h1>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <span id="sync-indicator"></span>
+  <span id="user-info" class="file-status"></span>
+  <button class="btn btn-ghost btn-sm" onclick="manageEvents()">🎉 Événements</button>
+  <button class="btn btn-ghost btn-sm" onclick="manageTeam()">👥 Équipe</button>
+  <button class="btn btn-ghost btn-sm" id="logout-btn" onclick="doLogout()" style="display:none">⏏ Déconnexion</button>
+</header>
+
+<!-- TOOLBAR -->
+<div class="gantt-toolbar">
+  <div style="display:flex;gap:4px">
+    <button class="view-btn active" data-view="semaine" onclick="setView('semaine')">Semaine</button>
+    <button class="view-btn" data-view="trimestre" onclick="setView('trimestre')">Trimestre</button>
+  </div>
+  <button class="btn btn-secondary btn-sm" onclick="exportWeekJPEG()" title="Exporter la semaine en PDF">📄 Export semaine</button>
+  <div style="display:flex;align-items:center;gap:4px">
+    <button class="nav-btn" onclick="navPrev()">‹</button>
+    <button class="btn btn-secondary btn-sm" onclick="navToday()">Aujourd'hui</button>
+    <button class="nav-btn" onclick="navNext()">›</button>
+  </div>
+  <span id="period-label"></span>
+  <div class="spacer"></div>
+  <button class="btn btn-primary btn-sm editor-only" onclick="addLabelGlobal()">+ Nouvelle étiquette</button>
+</div>
+
+<!-- LEGEND -->
+<div class="legend-sav">
+  <span class="legend-item"><span class="legend-dot" style="background:var(--sav-cyan)"></span>Câble-poulie</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--sav-orange)"></span>Divers</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--sav-jaune)"></span>Électrique</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--sav-marron)"></span>Fosse</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--sav-orangec)"></span>Téléalarme</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--sav-gris)"></span>Cabine</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--sav-noir)"></span>Absent</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--sav-rose)"></span>Formation</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--sav-vert)"></span>Indic. horaire</span>
+</div>
+
+<!-- GANTT -->
+<div class="gantt-wrap"><div class="gantt-scroll" id="gantt-scroll"></div></div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ════════════════════════════════════════════════════
+// SUPABASE
+// ════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://nnkthgxbcslkhkdayjvg.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_zX0P2GxSqIlh3Lqb_-PtCw_ydCahuhp';
+let sb = null;
+
+// ════════════════════════════════════════════════════
+// LABEL TYPES
+// ════════════════════════════════════════════════════
+// Pour les lignes communes (Menétrey, Burgy) — étiquettes stockées dans la table montage
+const LABEL_TYPES_MONTAGE = {
+  rouge:  { label:'Remplacement',     color:'#dc4c4c', text:'light' },
+  bleu:   { label:'Installation neuve', color:'#3b6cc4', text:'light' },
+  violet: { label:'Modernisation',    color:'#9d4cb6', text:'light' },
+  gris:   { label:'Aide montage',     color:'#7e8893', text:'light' },
+  jaune:  { label:'Protocole',        color:'#d4b73a', text:'dark'  },
+  vert:   { label:'Congé/Vacances',   color:'#33c777', text:'light' },
+  orange: { label:'Maladie',          color:'#e8901a', text:'dark'  },
+  rose:   { label:'SAV en cours',     color:'#d8568a', text:'light' },
+  noir:   { label:'SAV bloqué',       color:'#3a3a3e', text:'light' },
+  brun:   { label:'Cas particulier',  color:'#8d6e63', text:'light' },
+  autre:  { label:'Autre',            color:'#9C27B0', text:'light' },
+};
+
+// Pour l'équipe SAV et la zone monteurs — étiquettes stockées dans etiquettes_sav
+const LABEL_TYPES_SAV = {
+  cyan:    { label:'Câble-poulie',     color:'#00BCD4', text:'light' },
+  orange:  { label:'Divers',           color:'#FF9800', text:'dark'  },
+  jaune:   { label:'Électrique',       color:'#FDD835', text:'dark'  },
+  marron:  { label:'Fosse',            color:'#5D4037', text:'light' },
+  orangec: { label:'Téléalarme',       color:'#FFB74D', text:'dark'  },
+  gris:    { label:'Cabine',           color:'#90A4AE', text:'dark'  },
+  noir:    { label:'Absent',           color:'#212121', text:'light' },
+  rose:    { label:'Formation',        color:'#F48FB1', text:'dark'  },
+  vert:    { label:'Indicateur horaire', color:'#43A047', text:'light' },
+};
+
+// Champs par type d'étiquette SAV
+const SAV_FIELDS = {
+  cyan:    ['numeroInstallation','adresse','numeroDevis','texteLibre'],
+  orange:  ['numeroInstallation','adresse','numeroDevis','texteLibre'],
+  jaune:   ['numeroInstallation','adresse','numeroDevis','texteLibre'],
+  marron:  ['numeroInstallation','adresse','numeroDevis','texteLibre'],
+  orangec: ['numeroInstallation','adresse','numeroDevis','texteLibre'],
+  gris:    ['numeroInstallation','adresse','numeroDevis','texteLibre'],
+  noir:    ['texteLibre'],
+  rose:    ['texteLibre','lieu'],
+  vert:    ['texteLibre'],
+};
+
+// Jours fériés (FR + GE) 2025-2027
+// ═══ Jours fériés 2025-2027 — Fribourg (FR) et Genève (GE) ═══
+// Source : législation cantonale FR / GE. Aligné avec planning-montage.html.
+//  - 1er mai (Fête du Travail) : férié GE uniquement (pas FR)
+//  - 26 décembre (Saint-Étienne) : férié FR uniquement (pas GE)
+//  - Fête-Dieu (jeudi 60 jours après Pâques) : férié FR uniquement
+//  - 31 décembre (Restauration de la République) : férié GE uniquement
+//  - Assomption 15 août, Toussaint 1er nov : FR uniquement
+//  - Jeûne genevois (jeudi suivant le 1er dimanche de septembre) : GE uniquement
+const FERIES_INFO = {
+  // ─── 2025 ───
+  '2025-01-01':{ nom:'Nouvel An',                     cantons:'FR + GE' },
+  '2025-04-18':{ nom:'Vendredi Saint',                cantons:'FR + GE' },
+  '2025-04-21':{ nom:'Lundi de Pâques',               cantons:'FR + GE' },
+  '2025-05-01':{ nom:'Fête du Travail',               cantons:'GE' },
+  '2025-05-29':{ nom:'Ascension',                     cantons:'FR + GE' },
+  '2025-06-09':{ nom:'Lundi de Pentecôte',            cantons:'FR + GE' },
+  '2025-06-19':{ nom:'Fête-Dieu',                     cantons:'FR' },
+  '2025-08-01':{ nom:'Fête Nationale',                cantons:'FR + GE' },
+  '2025-08-15':{ nom:'Assomption',                    cantons:'FR' },
+  '2025-09-11':{ nom:'Jeûne genevois',                cantons:'GE' },
+  '2025-11-01':{ nom:'Toussaint',                     cantons:'FR' },
+  '2025-12-25':{ nom:'Noël',                          cantons:'FR + GE' },
+  '2025-12-26':{ nom:'Saint-Étienne',                 cantons:'FR' },
+  '2025-12-31':{ nom:'Restauration de la République', cantons:'GE' },
+  // ─── 2026 ───
+  '2026-01-01':{ nom:'Nouvel An',                     cantons:'FR + GE' },
+  '2026-04-03':{ nom:'Vendredi Saint',                cantons:'FR + GE' },
+  '2026-04-06':{ nom:'Lundi de Pâques',               cantons:'FR + GE' },
+  '2026-05-01':{ nom:'Fête du Travail',               cantons:'GE' },
+  '2026-05-14':{ nom:'Ascension',                     cantons:'FR + GE' },
+  '2026-05-25':{ nom:'Lundi de Pentecôte',            cantons:'FR + GE' },
+  '2026-06-04':{ nom:'Fête-Dieu',                     cantons:'FR' },
+  '2026-08-01':{ nom:'Fête Nationale',                cantons:'FR + GE' },
+  '2026-08-15':{ nom:'Assomption',                    cantons:'FR' },
+  '2026-09-10':{ nom:'Jeûne genevois',                cantons:'GE' },
+  '2026-11-01':{ nom:'Toussaint',                     cantons:'FR' },
+  '2026-12-25':{ nom:'Noël',                          cantons:'FR + GE' },
+  '2026-12-26':{ nom:'Saint-Étienne',                 cantons:'FR' },
+  '2026-12-31':{ nom:'Restauration de la République', cantons:'GE' },
+  // ─── 2027 ───
+  '2027-01-01':{ nom:'Nouvel An',                     cantons:'FR + GE' },
+  '2027-03-26':{ nom:'Vendredi Saint',                cantons:'FR + GE' },
+  '2027-03-29':{ nom:'Lundi de Pâques',               cantons:'FR + GE' },
+  '2027-05-01':{ nom:'Fête du Travail',               cantons:'GE' },
+  '2027-05-06':{ nom:'Ascension',                     cantons:'FR + GE' },
+  '2027-05-17':{ nom:'Lundi de Pentecôte',            cantons:'FR + GE' },
+  '2027-05-27':{ nom:'Fête-Dieu',                     cantons:'FR' },
+  '2027-08-01':{ nom:'Fête Nationale',                cantons:'FR + GE' },
+  '2027-08-15':{ nom:'Assomption',                    cantons:'FR' },
+  '2027-09-09':{ nom:'Jeûne genevois',                cantons:'GE' },
+  '2027-11-01':{ nom:'Toussaint',                     cantons:'FR' },
+  '2027-12-25':{ nom:'Noël',                          cantons:'FR + GE' },
+  '2027-12-26':{ nom:'Saint-Étienne',                 cantons:'FR' },
+  '2027-12-31':{ nom:'Restauration de la République', cantons:'GE' },
+};
+const JOURS_FERIES = new Set(Object.keys(FERIES_INFO));
+function getFerieInfo(d) {
+  const s = (typeof d === 'string') ? d : dateStr(d);
+  return FERIES_INFO[s] || null;
+}
+
+// ════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════
+let state = {
+  personnes_montage: [],
+  personnes_sav: [],
+  etiquettes_montage: [],
+  etiquettes_sav: [],
+  ponts: [],
+  session: null,
+  userRole: null,
+  admin: false,
+  currentUser: null,
+  view: 'semaine',
+  anchorDate: new Date(),
+  rangeBefore: 180,
+  rangeAfter: 540,
+  _suppressRealtime: false,
+};
+
+function canEdit()  { return ['editor','admin'].includes(state.userRole); }
+function canAdmin() { return state.userRole === 'admin'; }
+
+// ════════════════════════════════════════════════════
+// DATE UTILITIES
+// ════════════════════════════════════════════════════
+function dateStr(d) {
+  if (typeof d === 'string') return d;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function parseDate(s) { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function addDays(d, n) { const dt=new Date(d); dt.setDate(dt.getDate()+n); return dt; }
+function isWeekend(d) { const day=(typeof d==='string'?parseDate(d):d).getDay(); return day===0||day===6; }
+function isFerie(d) {
+  const s = typeof d==='string'?d:dateStr(d);
+  if (JOURS_FERIES.has(s)) return true;
+  return (state.ponts||[]).some(p => p.date === s);
+}
+function isToday(d) { return (typeof d==='string'?d:dateStr(d)) === dateStr(new Date()); }
+function isTodayPlus(d, n) {
+  const target = dateStr(addDays(new Date(), n));
+  return (typeof d==='string'?d:dateStr(d)) === target;
+}
+function isBusinessDay(d) { return !isWeekend(d) && !isFerie(d); }
+function businessDaysBetween(a, b) {
+  const start=parseDate(dateStr(a)), end=parseDate(dateStr(b));
+  if (end<start) return 0;
+  let count=0, d=new Date(start);
+  while (d <= end) { if (isBusinessDay(d)) count++; d=addDays(d,1); }
+  return count;
+}
+function addBusinessDays(startDate, nbBusinessDays) {
+  let d=parseDate(dateStr(startDate));
+  while (!isBusinessDay(d)) d=addDays(d,1);
+  let remaining=Math.max(1,nbBusinessDays)-1;
+  while (remaining>0) { d=addDays(d,1); if (isBusinessDay(d)) remaining--; }
+  return d;
+}
+function formatDate(s) { return parseDate(s).toLocaleDateString('fr-CH',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+function getDateRange() {
+  const anchor = state.anchorDate;
+  const dow = anchor.getDay()===0?6:anchor.getDay()-1;
+  const baseStart = addDays(anchor, -dow);
+  const start = addDays(baseStart, -state.rangeBefore);
+  const total = state.rangeBefore + state.rangeAfter;
+  const dates = [];
+  for (let i=0;i<total;i++) dates.push(addDays(start,i));
+  return dates;
+}
+function getColWidth() {
+  return {semaine:80, mois:40, trimestre:24, annee:16}[state.view] || 24;
+}
+function periodLabel(dates) {
+  if (!dates.length) return '';
+  const monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const s = dates[0], e = dates[dates.length-1];
+  return `${monthNames[s.getMonth()]} ${s.getFullYear()} – ${monthNames[e.getMonth()]} ${e.getFullYear()}`;
+}
+function uid() { return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2); }
+function getWeekNum(d) {
+  const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = dt.getUTCDay() || 7;
+  dt.setUTCDate(dt.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
+  return Math.ceil((((dt - yearStart) / 86400000) + 1) / 7);
+}
+function getMonday(d) {
+  const dow = d.getDay() === 0 ? 6 : d.getDay() - 1;
+  return addDays(d, -dow);
+}
+
+// ════════════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  errEl.textContent = '';
+  btn.disabled = true; btn.textContent = 'Connexion…';
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { errEl.textContent = error.message; return; }
+    await onAuthSuccess(data.session);
+  } catch (e) {
+    errEl.textContent = e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Se connecter';
+  }
+}
+async function doLogout() {
+  unsubscribeRealtime();
+  await sb.auth.signOut();
+  state.session = null; state.userRole = null; state.admin = false;
+  state.personnes_montage = []; state.personnes_sav = [];
+  state.etiquettes_montage = []; state.etiquettes_sav = [];
+  document.getElementById('logout-btn').style.display = 'none';
+  document.getElementById('user-info').textContent = '';
+  document.getElementById('sync-indicator').textContent = '';
+  showAuthScreen();
+}
+async function onAuthSuccess(session) {
+  state.session = session;
+  state.currentUser = session.user.email;
+  const { data: appUser } = await sb.from('app_users').select('role').eq('user_id', session.user.id).maybeSingle();
+  state.userRole = appUser?.role || 'viewer';
+  state.admin = state.userRole === 'admin';
+  document.getElementById('user-info').innerHTML = `👤 ${session.user.email}<span class="role-badge role-${state.userRole}">${state.userRole.toUpperCase()}</span>`;
+  document.getElementById('logout-btn').style.display = '';
+  document.getElementById('sync-indicator').textContent = 'Synchronisé';
+  hideAuthScreen();
+  applyRolePermissions();
+  setSyncing(true);
+  try { await loadStateFromSupabase(); } catch (e) { toast('Erreur chargement : '+e.message, 'error'); }
+  setSyncing(false);
+  // Si admin et personnes SAV vides → seed
+  if (canAdmin() && state.personnes_sav.length === 0) {
+    if (confirm('Équipe SAV vide. Initialiser avec les personnes par défaut ?')) {
+      await seedDefaultSavTeam();
+    }
+  }
+  setDefaultView();
+  renderAll();
+  requestAnimationFrame(() => scrollToDate(new Date()));
+  subscribeRealtime();
+  toast(`Connecté · ${state.userRole}`, 'success');
+}
+function showAuthScreen() { document.getElementById('auth-screen').classList.add('visible'); }
+function hideAuthScreen() { document.getElementById('auth-screen').classList.remove('visible'); }
+function applyRolePermissions() {
+  document.body.classList.toggle('role-readonly', !canEdit());
+  document.body.classList.toggle('role-editor', canEdit() && !canAdmin());
+  document.body.classList.toggle('role-admin', canAdmin());
+}
+
+// ════════════════════════════════════════════════════
+// DATA LAYER
+// ════════════════════════════════════════════════════
+// helpers prêts pour migration progressive
+async function safeUpsert(tableName, payload, opts = {}) {
+  try {
+    const q = sb.from(tableName).upsert(payload, opts);
+    const { data, error } = await q;
+    if (error) throw error;
+    return { ok: true, data };
+  } catch (e) {
+    console.warn('[upsert]', tableName, e);
+    toast('Erreur sauvegarde ' + tableName + ' : ' + (e.message || e), 'error');
+    return { ok: false, error: e };
+  }
+}
+async function safeDelete(tableName, match) {
+  try {
+    let q = sb.from(tableName).delete();
+    Object.entries(match).forEach(([k, v]) => { q = q.eq(k, v); });
+    const { error } = await q;
+    if (error) throw error;
+    return { ok: true };
+  } catch (e) {
+    console.warn('[delete]', tableName, e);
+    toast('Erreur suppression ' + tableName + ' : ' + (e.message || e), 'error');
+    return { ok: false, error: e };
+  }
+}
+
+// Logging cohérent et activable via localStorage.setItem('planning.debug','1')
+const DEBUG = (typeof localStorage !== 'undefined' && localStorage.getItem('planning.debug') === '1');
+function debugLog(...args) { if (DEBUG) console.log('[planning]', ...args); }
+
+async function loadStateFromSupabase() {
+  // Anti race-condition : ignore les invocations concurrentes (réentrance debounce realtime)
+  if (state._loading) { state._loadPending = true; return; }
+  state._loading = true;
+  try {
+    async function safeSelect(tableName, columns = 'body') {
+      try {
+        const { data, error } = await sb.from(tableName).select(columns);
+        if (error) { console.warn('[load]', tableName, error); return { ok: false, error }; }
+        return { ok: true, data: data || [] };
+      } catch (e) {
+        console.warn('[load]', tableName, e);
+        return { ok: false, error: e };
+      }
+    }
+    const [pm, ps, em, es, po] = await Promise.all([
+      safeSelect('personnes'),
+      safeSelect('personnes_sav'),
+      safeSelect('etiquettes'),
+      safeSelect('etiquettes_sav'),
+      safeSelect('ponts'),
+    ]);
+    const failedTables = [];
+    if (!pm.ok) failedTables.push('personnes');
+    if (!ps.ok) failedTables.push('personnes_sav');
+    if (!em.ok) failedTables.push('etiquettes');
+    if (!es.ok) failedTables.push('etiquettes_sav');
+    if (!po.ok) failedTables.push('ponts');
+
+    // En cas d'échec d'une table, on conserve la valeur en mémoire au lieu d'écraser avec [].
+    if (pm.ok) {
+      state.personnes_montage = pm.data.map(x => ({...x.body, id: String(x.body.id)}));
+    }
+    if (ps.ok) {
+      state.personnes_sav = ps.data.map(x => ({...x.body, id: String(x.body.id)}));
+    }
+    if (em.ok) {
+      state.etiquettes_montage = em.data.map(x => {
+        const b = x.body;
+        return {...b, personneId: b.personneId!=null?String(b.personneId):null};
+      });
+    }
+    if (es.ok) {
+      state.etiquettes_sav = es.data.map(x => {
+        const b = x.body;
+        return {...b,
+          personneSavId: b.personneSavId!=null?String(b.personneSavId):null,
+          monteurId: b.monteurId!=null?String(b.monteurId):null,
+          etiquetteNoirId: b.etiquetteNoirId!=null?String(b.etiquetteNoirId):null,
+          commonPersonId: b.commonPersonId!=null?String(b.commonPersonId):null,
+        };
+      });
+    }
+    if (po.ok) {
+      state.ponts = po.data.map(x => x.body);
+    }
+
+    if (failedTables.length > 0) {
+      const msg = 'Données partielles : ' + failedTables.join(', ') + ' indisponible' + (failedTables.length>1?'s':'') + '. Affichage en mode dégradé.';
+      try { toast(msg, 'error'); } catch(_){}
+      try { setSyncError(msg); } catch(_){}
+    }
+    // Note : ce fichier ne fait pas de seed initial automatique ; pas de garde canSeed nécessaire.
+  } catch (e) {
+    try { setSyncError(e.message); } catch(_){}
+    try { toast('Erreur de chargement : ' + e.message, 'error'); } catch(_){}
+    console.error('[loadStateFromSupabase]', e);
+  } finally {
+    state._loading = false;
+    if (state._loadPending) {
+      state._loadPending = false;
+      setTimeout(() => { loadStateFromSupabase().catch(_=>{}); }, 0);
+    }
+  }
+}
+
+let _syncTimer = null;
+async function saveToFile() {
+  if (!sb || !state.session) return;
+  if (!canEdit()) { toast('Lecture seule', 'warning'); return; }
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(() => syncToSupabase().catch(e => setSyncError(e.message)), 200);
+}
+async function syncToSupabase() {
+  if (!sb || !state.session || !canEdit()) return;
+  setSyncing(true);
+  state._suppressRealtime = true;
+  try {
+    // Pour chaque table : upsert tout l'état + delete les IDs absents
+    const tables = {
+      personnes_sav: state.personnes_sav,
+      etiquettes_sav: state.etiquettes_sav,
+      // Pour les tables montage, on ne pousse que ce qui a été modifié ici
+      // (étiquettes des lignes communes + mises à jour de data.travaux_sav)
+      etiquettes: state.etiquettes_montage,
+    };
+    for (const [t, items] of Object.entries(tables)) {
+      if (items.length > 0) {
+        const rows = items.map(x => ({ id: String(x.id), body: x }));
+        const { error } = await sb.from(t).upsert(rows);
+        if (error) throw new Error(`${t} upsert: ${error.message}`);
+      }
+      // Delete : seulement pour les tables SAV (pas etiquettes montage)
+      if (t === 'etiquettes') continue;
+      const { data: existing, error: selErr } = await sb.from(t).select('id');
+      if (selErr) throw new Error(`${t} select: ${selErr.message}`);
+      const stateIds = new Set(items.map(x => String(x.id)));
+      const toDelete = (existing||[]).filter(r => !stateIds.has(String(r.id))).map(r => r.id);
+      if (toDelete.length) {
+        const { error: delErr } = await sb.from(t).delete().in('id', toDelete);
+        if (delErr) throw new Error(`${t} delete: ${delErr.message}`);
+      }
+    }
+    setSyncing(false);
+  } catch (e) {
+    setSyncError(e.message);
+    toast('Erreur sync : '+e.message, 'error');
+  } finally {
+    setTimeout(() => { state._suppressRealtime = false; }, 600);
+  }
+}
+
+function setSyncing(on) {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  if (on) { el.classList.add('syncing'); el.classList.remove('error'); el.textContent='Synchro…'; }
+  else { el.classList.remove('syncing'); el.textContent='Synchronisé'; }
+}
+function setSyncError(msg) {
+  const el = document.getElementById('sync-indicator');
+  if (el) { el.classList.add('error'); el.classList.remove('syncing'); el.textContent='Erreur sync'; el.title = msg||''; }
+}
+
+// ════════════════════════════════════════════════════
+// REALTIME
+// ════════════════════════════════════════════════════
+let _channels = [];
+let _reloadTimer = null;
+let _rtRetryTimers = {};
+let _rtHadError = {};
+function subscribeRealtime() {
+  unsubscribeRealtime();
+  const debouncedReload = () => {
+    if (state._suppressRealtime) return;
+    clearTimeout(_reloadTimer);
+    _reloadTimer = setTimeout(async () => {
+      try { await loadStateFromSupabase(); renderAll(); }
+      catch (e) { console.warn(e); }
+    }, 250);
+  };
+  ['etiquettes_sav','personnes_sav','etiquettes','personnes','ponts'].forEach(t => {
+    const subscribeOne = () => {
+      const ch = sb.channel('rt-sav-'+t)
+        .on('postgres_changes', {event:'*', schema:'public', table:t}, debouncedReload)
+        .subscribe(status => {
+          if (status === 'SUBSCRIBED') {
+            if (_rtHadError[t]) {
+              try { toast('Connexion temps réel rétablie', 'success'); } catch(e){}
+              _rtHadError[t] = false;
+            }
+            ch._rtRetries = 0;
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            _rtHadError[t] = true;
+            ch._rtRetries = (ch._rtRetries || 0) + 1;
+            const delay = Math.min(30000, 1000 * Math.pow(2, ch._rtRetries - 1));
+            clearTimeout(_rtRetryTimers[t]);
+            _rtRetryTimers[t] = setTimeout(() => {
+              try { sb.removeChannel(ch); } catch(e){}
+              _channels = _channels.filter(c => c !== ch);
+              subscribeOne();
+            }, delay);
+          }
+        });
+      _channels.push(ch);
+    };
+    subscribeOne();
+  });
+}
+function unsubscribeRealtime() {
+  _channels.forEach(ch => { try { sb.removeChannel(ch); } catch(e){} });
+  _channels = [];
+  Object.values(_rtRetryTimers).forEach(t => clearTimeout(t));
+  _rtRetryTimers = {};
+}
+if (typeof window !== 'undefined' && !window._rtOnlineHookedSav) {
+  window._rtOnlineHookedSav = true;
+  window.addEventListener('online', () => {
+    if (!sb || !state.session) return;
+    loadStateFromSupabase().then(() => { try { renderAll(); } catch(e){} }).catch(e => console.warn('online reload', e));
+    subscribeRealtime();
+  });
+}
+
+// ════════════════════════════════════════════════════
+// SEED DONNÉES PAR DÉFAUT
+// ════════════════════════════════════════════════════
+async function seedDefaultSavTeam() {
+  const team = [
+    { id: uid(), prenom:'Arnaud',  nom:'Blanc',   sousgroupe:'chef', role:'Chef SAV', actif:true },
+    { id: uid(), prenom:'Jo.',     nom:'Ballein', sousgroupe:'chef', role:'Chef SAV', actif:true },
+    { id: uid(), prenom:'Yannick', nom:'Blatter', sousgroupe:'chef', role:'Chef SAV', actif:true },
+    { id: uid(), prenom:'Kevin',     nom:'Deguergue', sousgroupe:'ts', role:'Technicien TS', actif:true },
+    { id: uid(), prenom:'Gérald',    nom:'Viola',     sousgroupe:'ts', role:'Technicien TS', actif:true },
+    { id: uid(), prenom:'Thomas',    nom:'Progin',    sousgroupe:'ts', role:'Technicien TS', actif:true },
+    { id: uid(), prenom:'Bruno',     nom:'Lucas',     sousgroupe:'ts', role:'Technicien TS', actif:true },
+    { id: uid(), prenom:'Ludovic',   nom:'Wilheine',  sousgroupe:'ts', role:'Technicien TS', actif:true },
+    { id: uid(), prenom:'Dominique', nom:'Alfocea',   sousgroupe:'ts', role:'Technicien TS', actif:true },
+    { id: uid(), prenom:'Bruno',     nom:'Le Minter', sousgroupe:'ts', role:'Technicien TS', actif:true },
+  ];
+  state.personnes_sav = team;
+  // Démo : 2 étiquettes SAV
+  const today = new Date();
+  const d = (offset) => dateStr(addDays(today, offset));
+  state.etiquettes_sav.push({
+    id: uid(), type:'cyan', personneSavId: team[3].id,
+    dateDebut: d(0), dateFin: d(2),
+    data:{numeroInstallation:'02-1198', adresse:'Romont FR Savoie 22', numeroDevis:'D-2026-114', texteLibre:'Câble-poulie usagé'},
+    creePar: state.currentUser, history:[]
+  });
+  state.etiquettes_sav.push({
+    id: uid(), type:'jaune', personneSavId: team[4].id,
+    dateDebut: d(1), dateFin: d(1),
+    data:{numeroInstallation:'04-2298', adresse:'Lausanne Ouchy 4', numeroDevis:'D-2026-117', texteLibre:'Tableau électrique défaillant'},
+    creePar: state.currentUser, history:[]
+  });
+  await syncToSupabase();
+  toast('Équipe SAV initialisée', 'success');
+}
+
+// ════════════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════════════
+function renderAll() { renderGantt(); }
+function setDefaultView() {
+  state.view = 'semaine';
+  state.anchorDate = new Date();
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view==='semaine'));
+}
+
+/**
+ * RÈGLE MÉTIER : retourne les personnes "lignes communes" (Christophe Menétrey
+ *   + Frédéric Burgy) issues de la table montage. Ces personnes sont affichées
+ *   en haut du planning SAV et acceptent des étiquettes via commonPersonId.
+ *   La détection est basée sur prénom+nom (insensible accents/casse).
+ * RISQUE : Moyen
+ * NE PAS REFACTORER sans tests manuels couvrant : variations d'orthographe
+ *   (avec/sans accent, casse), personnes inactives, ajout/retrait depuis le
+ *   planning montage, identifiants String vs numériques.
+ */
+// Identifie les personnes "lignes communes" : Christophe Menétrey + Frédéric Burgy
+function getLignesCommunes() {
+  const norm = s => (s||'').toLowerCase().trim().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const targets = [
+    { prenom:'christophe', nom:'menetrey' },
+    { prenom:'frederic',   nom:'burgy' },
+    { prenom:'fredéric',   nom:'burgy' },
+  ];
+  return state.personnes_montage.filter(p => p.actif && targets.some(t =>
+    norm(p.prenom).includes(t.prenom.replace('é','e')) && norm(p.nom).includes(t.nom)
+  ));
+}
+
+/**
+ * RÈGLE MÉTIER : zone monteurs SAV dynamique. Liste les monteurs (côté montage)
+ *   ayant au moins une étiquette NOIRE chevauchant la fenêtre [rangeStart, rangeEnd].
+ *   Chaque entrée porte la liste des noirs de ce monteur. Sert à afficher une zone
+ *   spéciale dans le Gantt SAV où l'on peut déposer des travaux SAV liés à un noir
+ *   (estMonteurZone=true, etiquetteNoirId).
+ * RISQUE : Élevé
+ * NE PAS REFACTORER sans tests manuels couvrant : changement de fenêtre (semaine/
+ *   mois), monteur avec plusieurs noirs simultanés, noirs commençant/finissant
+ *   hors fenêtre, suppression du noir (cascade updateNoirTravauxSav).
+ */
+// Identifie les monteurs ayant une étiquette noire active dans la fenêtre visible
+function getMonteursEnSav(rangeStart, rangeEnd) {
+  const noirs = state.etiquettes_montage.filter(e =>
+    e.type === 'noir' && e.dateDebut <= rangeEnd && e.dateFin >= rangeStart
+  );
+  // Grouper par monteur (peut avoir plusieurs noirs)
+  const map = new Map();
+  noirs.forEach(n => {
+    const m = state.personnes_montage.find(p => String(p.id) === String(n.personneId));
+    if (!m) return;
+    if (!map.has(m.id)) map.set(m.id, { person:m, noirs:[] });
+    map.get(m.id).noirs.push(n);
+  });
+  return [...map.values()];
+}
+
+function renderGantt() {
+  // Guard défensif : évite un crash si appelé trop tôt (race auth/load).
+  if (!state || !sb) return;
+  if (!Array.isArray(state.personnes_montage)) state.personnes_montage = [];
+  if (!Array.isArray(state.personnes_sav)) state.personnes_sav = [];
+  if (!Array.isArray(state.etiquettes_montage)) state.etiquettes_montage = [];
+  if (!Array.isArray(state.etiquettes_sav)) state.etiquettes_sav = [];
+  if (!Array.isArray(state.ponts)) state.ponts = [];
+  const dates = getDateRange();
+  const colW = getColWidth();
+  document.documentElement.style.setProperty('--col-w', colW+'px');
+  document.getElementById('period-label').textContent = periodLabel(dates);
+
+  const dateMap = {};
+  dates.forEach((d,i) => { dateMap[dateStr(d)] = i; });
+  const rangeStart = dateStr(dates[0]);
+  const rangeEnd   = dateStr(dates[dates.length-1]);
+
+  const scroll = document.getElementById('gantt-scroll');
+  scroll.innerHTML = '';
+
+  // ── HEADER ──
+  const headerRow = document.createElement('div');
+  headerRow.className = 'gr-header';
+  const corner = document.createElement('div');
+  corner.className = 'gr-corner';
+  corner.textContent = 'PLANNING SAV';
+  headerRow.appendChild(corner);
+
+  const totalDaysWidth = dates.length * colW;
+  const headerRight = document.createElement('div');
+  headerRight.className = 'gr-header-right';
+  headerRight.style.width = totalDaysWidth + 'px';
+  headerRight.style.minWidth = totalDaysWidth + 'px';
+  const monthRow = document.createElement('div');
+  monthRow.className = 'gr-month-row';
+  monthRow.style.width = totalDaysWidth + 'px';
+  const weekRow = document.createElement('div');
+  weekRow.className = 'gr-week-row';
+  weekRow.style.width = totalDaysWidth + 'px';
+  const dayRow = document.createElement('div');
+  dayRow.className = 'gr-day-row';
+  dayRow.style.width = totalDaysWidth + 'px';
+
+  const monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const dayNames = ['Di','Lu','Ma','Me','Je','Ve','Sa'];
+  let curMonth=null, curYear=null, curCount=0;
+  let curWeek=null, curWeekCount=0;
+  const flushMonth = () => {
+    if (curCount===0) return;
+    const band = document.createElement('div');
+    band.className = 'month-band';
+    band.style.width = (curCount*colW)+'px';
+    band.style.minWidth = (curCount*colW)+'px';
+    const inner = document.createElement('div');
+    inner.className = 'month-band-inner';
+    inner.textContent = `${monthNames[curMonth]} ${curYear}`;
+    band.appendChild(inner);
+    monthRow.appendChild(band);
+  };
+  const flushWeek = () => {
+    if (curWeekCount===0) return;
+    const band = document.createElement('div');
+    band.className = 'week-band';
+    band.style.width = (curWeekCount*colW)+'px';
+    band.style.minWidth = (curWeekCount*colW)+'px';
+    const inner = document.createElement('div');
+    inner.className = 'week-band-inner';
+    inner.textContent = `S${curWeek}`;
+    band.appendChild(inner);
+    weekRow.appendChild(band);
+  };
+  dates.forEach(d => {
+    const ds = dateStr(d);
+    if (d.getMonth()!==curMonth || d.getFullYear()!==curYear) {
+      flushMonth();
+      curMonth=d.getMonth(); curYear=d.getFullYear(); curCount=0;
+    }
+    const wn = getWeekNum(d);
+    if (wn !== curWeek) { flushWeek(); curWeek = wn; curWeekCount = 0; }
+    curWeekCount++;
+    curCount++;
+    const cell = document.createElement('div');
+    cell.className = 'day-header';
+    if (isToday(d)) cell.classList.add('today');
+    else if (isWeekend(d)) cell.classList.add('weekend');
+    if (isFerie(ds)) cell.classList.add('ferie');
+    if (isTodayPlus(d, 14)) cell.classList.add('marker-14');
+    if (isTodayPlus(d, 35)) cell.classList.add('marker-35');
+    cell.style.width = colW+'px';
+    // Tooltip canton sur les jours fériés
+    const ferieInfo = getFerieInfo(ds);
+    if (ferieInfo) cell.title = `${ferieInfo.nom} — ${ferieInfo.cantons}`;
+    cell.innerHTML = `<div class="day-num">${d.getDate()}</div><div class="day-name">${dayNames[d.getDay()]}</div>${ferieInfo ? '<div style="font-size:8px;line-height:1">🏖️</div>' : ''}`;
+    dayRow.appendChild(cell);
+  });
+  flushMonth();
+  flushWeek();
+  headerRight.appendChild(monthRow);
+  headerRight.appendChild(weekRow);
+  headerRight.appendChild(dayRow);
+  headerRow.appendChild(headerRight);
+  scroll.appendChild(headerRow);
+
+  // ── BLOC 1 : Lignes communes ──
+  const commune = getLignesCommunes();
+  appendBlockHeader(scroll, '🤝 Lignes communes', dates, colW);
+  if (commune.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-monteur-zone';
+    empty.textContent = 'Christophe Menétrey et Frédéric Burgy non trouvés dans la table personnes (montage).';
+    scroll.appendChild(empty);
+  } else {
+    commune.forEach(p => appendPersonRow(scroll, p, dates, colW, dateMap, rangeStart, rangeEnd, 'commune'));
+  }
+
+  // ── BLOC 2 : Équipe SAV (groupé par chef) ──
+  const allActiveSav = state.personnes_sav.filter(p => p.actif);
+  const chefs = allActiveSav.filter(p => p.sousgroupe === 'chef')
+    .sort((a,b) => (a.nom+a.prenom).localeCompare(b.nom+b.prenom));
+  // Pour chaque chef : un sous-bloc "Équipe X" → chef + ses TS
+  chefs.forEach(chef => {
+    appendBlockHeader(scroll, `🛠️ Équipe ${chef.prenom} ${chef.nom}`, dates, colW);
+    appendSavPersonRow(scroll, chef, dates, colW, dateMap, rangeStart, rangeEnd);
+    const teamMembers = allActiveSav
+      .filter(p => p.sousgroupe === 'ts' && String(p.equipe||'') === String(chef.id))
+      .sort((a,b) => (a.nom+a.prenom).localeCompare(b.nom+b.prenom));
+    teamMembers.forEach(ts => appendSavPersonRow(scroll, ts, dates, colW, dateMap, rangeStart, rangeEnd));
+  });
+  // TS sans chef assigné (orphelins)
+  const orphaned = allActiveSav.filter(p => p.sousgroupe === 'ts' && !p.equipe);
+  if (orphaned.length > 0) {
+    appendBlockHeader(scroll, '⚠️ TS sans chef', dates, colW);
+    orphaned.sort((a,b) => (a.nom+a.prenom).localeCompare(b.nom+b.prenom))
+      .forEach(ts => appendSavPersonRow(scroll, ts, dates, colW, dateMap, rangeStart, rangeEnd));
+  }
+  // Externes
+  const externes = allActiveSav.filter(p => p.sousgroupe === 'externe');
+  if (externes.length > 0) {
+    appendBlockHeader(scroll, '🌐 Externes', dates, colW);
+    externes.sort((a,b) => (a.nom+a.prenom).localeCompare(b.nom+b.prenom))
+      .forEach(ts => appendSavPersonRow(scroll, ts, dates, colW, dateMap, rangeStart, rangeEnd));
+  }
+
+  // ── BLOC 3 : Monteurs en SAV bloqué ──
+  appendBlockHeader(scroll, '⚫ Monteurs (SAV bloqué)', dates, colW);
+  const monteursSav = getMonteursEnSav(rangeStart, rangeEnd);
+  if (monteursSav.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-monteur-zone';
+    empty.textContent = 'Aucun monteur en SAV';
+    scroll.appendChild(empty);
+  } else {
+    monteursSav.forEach(({person, noirs}) => appendMonteurZoneRow(scroll, person, noirs, dates, colW, dateMap, rangeStart, rangeEnd));
+  }
+
+  // Infinite scroll
+  scroll._datesRef = dates;
+  scroll._colWRef = colW;
+  if (!scroll._scrollBound) {
+    scroll._scrollBound = true;
+    scroll.addEventListener('scroll', onGanttScroll);
+  }
+}
+
+function appendBlockHeader(scroll, title, dates, colW) {
+  const bh = document.createElement('div');
+  bh.className = 'gr-block-header';
+  const name = document.createElement('div');
+  name.className = 'gr-block-name';
+  name.textContent = title;
+  const fill = document.createElement('div');
+  fill.className = 'gr-block-fill';
+  fill.style.width = (dates.length*colW)+'px';
+  bh.appendChild(name); bh.appendChild(fill);
+  scroll.appendChild(bh);
+}
+
+// Rendu d'une personne montage (ligne commune) — étiquettes lues dans etiquettes_montage
+function appendPersonRow(scroll, person, dates, colW, dateMap, rangeStart, rangeEnd, rowClass) {
+  const row = document.createElement('div');
+  row.className = 'gr-row ' + (rowClass||'');
+  row.dataset.personId = person.id;
+  row.dataset.source = 'montage';
+
+  const nameCell = document.createElement('div');
+  nameCell.className = 'gr-name';
+  const badge = document.createElement('span');
+  badge.className = 'group-badge';
+  badge.textContent = person.groupe || 'COM';
+  const info = document.createElement('div');
+  info.className = 'person-info';
+  info.innerHTML = `<div class="person-name">${person.prenom} ${person.nom}</div><div class="person-role">${person.role||''}</div>`;
+  nameCell.appendChild(badge); nameCell.appendChild(info);
+  row.appendChild(nameCell);
+
+  const daysArea = document.createElement('div');
+  daysArea.className = 'gr-days';
+  daysArea.style.width = (dates.length*colW)+'px';
+  appendDayCells(daysArea, dates, colW, person.id, 'montage');
+
+  // Étiquettes montage de cette personne
+  const labels = state.etiquettes_montage.filter(e => String(e.personneId) === String(person.id));
+  appendLabels(daysArea, labels, dateMap, colW, rangeStart, rangeEnd, LABEL_TYPES_MONTAGE, 'montage');
+
+  // Étiquettes SAV liées à cette personne commune (commonPersonId)
+  const savLabels = state.etiquettes_sav.filter(e => String(e.commonPersonId) === String(person.id));
+  appendLabels(daysArea, savLabels, dateMap, colW, rangeStart, rangeEnd, LABEL_TYPES_SAV, 'sav');
+
+  row.appendChild(daysArea);
+  scroll.appendChild(row);
+}
+
+// Rendu d'une personne SAV (équipe SAV) — étiquettes lues dans etiquettes_sav
+function appendSavPersonRow(scroll, person, dates, colW, dateMap, rangeStart, rangeEnd) {
+  const row = document.createElement('div');
+  row.className = 'gr-row';
+  row.dataset.personId = person.id;
+  row.dataset.source = 'sav';
+
+  const nameCell = document.createElement('div');
+  nameCell.className = 'gr-name';
+  const badge = document.createElement('span');
+  badge.className = 'group-badge';
+  badge.textContent = person.sousgroupe === 'chef' ? 'CHEF'
+                    : person.sousgroupe === 'externe' ? 'EXT'
+                    : 'TS';
+  const info = document.createElement('div');
+  info.className = 'person-info';
+  info.innerHTML = `<div class="person-name">${person.prenom} ${person.nom}</div><div class="person-role">${person.role||''}</div>`;
+  nameCell.appendChild(badge); nameCell.appendChild(info);
+  row.appendChild(nameCell);
+
+  const daysArea = document.createElement('div');
+  daysArea.className = 'gr-days';
+  daysArea.style.width = (dates.length*colW)+'px';
+  appendDayCells(daysArea, dates, colW, person.id, 'sav');
+
+  const labels = state.etiquettes_sav.filter(e =>
+    String(e.personneSavId) === String(person.id) && !e.estMonteurZone
+  );
+  appendLabels(daysArea, labels, dateMap, colW, rangeStart, rangeEnd, LABEL_TYPES_SAV, 'sav');
+
+  row.appendChild(daysArea);
+  scroll.appendChild(row);
+}
+
+// Rendu d'une ligne "monteur en SAV bloqué"
+function appendMonteurZoneRow(scroll, person, noirs, dates, colW, dateMap, rangeStart, rangeEnd) {
+  const row = document.createElement('div');
+  row.className = 'gr-row monteur-zone';
+  row.dataset.personId = person.id;
+  row.dataset.source = 'monteur-zone';
+
+  const nameCell = document.createElement('div');
+  nameCell.className = 'gr-name';
+  const badge = document.createElement('span');
+  badge.className = 'group-badge sav-bloque';
+  badge.textContent = '⚫ SAV';
+  const info = document.createElement('div');
+  info.className = 'person-info';
+  info.innerHTML = `<div class="person-name">${person.prenom} ${person.nom}</div><div class="person-role">${person.role||''} (bloqué)</div>`;
+  nameCell.appendChild(badge); nameCell.appendChild(info);
+  row.appendChild(nameCell);
+
+  const daysArea = document.createElement('div');
+  daysArea.className = 'gr-days';
+  daysArea.style.width = (dates.length*colW)+'px';
+  // Pour chaque cellule : dataset particulier (clic = créer étiquette SAV monteur-zone)
+  dates.forEach(d => {
+    const cell = document.createElement('div');
+    cell.className = 'day-cell';
+    if (isWeekend(d)) cell.classList.add('weekend');
+    if (isFerie(dateStr(d))) cell.classList.add('ferie');
+    if (isToday(d)) cell.classList.add('today');
+    if (isTodayPlus(d,14)) cell.classList.add('marker-14');
+    if (isTodayPlus(d,35)) cell.classList.add('marker-35');
+    cell.style.width = colW+'px';
+    cell.dataset.date = dateStr(d);
+    cell.dataset.personId = person.id;
+    cell.dataset.source = 'monteur-zone';
+    cell.addEventListener('dblclick', e => {
+      if (!e.target.closest('.label-block') && canEdit()) {
+        // Trouver le noir actif pour cette date
+        const activeNoir = noirs.find(n => n.dateDebut <= cell.dataset.date && n.dateFin >= cell.dataset.date);
+        if (!activeNoir) { toast('Pas d\'étiquette noire active sur cette date', 'warning'); return; }
+        addSavLabel({estMonteurZone:true, monteurId:person.id, etiquetteNoirId:activeNoir.id, defaultDate:cell.dataset.date});
+      }
+    });
+    daysArea.appendChild(cell);
+  });
+
+  // Watermarks pour chaque période noire dans la fenêtre visible
+  noirs.forEach(noir => {
+    const visStart = noir.dateDebut < rangeStart ? rangeStart : noir.dateDebut;
+    const visEnd   = noir.dateFin   > rangeEnd   ? rangeEnd   : noir.dateFin;
+    const startIdx = dateMap[visStart], endIdx = dateMap[visEnd];
+    if (startIdx === undefined || endIdx === undefined) return;
+    const wm = document.createElement('div');
+    wm.className = 'noir-watermark';
+    wm.style.left = (startIdx*colW + 1)+'px';
+    wm.style.width = ((endIdx-startIdx+1)*colW - 2)+'px';
+    wm.innerHTML = `<span>${person.prenom} ${person.nom} · SAV BLOQUÉ</span>`;
+    wm.title = noir.data?.descriptionSAV ? `SAV bloqué : ${noir.data.descriptionSAV}` : 'SAV bloqué';
+    daysArea.appendChild(wm);
+  });
+
+  // Étiquettes SAV de la zone monteur pour cette personne
+  const labels = state.etiquettes_sav.filter(e =>
+    e.estMonteurZone === true && String(e.monteurId) === String(person.id)
+  );
+  appendLabels(daysArea, labels, dateMap, colW, rangeStart, rangeEnd, LABEL_TYPES_SAV, 'sav');
+
+  row.appendChild(daysArea);
+  scroll.appendChild(row);
+}
+
+function appendDayCells(daysArea, dates, colW, personId, source) {
+  dates.forEach(d => {
+    const cell = document.createElement('div');
+    cell.className = 'day-cell';
+    if (isWeekend(d)) cell.classList.add('weekend');
+    if (isFerie(dateStr(d))) cell.classList.add('ferie');
+    if (isToday(d)) cell.classList.add('today');
+    if (isTodayPlus(d,14)) cell.classList.add('marker-14');
+    if (isTodayPlus(d,35)) cell.classList.add('marker-35');
+    cell.style.width = colW+'px';
+    cell.dataset.date = dateStr(d);
+    cell.dataset.personId = personId;
+    cell.dataset.source = source;
+    cell.addEventListener('dblclick', e => {
+      if (!e.target.closest('.label-block') && canEdit()) {
+        if (source === 'montage') addMontageLabel(personId, cell.dataset.date);
+        else if (source === 'sav') addSavLabel({personneSavId:personId, defaultDate:cell.dataset.date});
+      }
+    });
+    daysArea.appendChild(cell);
+  });
+}
+
+function appendLabels(daysArea, labels, dateMap, colW, rangeStart, rangeEnd, types, source) {
+  // Calculer les chevauchements pour empilage vertical (max 2 voies)
+  // Les "vert-indic" sont rendus en bandeau bas et n'entrent pas dans le calcul
+  const stackable = labels.filter(l => !(source === 'sav' && l.type === 'vert'));
+  const overlapMap = {};
+  stackable.forEach(a => {
+    stackable.forEach(b => {
+      if (a.id === b.id) return;
+      if (a.dateDebut <= b.dateFin && a.dateFin >= b.dateDebut) {
+        (overlapMap[a.id] = overlapMap[a.id] || new Set()).add(b.id);
+      }
+    });
+  });
+  const lane = {};
+  stackable.slice().sort((a,b) => a.dateDebut.localeCompare(b.dateDebut)).forEach(lbl => {
+    const others = overlapMap[lbl.id];
+    if (!others) { lane[lbl.id] = -1; return; }
+    const used = new Set();
+    others.forEach(oid => { if (lane[oid] !== undefined && lane[oid] >= 0) used.add(lane[oid]); });
+    lane[lbl.id] = used.has(0) ? 1 : 0;
+  });
+
+  labels.forEach(lbl => {
+    if (!lbl.dateDebut || !lbl.dateFin) return;
+    if (lbl.dateDebut > rangeEnd || lbl.dateFin < rangeStart) return;
+    const visStart = lbl.dateDebut < rangeStart ? rangeStart : lbl.dateDebut;
+    const visEnd   = lbl.dateFin   > rangeEnd   ? rangeEnd   : lbl.dateFin;
+    const startIdx = dateMap[visStart], endIdx = dateMap[visEnd];
+    if (startIdx === undefined || endIdx === undefined) return;
+    const typeInfo = types[lbl.type] || {label:lbl.type, color:'#999', text:'light'};
+    const lblEl = document.createElement('div');
+    const isVertIndic = (source === 'sav' && lbl.type === 'vert');
+    let stackClass = '';
+    if (lane[lbl.id] === 0) stackClass = ' stack-top';
+    else if (lane[lbl.id] === 1) stackClass = ' stack-bot';
+    lblEl.className = 'label-block ' + (typeInfo.text === 'dark' ? 'dark-text' : 'light-text') + (isVertIndic ? ' vert-indic' : stackClass);
+    lblEl.style.cssText = `left:${startIdx*colW+1}px;width:${(endIdx-startIdx+1)*colW-2}px;background:${typeInfo.color}`;
+    lblEl.dataset.labelId = lbl.id;
+    lblEl.dataset.source = source;
+
+    let text;
+    if (lbl.type === 'vert') text = lbl.data?.texteLibre || 'IH';
+    else if (lbl.type === 'noir' && source === 'sav') text = lbl.data?.texteLibre || 'Absent';
+    else if (lbl.type === 'rose' && source === 'sav') text = `${lbl.data?.texteLibre||'Formation'}${lbl.data?.lieu?' · '+lbl.data.lieu:''}`;
+    else if (source === 'sav') text = `${lbl.data?.numeroInstallation||''}${lbl.data?.adresse?' '+lbl.data.adresse:''}`.trim() || typeInfo.label;
+    else { // montage
+      if (lbl.type === 'jaune') text = lbl.data?.numeroInstallation || '';
+      else if (lbl.type === 'vert') text = lbl.data?.intitule || 'Congé';
+      else if (lbl.type === 'orange') text = 'Maladie';
+      else if (lbl.type === 'rose') text = lbl.data?.descriptionSAV ? `SAV: ${lbl.data.descriptionSAV}` : 'SAV';
+      else if (lbl.type === 'noir') text = lbl.data?.descriptionSAV ? `🔒 ${lbl.data.descriptionSAV}` : '🔒 SAV bloqué';
+      else if (lbl.type === 'brun') text = lbl.data?.texteBrun || 'Cas particulier';
+      else if (lbl.type === 'autre') text = lbl.data?.texteLibre || 'Autre';
+      else text = `${lbl.data?.numeroInstallation||''} ${lbl.data?.lieu||''}`.trim() || typeInfo.label;
+    }
+    if (lbl.verrouille) text = '🔒 ' + text;
+    lblEl.textContent = text;
+
+    // Tooltip
+    const tip = [typeInfo.label];
+    if (lbl.data?.numeroInstallation) tip.push('N° ' + lbl.data.numeroInstallation);
+    if (lbl.data?.adresse) tip.push(lbl.data.adresse);
+    if (lbl.data?.numeroDevis) tip.push('Devis ' + lbl.data.numeroDevis);
+    if (lbl.data?.texteLibre) tip.push(lbl.data.texteLibre);
+    tip.push(`${formatDate(lbl.dateDebut)} → ${formatDate(lbl.dateFin)}`);
+    lblEl.title = tip.join('\n');
+
+    attachLabelDrag(lblEl, lbl.id, colW, source);
+    lblEl.addEventListener('dblclick', e => { e.stopPropagation(); if (canEdit()) editLabel(lbl.id, source); });
+    daysArea.appendChild(lblEl);
+  });
+}
+
+function onGanttScroll(e) {
+  // Pendant l'export JPEG on fige la plage rendue
+  if (state._exporting) return;
+  const scroll = e.currentTarget;
+  const colW = scroll._colWRef || getColWidth();
+  const max = scroll.scrollWidth - scroll.clientWidth;
+  // Si le contenu n'est pas plus large que le viewport, ne rien étendre
+  if (max <= 0) return;
+  const left = scroll.scrollLeft;
+  if (max - left < colW * 30) {
+    state.rangeAfter += 180;
+    const sl = scroll.scrollLeft;
+    renderGantt();
+    document.getElementById('gantt-scroll').scrollLeft = sl;
+  } else if (left < colW * 30 && state.rangeBefore < 1800) {
+    const sl = scroll.scrollLeft;
+    state.rangeBefore += 180;
+    renderGantt();
+    document.getElementById('gantt-scroll').scrollLeft = sl + 180 * colW;
+  }
+}
+
+function scrollToDate(targetDate) {
+  const scroll = document.getElementById('gantt-scroll');
+  if (!scroll || !scroll._datesRef) return;
+  const colW = getColWidth();
+  const ts = dateStr(targetDate);
+  const idx = scroll._datesRef.findIndex(d => dateStr(d) === ts);
+  if (idx < 0) return;
+  const fixedW = 200;
+  const visible = scroll.clientWidth - fixedW;
+  scroll.scrollLeft = idx * colW - visible / 3;
+}
+
+// ════════════════════════════════════════════════════
+// DRAG horizontal (dates) + vertical (réassignation entre rangées)
+// ════════════════════════════════════════════════════
+function attachLabelDrag(lblEl, labelId, colW, source) {
+  let dragMoved = false, startX=0, startY=0, origStart, origEnd, origAssign, businessDur, origNoirId;
+  let rafId = null;
+
+  const findLabel = (id, src) => {
+    const arr = src === 'montage' ? state.etiquettes_montage : state.etiquettes_sav;
+    return arr.find(l => l.id === id);
+  };
+
+  // Détecte la rangée sous le curseur (et son contexte : montage / sav / monteur-zone)
+  const detectDropRow = (cx, cy) => {
+    const elBelow = document.elementFromPoint(cx, cy);
+    const rowBelow = elBelow?.closest('.gr-row');
+    if (!rowBelow) return null;
+    return {
+      personId: rowBelow.dataset.personId,
+      source: rowBelow.dataset.source, // 'montage' | 'sav' | 'monteur-zone'
+    };
+  };
+
+  // Trouve l'étiquette noire active sur (monteurId, date)
+  const findActiveNoir = (monteurId, date) => {
+    return state.etiquettes_montage.find(e =>
+      e.type === 'noir' && String(e.personneId) === String(monteurId) &&
+      e.dateDebut <= date && e.dateFin >= date
+    );
+  };
+
+  // Applique une nouvelle assignation à l'étiquette en mémoire
+  // Une étiquette SAV peut atterrir sur n'importe quelle rangée (commune / sav team / monteur-zone)
+  // Une étiquette montage (commune Menétrey/Burgy) peut être déplacée entre rangées communes uniquement
+  const applyAssignment = (lbl, drop) => {
+    if (!drop) return false;
+    if (source === 'montage') {
+      // Migration entre tables (montage → SAV) trop complexe → on limite aux rangées communes
+      if (drop.source !== 'montage') return false;
+      lbl.personneId = String(drop.personId);
+      return true;
+    }
+    // Étiquette SAV : peut atterrir sur n'importe quelle rangée
+    if (drop.source === 'sav') {
+      lbl.personneSavId = String(drop.personId);
+      delete lbl.estMonteurZone;
+      delete lbl.monteurId;
+      delete lbl.etiquetteNoirId;
+      delete lbl.commonPersonId;
+      return true;
+    }
+    if (drop.source === 'monteur-zone') {
+      const noir = findActiveNoir(drop.personId, lbl.dateDebut);
+      if (!noir) return false;
+      lbl.estMonteurZone = true;
+      lbl.monteurId = String(drop.personId);
+      lbl.etiquetteNoirId = noir.id;
+      delete lbl.personneSavId;
+      delete lbl.commonPersonId;
+      return true;
+    }
+    if (drop.source === 'montage') {
+      // Étiquette SAV déposée sur une ligne commune → devient liée à la personne commune
+      lbl.commonPersonId = String(drop.personId);
+      delete lbl.personneSavId;
+      delete lbl.estMonteurZone;
+      delete lbl.monteurId;
+      delete lbl.etiquetteNoirId;
+      return true;
+    }
+    return false;
+  };
+
+  const start = (cx, cy, e) => {
+    const lbl = findLabel(labelId, source);
+    if (!lbl || !canEdit()) return;
+    dragMoved = false;
+    startX = cx; startY = cy;
+    origStart = lbl.dateDebut; origEnd = lbl.dateFin;
+    origAssign = source === 'montage'
+      ? {personneId: lbl.personneId}
+      : {personneSavId: lbl.personneSavId, estMonteurZone: lbl.estMonteurZone, monteurId: lbl.monteurId, etiquetteNoirId: lbl.etiquetteNoirId, commonPersonId: lbl.commonPersonId};
+    origNoirId = lbl.etiquetteNoirId; // pour mise à jour travaux_sav après migration
+    businessDur = Math.max(1, businessDaysBetween(parseDate(origStart), parseDate(origEnd)));
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    e.preventDefault();
+  };
+
+  const onMove = (ev) => move(ev.clientX, ev.clientY);
+
+  const move = (cx, cy) => {
+    const dx = cx - startX, dy = cy - startY;
+    if (!dragMoved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+      dragMoved = true;
+      lblEl.classList.add('dragging');
+      document.body.style.cursor = 'grabbing';
+    }
+    if (!dragMoved) return;
+    const lbl = findLabel(labelId, source);
+    if (!lbl) return;
+    // Date : dérive horizontale, durée préservée
+    const daysDelta = Math.round(dx / colW);
+    const newStart = addDays(parseDate(origStart), daysDelta);
+    const newEnd = addBusinessDays(newStart, businessDur);
+    lbl.dateDebut = dateStr(newStart);
+    lbl.dateFin = dateStr(newEnd);
+    // Réassignation verticale via détection de la rangée sous le curseur
+    const drop = detectDropRow(cx, cy);
+    if (drop) applyAssignment(lbl, drop);
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => { try { renderGantt(); } catch(e){} });
+  };
+
+  const onUp = async () => {
+    try {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      if (!dragMoved) { showLabelDetail(labelId, source); return; }
+      const lbl = findLabel(labelId, source);
+      if (!lbl) return;
+      // Si l'étiquette était (ou est devenue) liée à un noir → mettre à jour les travaux_sav
+      // de l'ANCIEN noir (si l'étiquette en a été retirée) ET du NOUVEAU noir
+      if (origNoirId && origNoirId !== lbl.etiquetteNoirId) {
+        await updateNoirTravauxSav(origNoirId);
+      }
+      if (source === 'sav' && lbl.estMonteurZone && lbl.etiquetteNoirId) {
+        await updateNoirTravauxSav(lbl.etiquetteNoirId);
+      }
+      renderGantt();
+      saveToFile();
+      toast('Étiquette déplacée', 'info');
+    } catch(e) {
+      console.error(e);
+      try { toast('Erreur', 'error'); } catch(_){}
+    } finally {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+    }
+  };
+
+  lblEl.addEventListener('mousedown', e => { if (e.button === 0) { e.stopPropagation(); start(e.clientX, e.clientY, e); } });
+
+  // Touch (long-press 1.5s pour activer le drag flottant)
+  let touchTimer = null, touchActive = false, touchSX=0, touchSY=0, touchMoved=false;
+  lblEl.addEventListener('touchstart', e => {
+    if (!e.touches[0] || e.touches.length>1) return;
+    e.stopPropagation();
+    touchSX = e.touches[0].clientX; touchSY = e.touches[0].clientY;
+    touchActive = false; touchMoved = false;
+    setTimeout(() => { if (touchTimer) lblEl.classList.add('long-pressing'); }, 300);
+    touchTimer = setTimeout(() => {
+      touchTimer = null;
+      lblEl.classList.remove('long-pressing');
+      const lbl = findLabel(labelId, source);
+      if (!lbl || !canEdit()) return;
+      touchActive = true;
+      lblEl.classList.add('floating');
+      origStart = lbl.dateDebut; origEnd = lbl.dateFin;
+      origAssign = source === 'montage' ? {personneId: lbl.personneId}
+        : {personneSavId: lbl.personneSavId, estMonteurZone: lbl.estMonteurZone, monteurId: lbl.monteurId, etiquetteNoirId: lbl.etiquetteNoirId, commonPersonId: lbl.commonPersonId};
+      origNoirId = lbl.etiquetteNoirId;
+      businessDur = Math.max(1, businessDaysBetween(parseDate(origStart), parseDate(origEnd)));
+      startX = touchSX; startY = touchSY;
+      dragMoved = true;
+      if (navigator.vibrate) try { navigator.vibrate(40); } catch(e){}
+    }, 1500);
+  }, {passive:true});
+  lblEl.addEventListener('touchmove', e => {
+    if (!e.touches[0]) return;
+    if (!touchActive) {
+      if (Math.abs(e.touches[0].clientX-touchSX)>12 || Math.abs(e.touches[0].clientY-touchSY)>12) {
+        if (touchTimer) { clearTimeout(touchTimer); touchTimer=null; }
+        lblEl.classList.remove('long-pressing');
+        touchMoved = true;
+      }
+      return;
+    }
+    e.preventDefault(); e.stopPropagation();
+    move(e.touches[0].clientX, e.touches[0].clientY);
+  }, {passive:false});
+  lblEl.addEventListener('touchend', () => {
+    if (touchTimer) { clearTimeout(touchTimer); touchTimer=null; }
+    lblEl.classList.remove('long-pressing');
+    if (touchActive) { touchActive=false; lblEl.classList.remove('floating','dragging'); onUp(); }
+    else if (!touchMoved) showLabelDetail(labelId, source);
+  });
+}
+
+// ════════════════════════════════════════════════════
+// POPUP DETAIL
+// ════════════════════════════════════════════════════
+function closeAllPopups() {
+  document.getElementById('detail-popup')?.remove();
+  document.removeEventListener('click', closeOnOutside);
+}
+function closeOnOutside(e) {
+  const p = document.getElementById('detail-popup');
+  if (p && !p.contains(e.target)) closeAllPopups();
+}
+
+function showLabelDetail(labelId, source) {
+  closeAllPopups();
+  const arr = source === 'montage' ? state.etiquettes_montage : state.etiquettes_sav;
+  const lbl = arr.find(l => l.id === labelId);
+  if (!lbl) return;
+  const types = source === 'montage' ? LABEL_TYPES_MONTAGE : LABEL_TYPES_SAV;
+  const typeInfo = types[lbl.type] || {label:lbl.type, color:'#999'};
+  let personName = '?';
+  if (source === 'montage') {
+    const p = state.personnes_montage.find(x => String(x.id) === String(lbl.personneId));
+    personName = p ? `${p.prenom} ${p.nom}` : '?';
+  } else if (lbl.estMonteurZone) {
+    const m = state.personnes_montage.find(x => String(x.id) === String(lbl.monteurId));
+    personName = m ? `${m.prenom} ${m.nom} (Monteur en SAV)` : '?';
+  } else {
+    const p = state.personnes_sav.find(x => String(x.id) === String(lbl.personneSavId));
+    personName = p ? `${p.prenom} ${p.nom}` : '?';
+  }
+
+  const rows = [
+    ['Personne', personName],
+    ['Type', typeInfo.label],
+    ['Du', formatDate(lbl.dateDebut)],
+    ['Au', formatDate(lbl.dateFin)],
+    ['Durée', businessDaysBetween(lbl.dateDebut, lbl.dateFin) + ' j ouvrables'],
+    ['Créé par', lbl.creePar||'—'],
+  ];
+  const d = lbl.data || {};
+  if (d.numeroInstallation) rows.push(['N° installation', d.numeroInstallation]);
+  if (d.adresse) rows.push(['Adresse', d.adresse]);
+  if (d.numeroDevis) rows.push(['N° devis', d.numeroDevis]);
+  if (d.lieu) rows.push(['Lieu', d.lieu]);
+  if (d.texteLibre) rows.push(['Description', d.texteLibre]);
+  if (d.descriptionSAV) rows.push(['Description SAV', d.descriptionSAV]);
+  if (d.travauxRestants) rows.push(['Travaux restants', d.travauxRestants]);
+
+  // Travaux SAV assignés (uniquement sur étiquettes noires côté montage)
+  let travauxSavHtml = '';
+  if (source === 'montage' && lbl.type === 'noir' && Array.isArray(d.travaux_sav) && d.travaux_sav.length > 0) {
+    travauxSavHtml = `<div class="travaux-sav-list">
+      <div style="font-size:11px;font-weight:600;color:#fca5a5;margin-bottom:4px">🛠️ Travaux SAV assignés (${d.travaux_sav.length})</div>
+      ${d.travaux_sav.map(t => {
+        const tcol = LABEL_TYPES_SAV[t.type]?.color || '#999';
+        const tlabel = LABEL_TYPES_SAV[t.type]?.label || t.type;
+        return `<div class="ts-item"><span class="ts-type" style="background:${tcol}"></span><strong>${tlabel}</strong> · ${t.numeroInstallation||''} · ${formatDate(t.dateDebut)}→${formatDate(t.dateFin)}<br><span style="margin-left:14px;color:var(--text-faint)">${t.description||''}</span></div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  const popup = document.createElement('div');
+  popup.id = 'detail-popup';
+  popup.className = 'detail-popup';
+  popup.style.cssText = 'top:50%;left:50%;transform:translate(-50%,-50%);position:fixed';
+  popup.innerHTML = `
+    <div class="popup-header" style="background:${typeInfo.color}">
+      <span>${typeInfo.label}</span>
+    </div>
+    <div class="popup-body">
+      ${rows.map(([k,v]) => `<div class="popup-row"><span class="pkey">${k}</span><span class="pval">${v}</span></div>`).join('')}
+      ${travauxSavHtml}
+    </div>
+    <div class="popup-actions">
+      ${canEdit() ? `<button class="btn btn-secondary btn-sm" onclick="editLabel('${lbl.id}','${source}');closeAllPopups()">✏️ Modifier</button>` : ''}
+      ${canEdit() ? `<button class="btn btn-danger btn-sm" onclick="deleteLabelHere('${lbl.id}','${source}')">🗑️ Supprimer</button>` : ''}
+      <button class="btn btn-secondary btn-sm" onclick="closeAllPopups()">Fermer</button>
+    </div>
+  `;
+  document.body.appendChild(popup);
+  setTimeout(() => document.addEventListener('click', closeOnOutside, {once:true}), 50);
+}
+
+// ════════════════════════════════════════════════════
+// MODAL HELPERS
+// ════════════════════════════════════════════════════
+function createModal(title) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'modal-overlay';
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-header"><h2>${title}</h2><button class="btn btn-secondary btn-sm" onclick="closeModal()">✕</button></div>
+      <div class="modal-body"></div>
+      <div class="modal-footer"></div>
+    </div>`;
+  return overlay;
+}
+function closeModal() { document.getElementById('modal-overlay')?.remove(); }
+
+// ════════════════════════════════════════════════════
+// CRÉATION / MODIFICATION D'ÉTIQUETTES
+// ════════════════════════════════════════════════════
+
+// Sur ligne commune (Menétrey/Burgy) → étiquette dans table montage OU SAV selon type choisi
+function addMontageLabel(personId, defaultDate) {
+  closeAllPopups();
+  const modal = createModal('Nouvelle étiquette');
+  const body = modal.querySelector('.modal-body');
+  const sectionHeader = title => {
+    const h = document.createElement('div');
+    h.style.cssText = 'font-size:11px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;margin:6px 0 8px;border-bottom:1px solid var(--border);padding-bottom:6px';
+    h.textContent = title;
+    return h;
+  };
+  const buildGrid = (types, onPick) => {
+    const grid = document.createElement('div');
+    grid.className = 'type-grid';
+    Object.entries(types).forEach(([key, info]) => {
+      const opt = document.createElement('div');
+      opt.className = 'type-option'; opt.style.color = info.color;
+      opt.innerHTML = `<div class="type-swatch" style="background:${info.color}"></div><div class="type-name">${info.label}</div>`;
+      opt.addEventListener('click', () => { closeModal(); onPick(key); });
+      grid.appendChild(opt);
+    });
+    return grid;
+  };
+  body.appendChild(sectionHeader('🏗️ Type Montage (table etiquettes)'));
+  body.appendChild(buildGrid(LABEL_TYPES_MONTAGE, key => showMontageLabelForm(null, key, personId, defaultDate)));
+  body.appendChild(sectionHeader('🛠️ Type SAV (table etiquettes_sav)'));
+  body.appendChild(buildGrid(LABEL_TYPES_SAV, key => showSavLabelForm(null, key, {commonPersonId:personId, defaultDate})));
+  modal.querySelector('.modal-footer').innerHTML = '<button class="btn btn-secondary" onclick="closeModal()">Annuler</button>';
+  document.body.appendChild(modal);
+}
+
+// Sur équipe SAV ou monteur zone → étiquette dans etiquettes_sav
+function addSavLabel(opts) {
+  closeAllPopups();
+  const modal = createModal(opts.estMonteurZone ? 'Nouvelle étiquette SAV (monteur)' : 'Nouvelle étiquette SAV');
+  const body = modal.querySelector('.modal-body');
+  const grid = document.createElement('div');
+  grid.className = 'type-grid';
+  Object.entries(LABEL_TYPES_SAV).forEach(([key, info]) => {
+    const opt = document.createElement('div');
+    opt.className = 'type-option'; opt.style.color = info.color;
+    opt.innerHTML = `<div class="type-swatch" style="background:${info.color}"></div><div class="type-name">${info.label}</div>`;
+    opt.addEventListener('click', () => { closeModal(); showSavLabelForm(null, key, opts); });
+    grid.appendChild(opt);
+  });
+  body.appendChild(grid);
+  modal.querySelector('.modal-footer').innerHTML = '<button class="btn btn-secondary" onclick="closeModal()">Annuler</button>';
+  document.body.appendChild(modal);
+}
+
+function editLabel(labelId, source) {
+  closeAllPopups();
+  const arr = source === 'montage' ? state.etiquettes_montage : state.etiquettes_sav;
+  const lbl = arr.find(l => l.id === labelId);
+  if (!lbl) return;
+  if (source === 'montage') showMontageLabelForm(labelId, lbl.type, lbl.personneId, lbl.dateDebut);
+  else showSavLabelForm(labelId, lbl.type, {
+    personneSavId: lbl.personneSavId,
+    estMonteurZone: lbl.estMonteurZone,
+    monteurId: lbl.monteurId,
+    etiquetteNoirId: lbl.etiquetteNoirId,
+    commonPersonId: lbl.commonPersonId,
+    defaultDate: lbl.dateDebut,
+  });
+}
+
+function showMontageLabelForm(labelId, type, personId, preDate) {
+  const existing = labelId ? state.etiquettes_montage.find(l => l.id === labelId) : null;
+  const typeInfo = LABEL_TYPES_MONTAGE[type] || LABEL_TYPES_MONTAGE.autre;
+  const modal = createModal(existing ? `Modifier : ${typeInfo.label}` : `Nouvelle : ${typeInfo.label}`);
+  const dot = document.createElement('div');
+  dot.className = 'type-dot'; dot.style.background = typeInfo.color;
+  modal.querySelector('.modal-header').insertBefore(dot, modal.querySelector('.modal-header').firstChild);
+  const body = modal.querySelector('.modal-body');
+  const today = dateStr(new Date());
+  const d = existing?.data || {};
+  const isSAV = type === 'rose' || type === 'noir';
+  body.innerHTML = `
+    <div class="form-row">
+      <div class="form-group"><label>Date début</label><input type="date" id="f-debut" value="${existing?.dateDebut||preDate||today}"></div>
+      <div class="form-group"><label>Durée (j ouvr.)</label><input type="number" id="f-duree" min="1" value="${existing?businessDaysBetween(existing.dateDebut,existing.dateFin):1}"></div>
+    </div>
+    <div class="form-group"><label>N° installation</label><input id="f-num" value="${d.numeroInstallation||''}"></div>
+    <div class="form-group"><label>Lieu / Adresse</label><input id="f-lieu" value="${d.lieu||d.adresse||''}"></div>
+    ${isSAV ? `<div class="form-group"><label>Description</label><textarea id="f-desc" rows="2">${d.descriptionSAV||''}</textarea></div>` : ''}
+    <div id="f-error" class="form-error"></div>
+  `;
+  modal.querySelector('.modal-footer').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+    <button class="btn btn-primary" onclick="submitMontageLabel('${labelId||''}','${type}','${personId}')">${existing?'Enregistrer':'Créer'}</button>
+  `;
+  document.body.appendChild(modal);
+}
+
+async function submitMontageLabel(labelId, type, personId) {
+  const debut = document.getElementById('f-debut').value;
+  const dur = Math.max(1, parseInt(document.getElementById('f-duree').value)||1);
+  if (!debut) { document.getElementById('f-error').textContent='Date requise'; toast('Dates requises', 'error'); return; }
+  const fin = dateStr(addBusinessDays(parseDate(debut), dur));
+  if (!fin) { document.getElementById('f-error').textContent='Date fin invalide'; toast('Dates requises', 'error'); return; }
+  if (debut > fin) { document.getElementById('f-error').textContent='Date de début postérieure à la date de fin'; toast('Date de début postérieure à la date de fin', 'error'); return; }
+  if (!personId) { document.getElementById('f-error').textContent='Personne requise'; toast('Personne requise', 'error'); return; }
+  if (!type) { document.getElementById('f-error').textContent='Type requis'; toast('Type requis', 'error'); return; }
+  const data = {};
+  if (document.getElementById('f-num')?.value) data.numeroInstallation = document.getElementById('f-num').value;
+  if (document.getElementById('f-lieu')?.value) data.lieu = document.getElementById('f-lieu').value;
+  if (document.getElementById('f-desc')?.value) data.descriptionSAV = document.getElementById('f-desc').value;
+  if (labelId) {
+    const idx = state.etiquettes_montage.findIndex(l => l.id === labelId);
+    if (idx >= 0) {
+      state.etiquettes_montage[idx] = {...state.etiquettes_montage[idx], dateDebut:debut, dateFin:fin, data:{...state.etiquettes_montage[idx].data, ...data}};
+    }
+  } else {
+    state.etiquettes_montage.push({
+      id: uid(), personneId: String(personId), type, dateDebut:debut, dateFin:fin,
+      data, verrouille: type === 'noir', creePar: state.currentUser, history:[]
+    });
+  }
+  closeModal();
+  renderGantt();
+  saveToFile();
+  toast(labelId ? 'Étiquette modifiée' : 'Étiquette créée', 'success');
+}
+
+function showSavLabelForm(labelId, type, opts) {
+  const existing = labelId ? state.etiquettes_sav.find(l => l.id === labelId) : null;
+  const typeInfo = LABEL_TYPES_SAV[type] || {label:type, color:'#999'};
+  const modal = createModal(existing ? `Modifier : ${typeInfo.label}` : `Nouvelle : ${typeInfo.label}`);
+  const dot = document.createElement('div');
+  dot.className = 'type-dot'; dot.style.background = typeInfo.color;
+  modal.querySelector('.modal-header').insertBefore(dot, modal.querySelector('.modal-header').firstChild);
+  const body = modal.querySelector('.modal-body');
+  const today = dateStr(new Date());
+  const d = existing?.data || {};
+  const fields = SAV_FIELDS[type] || ['texteLibre'];
+  let html = `
+    <div class="form-row">
+      <div class="form-group"><label>Date début</label><input type="date" id="f-debut" value="${existing?.dateDebut||opts.defaultDate||today}"></div>
+      <div class="form-group"><label>Durée (j ouvr.)</label><input type="number" id="f-duree" min="1" value="${existing?businessDaysBetween(existing.dateDebut,existing.dateFin):(type==='vert'?1:1)}"></div>
+    </div>`;
+  if (fields.includes('numeroInstallation')) html += `<div class="form-group"><label>N° installation</label><input id="f-num" value="${d.numeroInstallation||''}"></div>`;
+  if (fields.includes('adresse')) html += `<div class="form-group"><label>Adresse</label><input id="f-adresse" value="${d.adresse||''}"></div>`;
+  if (fields.includes('numeroDevis')) html += `<div class="form-group"><label>N° devis</label><input id="f-devis" value="${d.numeroDevis||''}"></div>`;
+  if (fields.includes('lieu')) html += `<div class="form-group"><label>Lieu</label><input id="f-lieu" value="${d.lieu||''}"></div>`;
+  if (fields.includes('texteLibre')) html += `<div class="form-group"><label>${type==='vert'?'Texte (ex: 8h30, AB)':'Texte / Description'}</label><${type==='vert'?'input':'textarea rows="2"'} id="f-texte">${d.texteLibre||''}</${type==='vert'?'input':'textarea'}>${type==='vert'?'value="'+(d.texteLibre||'')+'"':''}</div>`;
+  html += `<div id="f-error" class="form-error"></div>`;
+  body.innerHTML = html;
+  // Personne — si zone monteur OU ligne commune, pas de sélecteur
+  if (!opts.estMonteurZone && !opts.commonPersonId && !existing?.commonPersonId) {
+    const personSel = document.createElement('div');
+    personSel.className = 'form-group';
+    const sel = `<select id="f-person-sav">${state.personnes_sav.filter(p=>p.actif).map(p =>
+      `<option value="${p.id}" ${(opts.personneSavId===p.id||existing?.personneSavId===p.id)?'selected':''}>${p.prenom} ${p.nom} (${p.role||''})</option>`
+    ).join('')}</select>`;
+    personSel.innerHTML = `<label>Personne SAV</label>${sel}`;
+    body.insertBefore(personSel, body.firstChild);
+  } else if (opts.commonPersonId || existing?.commonPersonId) {
+    const cId = opts.commonPersonId || existing.commonPersonId;
+    const cPerson = state.personnes_montage.find(p => String(p.id) === String(cId));
+    if (cPerson) {
+      const info = document.createElement('div');
+      info.className = 'form-group';
+      info.innerHTML = `<label>Ligne commune</label><div style="padding:8px 11px;background:var(--bg-elev-1);border:1px solid var(--border);border-radius:6px;font-weight:500">${cPerson.prenom} ${cPerson.nom}</div>`;
+      body.insertBefore(info, body.firstChild);
+    }
+  }
+  modal.querySelector('.modal-footer').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+    <button class="btn btn-primary" id="sav-submit-btn">${existing?'Enregistrer':'Créer'}</button>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById('sav-submit-btn').addEventListener('click', () => submitSavLabel(labelId||'', type, opts));
+}
+
+async function submitSavLabel(labelId, type, opts) {
+  const debut = document.getElementById('f-debut').value;
+  const dur = Math.max(1, parseInt(document.getElementById('f-duree').value)||1);
+  if (!debut) { document.getElementById('f-error').textContent='Date requise'; toast('Dates requises', 'error'); return; }
+  const fin = dateStr(addBusinessDays(parseDate(debut), dur));
+  if (!fin) { document.getElementById('f-error').textContent='Date fin invalide'; toast('Dates requises', 'error'); return; }
+  if (debut > fin) { document.getElementById('f-error').textContent='Date de début postérieure à la date de fin'; toast('Date de début postérieure à la date de fin', 'error'); return; }
+  if (!type) { document.getElementById('f-error').textContent='Type requis'; toast('Type requis', 'error'); return; }
+  const data = {};
+  ['f-num','f-adresse','f-devis','f-lieu','f-texte'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const map = {'f-num':'numeroInstallation','f-adresse':'adresse','f-devis':'numeroDevis','f-lieu':'lieu','f-texte':'texteLibre'};
+    if (el.value) data[map[id]] = el.value;
+  });
+  const personneSavSel = document.getElementById('f-person-sav');
+  const personneSavId = opts.estMonteurZone ? null : (personneSavSel?.value || opts.personneSavId);
+  // Validation : si pas en zone monteur ni ligne commune, une personne SAV est requise
+  if (!opts.estMonteurZone && !opts.commonPersonId && !personneSavId) {
+    document.getElementById('f-error').textContent='Personne requise';
+    toast('Personne requise', 'error');
+    return;
+  }
+  if (labelId) {
+    const idx = state.etiquettes_sav.findIndex(l => l.id === labelId);
+    if (idx >= 0) {
+      state.etiquettes_sav[idx] = {
+        ...state.etiquettes_sav[idx],
+        dateDebut: debut, dateFin: fin, data: {...state.etiquettes_sav[idx].data, ...data},
+        ...(personneSavId !== null && {personneSavId})
+      };
+      // Mise à jour travaux_sav si zone monteur
+      if (state.etiquettes_sav[idx].estMonteurZone) {
+        await updateNoirTravauxSav(state.etiquettes_sav[idx].etiquetteNoirId);
+      }
+    }
+  } else {
+    let assignment;
+    if (opts.estMonteurZone) {
+      assignment = {estMonteurZone:true, monteurId:String(opts.monteurId), etiquetteNoirId:String(opts.etiquetteNoirId)};
+    } else if (opts.commonPersonId) {
+      assignment = {commonPersonId: String(opts.commonPersonId)};
+    } else {
+      assignment = {personneSavId};
+    }
+    const newLbl = {
+      id: uid(), type, dateDebut: debut, dateFin: fin, data,
+      creePar: state.currentUser, history: [],
+      ...assignment
+    };
+    state.etiquettes_sav.push(newLbl);
+    if (newLbl.estMonteurZone) await updateNoirTravauxSav(newLbl.etiquetteNoirId);
+  }
+  closeModal();
+  renderGantt();
+  saveToFile();
+  toast(labelId ? 'Étiquette modifiée' : 'Étiquette créée', 'success');
+}
+
+/**
+ * RÈGLE MÉTIER : réagrégation auto. Met à jour le champ data.travaux_sav d'une
+ *   étiquette NOIRE côté montage avec la liste de toutes les étiquettes SAV
+ *   liées via etiquetteNoirId (estMonteurZone=true). Doit être rappelée à chaque
+ *   création/modification/suppression d'une étiquette SAV en zone monteur, et au
+ *   déplacement (drag) entre noirs (avec ancien + nouveau noirId).
+ * RISQUE : Élevé
+ * NE PAS REFACTORER sans tests manuels couvrant : ajout/modif/suppression d'un
+ *   travail SAV en zone monteur, drag entre 2 noirs (ancien + nouveau noir mis
+ *   à jour), noirId orphelin (noir supprimé), pousse Supabase via etiquettes.
+ */
+// Mise à jour de l'étiquette noire côté montage avec la liste des travaux SAV assignés
+async function updateNoirTravauxSav(noirId) {
+  if (!noirId) return;
+  const idx = state.etiquettes_montage.findIndex(l => l.id === noirId);
+  if (idx < 0) return;
+  const noir = state.etiquettes_montage[idx];
+  // Trouver toutes les étiquettes SAV liées à ce noir
+  const travaux = state.etiquettes_sav
+    .filter(e => e.estMonteurZone && String(e.etiquetteNoirId) === String(noirId))
+    .map(e => ({
+      id: e.id,
+      type: e.type,
+      numeroInstallation: e.data?.numeroInstallation || '',
+      dateDebut: e.dateDebut,
+      dateFin: e.dateFin,
+      description: e.data?.texteLibre || e.data?.adresse || '',
+      creePar: e.creePar || '',
+      creeAt: e.creeAt || new Date().toISOString(),
+    }));
+  noir.data = {...noir.data, travaux_sav: travaux};
+  state.etiquettes_montage[idx] = noir;
+}
+
+async function deleteLabelHere(labelId, source) {
+  if (!confirm('Supprimer cette étiquette ?')) return;
+  closeAllPopups();
+  if (source === 'montage') {
+    state.etiquettes_montage = state.etiquettes_montage.filter(l => l.id !== labelId);
+    // Note : suppression d'une étiquette montage côté SAV est rare (juste pour Menétrey/Burgy)
+    // On ne supprime PAS via les tables ici (la table etiquettes appartient au planning montage)
+    // mais on doit faire un upsert pour ne pas la recréer. En réalité il faut un delete explicite.
+    const { error } = await sb.from('etiquettes').delete().eq('id', String(labelId));
+    if (error) { toast('Erreur suppression : '+error.message, 'error'); return; }
+  } else {
+    const lbl = state.etiquettes_sav.find(l => l.id === labelId);
+    state.etiquettes_sav = state.etiquettes_sav.filter(l => l.id !== labelId);
+    if (lbl?.estMonteurZone && lbl.etiquetteNoirId) {
+      await updateNoirTravauxSav(lbl.etiquetteNoirId);
+    }
+  }
+  renderGantt();
+  saveToFile();
+  toast('Étiquette supprimée', 'success');
+}
+
+// ════════════════════════════════════════════════════
+// ÉVÉNEMENTS — Ponts offerts + Réunions d'équipe SAV
+// ════════════════════════════════════════════════════
+function manageEvents() {
+  const modal = createModal('🎉 Événements');
+  const body = modal.querySelector('.modal-body');
+  const ponts = (state.ponts || []).slice().sort((a,b) => a.date.localeCompare(b.date));
+  // Liste des "réunions SAV" : étiquettes type 'rose' avec data.reunionSavId
+  const reunionsSav = state.etiquettes_sav
+    .filter(e => e.data?.reunionSavId)
+    .reduce((acc, e) => {
+      const k = e.data.reunionSavId;
+      if (!acc[k]) acc[k] = { id:k, date:e.dateDebut, dateFin:e.dateFin, texte:e.data?.texteLibre||'', personnes:[] };
+      const p = state.personnes_sav.find(x => String(x.id) === String(e.personneSavId));
+      if (p) acc[k].personnes.push(`${p.prenom} ${p.nom}`);
+      return acc;
+    }, {});
+  const reunionList = Object.values(reunionsSav).sort((a,b) => b.date.localeCompare(a.date));
+  body.innerHTML = `
+    <!-- Section Ponts -->
+    <div style="margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="font-size:13px;font-weight:600">🌉 Ponts offerts <span style="color:var(--text-faint);font-weight:400">(jours fériés ajoutés)</span></h3>
+        ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="showSavPontForm()">+ Pont</button>` : ''}
+      </div>
+      <div style="border:1px solid var(--border);border-radius:6px;overflow:hidden">
+        ${ponts.length === 0 ? `<div style="padding:14px;text-align:center;color:var(--text-faint);font-style:italic;font-size:12px">Aucun pont</div>` : ponts.map(p => `
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px">
+            <span style="color:var(--text-muted);min-width:120px">${formatDate(p.date)}</span>
+            <strong style="flex:1">${p.nom||'Pont offert'}</strong>
+            ${canEdit() ? `<button class="btn btn-danger btn-sm" onclick="deleteSavPont('${p.id}')">🗑️</button>` : ''}
+          </div>`).join('')}
+      </div>
+    </div>
+    <!-- Section Réunions -->
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="font-size:13px;font-weight:600">👥 Réunions d'équipe <span style="color:var(--text-faint);font-weight:400">(formation rose sur personnes sélectionnées)</span></h3>
+        ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="showSavReunionForm()">+ Réunion</button>` : ''}
+      </div>
+      <div style="border:1px solid var(--border);border-radius:6px;overflow:hidden">
+        ${reunionList.length === 0 ? `<div style="padding:14px;text-align:center;color:var(--text-faint);font-style:italic;font-size:12px">Aucune réunion</div>` : reunionList.map(r => `
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;flex-wrap:wrap">
+            <span style="color:var(--text-muted);min-width:120px">${formatDate(r.date)}${r.dateFin!==r.date?' → '+formatDate(r.dateFin):''}</span>
+            <strong>${r.texte||'Réunion'}</strong>
+            <span style="flex:1;color:var(--text-faint);font-size:11px">${r.personnes.length} pers. : ${r.personnes.join(', ')}</span>
+            ${canEdit() ? `<button class="btn btn-danger btn-sm" onclick="deleteSavReunion('${r.id}')">🗑️</button>` : ''}
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+  modal.querySelector('.modal-footer').innerHTML = '<button class="btn btn-secondary" onclick="closeModal()">Fermer</button>';
+  document.body.appendChild(modal);
+}
+
+// ── Ponts ──
+function showSavPontForm() {
+  closeModal();
+  const modal = createModal('🌉 Nouveau pont offert');
+  const body = modal.querySelector('.modal-body');
+  body.innerHTML = `
+    <div class="form-group"><label>Date du pont</label><input type="date" id="pont-date" value="${dateStr(new Date())}"></div>
+    <div class="form-group"><label>Nom (optionnel)</label><input id="pont-nom" placeholder="Ex: Pont du 1er mai" value="Pont offert"></div>
+    <div class="form-note" style="font-size:11px;color:var(--text-faint)">Cette date sera traitée comme un jour férié sur les deux plannings.</div>
+  `;
+  modal.querySelector('.modal-footer').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal();manageEvents()">← Retour</button>
+    <button class="btn btn-primary" onclick="saveSavPont()">Enregistrer</button>
+  `;
+  document.body.appendChild(modal);
+}
+async function saveSavPont() {
+  const date = document.getElementById('pont-date').value;
+  const nom = document.getElementById('pont-nom').value.trim() || 'Pont offert';
+  if (!date) { toast('Date requise', 'error'); return; }
+  if (!state.ponts) state.ponts = [];
+  const pont = { id: uid(), date, nom };
+  state.ponts.push(pont);
+  // Push direct dans la table ponts (le sync principal ne pousse que SAV+etiquettes)
+  if (sb && state.session) await sb.from('ponts').upsert({id: pont.id, body: pont});
+  closeModal();
+  renderGantt();
+  toast('Pont enregistré', 'success');
+}
+async function deleteSavPont(id) {
+  if (!confirm('Supprimer ce pont ?')) return;
+  state.ponts = (state.ponts||[]).filter(p => p.id !== id);
+  if (sb && state.session) await sb.from('ponts').delete().eq('id', id);
+  closeModal();
+  renderGantt();
+  manageEvents();
+  toast('Pont supprimé', 'info');
+}
+
+// ── Réunions SAV ──
+function showSavReunionForm() {
+  closeModal();
+  const persons = [...state.personnes_sav].filter(p => p.actif)
+    .sort((a,b) => (a.nom+a.prenom).localeCompare(b.nom+b.prenom));
+  const modal = createModal("👥 Nouvelle réunion d'équipe SAV");
+  modal.querySelector('.modal').style.maxWidth = '600px';
+  const body = modal.querySelector('.modal-body');
+  body.innerHTML = `
+    <div class="form-row">
+      <div class="form-group"><label>Date début</label><input type="date" id="reu-date" value="${dateStr(new Date())}"></div>
+      <div class="form-group"><label>Durée (j ouvr.)</label><input type="number" id="reu-duree" value="1" min="1"></div>
+    </div>
+    <div class="form-group"><label>Texte / objet</label><input id="reu-texte" value="Réunion d'équipe SAV"></div>
+    <div class="form-group">
+      <label>Personnes concernées</label>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <button class="btn btn-secondary btn-sm" type="button" onclick="document.querySelectorAll('.reu-pers').forEach(c=>c.checked=true)">Tout cocher</button>
+        <button class="btn btn-secondary btn-sm" type="button" onclick="document.querySelectorAll('.reu-pers').forEach(c=>c.checked=false)">Tout décocher</button>
+      </div>
+      <div style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;background:var(--bg-elev-1)">
+        ${persons.map(p => `<label style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px;cursor:pointer">
+          <input type="checkbox" class="reu-pers" value="${p.id}">
+          <span style="font-weight:600">${p.prenom} ${p.nom}</span>
+          <span style="color:var(--text-faint);font-size:11px">— ${p.role||''} (${p.sousgroupe||''})</span>
+        </label>`).join('')}
+      </div>
+    </div>
+  `;
+  modal.querySelector('.modal-footer').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal();manageEvents()">← Retour</button>
+    <button class="btn btn-primary" onclick="saveSavReunion()">Créer les étiquettes</button>
+  `;
+  document.body.appendChild(modal);
+}
+async function saveSavReunion() {
+  const date = document.getElementById('reu-date').value;
+  const dur = Math.max(1, parseInt(document.getElementById('reu-duree').value)||1);
+  const texte = document.getElementById('reu-texte').value.trim() || "Réunion d'équipe SAV";
+  const ids = [...document.querySelectorAll('.reu-pers:checked')].map(c => c.value);
+  if (!date) { toast('Date requise', 'error'); return; }
+  if (ids.length === 0) { toast('Sélectionnez au moins une personne', 'error'); return; }
+  const fin = dateStr(addBusinessDays(parseDate(date), dur));
+  const reuId = uid();
+  ids.forEach(personneSavId => {
+    state.etiquettes_sav.push({
+      id: uid(), type: 'rose', personneSavId: String(personneSavId),
+      dateDebut: date, dateFin: fin,
+      data: { texteLibre: texte, reunionSavId: reuId },
+      creePar: state.currentUser, history: []
+    });
+  });
+  closeModal();
+  renderGantt();
+  saveToFile();
+  toast(`Réunion créée pour ${ids.length} personne(s)`, 'success');
+}
+async function deleteSavReunion(reuId) {
+  if (!confirm("Supprimer cette réunion et toutes les étiquettes associées ?")) return;
+  state.etiquettes_sav = state.etiquettes_sav.filter(e => e.data?.reunionSavId !== reuId);
+  closeModal();
+  renderGantt();
+  saveToFile();
+  manageEvents();
+  toast('Réunion supprimée', 'info');
+}
+
+// ════════════════════════════════════════════════════
+// ÉQUIPE SAV — gestion (admin)
+// ════════════════════════════════════════════════════
+function manageTeam() {
+  const modal = createModal('Équipe SAV');
+  const body = modal.querySelector('.modal-body');
+  body.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="color:var(--text-muted);font-size:12px">${state.personnes_sav.length} personne(s)</span>
+      ${canAdmin() ? `<button class="btn btn-primary btn-sm" onclick="editSavPerson(null)">+ Ajouter</button>` : '<span style="font-size:11px;color:var(--text-faint)">Lecture seule</span>'}
+    </div>
+    <div id="team-rows" style="border:1px solid var(--border);border-radius:6px;overflow:hidden">
+      ${state.personnes_sav.sort((a,b)=>{
+        const order = {chef:0, ts:1, externe:2};
+        const oa = order[a.sousgroupe]??99, ob = order[b.sousgroupe]??99;
+        if (oa !== ob) return oa - ob;
+        return (a.nom+a.prenom).localeCompare(b.nom+b.prenom);
+      }).map(p => {
+        const sgLabel = p.sousgroupe==='chef'?'CHEF': p.sousgroupe==='externe'?'EXT':'TS';
+        const sgBg = p.sousgroupe==='chef' ? 'rgba(220,76,76,.18)' : p.sousgroupe==='externe' ? 'rgba(168,85,247,.18)' : 'var(--bg-elev-3)';
+        const sgColor = p.sousgroupe==='chef' ? '#fca5a5' : p.sousgroupe==='externe' ? '#d8b4fe' : 'var(--text-muted)';
+        const chef = p.equipe ? state.personnes_sav.find(x => x.id === p.equipe) : null;
+        const chefBadge = chef ? `<span style="color:var(--text-faint);font-size:10px">→ ${chef.prenom} ${chef.nom}</span>` : '';
+        return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px">
+          <span style="font-size:9px;background:${sgBg};color:${sgColor};padding:2px 6px;border-radius:4px;font-weight:600">${sgLabel}</span>
+          <strong style="flex:0 0 auto">${p.prenom} ${p.nom}</strong>
+          ${chefBadge}
+          <span style="flex:1"></span>
+          <span style="color:var(--text-faint);font-size:11px">${p.role||''}</span>
+          ${canAdmin() ? `<button class="btn btn-secondary btn-sm" onclick="editSavPerson('${p.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSavPerson('${p.id}')">🗑️</button>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+  modal.querySelector('.modal-footer').innerHTML = '<button class="btn btn-secondary" onclick="closeModal()">Fermer</button>';
+  document.body.appendChild(modal);
+}
+
+function editSavPerson(personId) {
+  const existing = personId ? state.personnes_sav.find(p => p.id === personId) : null;
+  const modal = createModal(existing ? 'Modifier personne SAV' : 'Ajouter personne SAV');
+  const body = modal.querySelector('.modal-body');
+  // Liste des chefs disponibles pour le sélecteur "équipe"
+  const chefs = state.personnes_sav.filter(p => p.sousgroupe === 'chef' && p.actif && (!existing || p.id !== existing.id))
+    .sort((a,b) => (a.nom+a.prenom).localeCompare(b.nom+b.prenom));
+  body.innerHTML = `
+    <div class="form-row">
+      <div class="form-group"><label>Prénom</label><input id="sp-prenom" value="${existing?.prenom||''}"></div>
+      <div class="form-group"><label>Nom</label><input id="sp-nom" value="${existing?.nom||''}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Sous-groupe</label>
+        <select id="sp-sg" onchange="onSavSousGroupeChange()">
+          <option value="chef" ${existing?.sousgroupe==='chef'?'selected':''}>Chef SAV</option>
+          <option value="ts" ${(!existing?.sousgroupe||existing?.sousgroupe==='ts')?'selected':''}>Technicien TS</option>
+          <option value="externe" ${existing?.sousgroupe==='externe'?'selected':''}>Externe</option>
+        </select></div>
+      <div class="form-group"><label>Rôle (libellé)</label><input id="sp-role" value="${existing?.role||'Technicien TS'}"></div>
+    </div>
+    <div class="form-group" id="sp-equipe-group" style="display:${existing?.sousgroupe==='chef'?'none':'block'}">
+      <label>Équipe (chef à qui rattacher)</label>
+      <select id="sp-equipe">
+        <option value="">— Aucun (orphelin / externe) —</option>
+        ${chefs.map(c => `<option value="${c.id}" ${existing?.equipe===c.id?'selected':''}>${c.prenom} ${c.nom}</option>`).join('')}
+      </select>
+    </div>
+  `;
+  modal.querySelector('.modal-footer').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+    <button class="btn btn-primary" onclick="submitSavPerson('${personId||''}')">${existing?'Enregistrer':'Ajouter'}</button>
+  `;
+  document.body.appendChild(modal);
+}
+
+// Masque/affiche le sélecteur "équipe" selon le sous-groupe (un chef n'a pas de chef)
+function onSavSousGroupeChange() {
+  const sg = document.getElementById('sp-sg').value;
+  const grp = document.getElementById('sp-equipe-group');
+  if (grp) grp.style.display = (sg === 'chef') ? 'none' : 'block';
+}
+
+function submitSavPerson(personId) {
+  const prenom = document.getElementById('sp-prenom').value.trim();
+  const nom = document.getElementById('sp-nom').value.trim();
+  const sousgroupe = document.getElementById('sp-sg').value;
+  const role = document.getElementById('sp-role').value.trim();
+  // équipe (chef rattaché) — vide pour les chefs
+  const equipe = sousgroupe === 'chef' ? null : (document.getElementById('sp-equipe')?.value || null);
+  if (!prenom || !nom) { alert('Prénom et nom requis'); return; }
+  if (personId) {
+    const p = state.personnes_sav.find(x => x.id === personId);
+    if (p) Object.assign(p, {prenom, nom, sousgroupe, role, equipe});
+  } else {
+    state.personnes_sav.push({id: uid(), prenom, nom, sousgroupe, role, equipe, actif: true});
+  }
+  closeModal();
+  renderGantt();
+  saveToFile();
+  toast(personId?'Personne modifiée':'Personne ajoutée','success');
+}
+
+function deleteSavPerson(personId) {
+  const p = state.personnes_sav.find(x => x.id === personId);
+  if (!p) return;
+  if (!confirm(`Supprimer ${p.prenom} ${p.nom} ?`)) return;
+  state.personnes_sav = state.personnes_sav.filter(x => x.id !== personId);
+  // Note : les étiquettes attachées à cette personne deviennent orphelines
+  closeModal();
+  renderGantt();
+  saveToFile();
+  toast('Personne supprimée', 'success');
+}
+
+// ════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════
+function setView(v) {
+  state.view = v;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view===v));
+  renderGantt();
+  scrollToDate(state.anchorDate);
+}
+function navPrev() {
+  const d = new Date(state.anchorDate);
+  if (state.view==='semaine') d.setDate(d.getDate()-7);
+  else d.setMonth(d.getMonth()-3); // trimestre
+  state.anchorDate = d; renderGantt(); scrollToDate(d);
+}
+function navNext() {
+  const d = new Date(state.anchorDate);
+  if (state.view==='semaine') d.setDate(d.getDate()+7);
+  else d.setMonth(d.getMonth()+3); // trimestre
+  state.anchorDate = d; renderGantt(); scrollToDate(d);
+}
+function navToday() { state.anchorDate = new Date(); renderGantt(); scrollToDate(new Date()); }
+
+// ════════════════════════════════════════════════════
+// EXPORT PDF — modale de choix de semaine puis génération
+// ════════════════════════════════════════════════════
+function exportWeekJPEG() {
+  if (!window.html2canvas) { toast('html2canvas non chargé', 'error'); return; }
+  if (!(window.jspdf && window.jspdf.jsPDF)) { toast('jsPDF non chargé', 'error'); return; }
+  // Modale de sélection de la semaine
+  const modal = createModal('Exporter une semaine en PDF');
+  const body = modal.querySelector('.modal-body');
+  const today = new Date();
+  const curWeek = getWeekNum(today);
+  const curYear = today.getFullYear();
+  body.innerHTML = `
+    <div class="form-group">
+      <label>Sélection par n° de semaine</label>
+      <div class="form-row">
+        <div><input type="number" id="exp-week" min="1" max="53" value="${curWeek}"></div>
+        <div><input type="number" id="exp-year" min="2024" max="2030" value="${curYear}"></div>
+      </div>
+      <div class="form-note" style="font-size:11px;color:var(--text-faint);margin-top:4px">Numéro de semaine ISO (1-53) et année</div>
+    </div>
+    <div class="form-group">
+      <label>OU sélection par date (n'importe quel jour de la semaine)</label>
+      <input type="date" id="exp-date" value="${dateStr(today)}">
+    </div>
+    <div id="exp-preview" style="margin-top:6px;padding:10px 12px;background:var(--bg-elev-1);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text-muted)"></div>
+  `;
+  modal.querySelector('.modal-footer').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+    <button class="btn btn-primary" onclick="_doExportWeekJPEG()">📄 Générer le PDF</button>
+  `;
+  document.body.appendChild(modal);
+  // Sync date <-> n° semaine
+  const updatePreview = () => {
+    const d = parseDate(document.getElementById('exp-date').value);
+    const mon = getMonday(d);
+    const sun = addDays(mon, 6);
+    document.getElementById('exp-preview').textContent =
+      `Semaine ${getWeekNum(mon)} (${mon.getFullYear()}) — du ${formatDate(dateStr(mon))} au ${formatDate(dateStr(sun))}`;
+  };
+  document.getElementById('exp-week').addEventListener('input', () => {
+    const w = parseInt(document.getElementById('exp-week').value);
+    const y = parseInt(document.getElementById('exp-year').value);
+    if (!w || !y) return;
+    // Convertir n° de semaine ISO + année → date du lundi
+    // Algo : 4 janvier de l'année est toujours dans la semaine 1
+    const jan4 = new Date(y, 0, 4);
+    const jan4Mon = getMonday(jan4);
+    const targetMon = addDays(jan4Mon, (w-1)*7);
+    document.getElementById('exp-date').value = dateStr(targetMon);
+    updatePreview();
+  });
+  document.getElementById('exp-year').addEventListener('input', () => document.getElementById('exp-week').dispatchEvent(new Event('input')));
+  document.getElementById('exp-date').addEventListener('input', () => {
+    const d = parseDate(document.getElementById('exp-date').value);
+    document.getElementById('exp-week').value = getWeekNum(d);
+    document.getElementById('exp-year').value = d.getFullYear();
+    updatePreview();
+  });
+  updatePreview();
+}
+
+async function _doExportWeekJPEG() {
+  const dateInput = document.getElementById('exp-date').value;
+  if (!dateInput) { toast('Date requise', 'error'); return; }
+  const targetDate = parseDate(dateInput);
+  closeModal();
+  // Sauvegarder l'état actuel pour restauration
+  const saved = { view: state.view, rangeBefore: state.rangeBefore, rangeAfter: state.rangeAfter, anchorDate: state.anchorDate };
+  // Bloquer l'auto-extension de la plage pendant l'export
+  state._exporting = true;
+  // Forcer la vue semaine zoomée sur exactement 7 jours, ancrée sur la date demandée
+  state.view = 'semaine';
+  state.rangeBefore = 0;
+  state.rangeAfter = 7;
+  state.anchorDate = getMonday(targetDate);
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view==='semaine'));
+  renderGantt();
+  // Forcer le scroll à 0 pour éviter tout déclenchement de l'auto-scroll handler
+  document.getElementById('gantt-scroll').scrollLeft = 0;
+  await new Promise(r => setTimeout(r, 350));
+
+  const monday = getMonday(targetDate);
+  const sunday = addDays(monday, 6);
+  const monStr = dateStr(monday), sunStr = dateStr(sunday);
+  const weekNum = getWeekNum(monday);
+
+  // Conteneur off-screen pour la capture
+  // NB : on évite "left:-99999px" car cela combiné aux .gr-name en position:sticky
+  // projetait les noms hors de leur ligne (à droite). On rend le conteneur
+  // hors viewport vertical (top:100vh) mais sans visibility:hidden, sinon
+  // html2canvas n'imprime pas les textes des noms.
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;left:0;top:100vh;background:#16161a;padding:24px;width:auto;font-family:Inter,-apple-system,sans-serif;color:#ededee;pointer-events:none;z-index:-1';
+
+  // En-tête
+  const headerEl = document.createElement('div');
+  headerEl.style.cssText = 'display:flex;align-items:center;gap:14px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #33333a';
+  headerEl.innerHTML = `
+    <img src="https://menetrey-lift.ch/wp-content/uploads/2022/05/logotest-web.png" style="height:36px;filter:brightness(0) invert(1)" crossorigin="anonymous">
+    <div style="flex:1">
+      <div style="font-size:10px;color:#a1a1a8;text-transform:uppercase;letter-spacing:.1em;font-weight:500">Planning SAV — Ascenseurs Menétrey SA</div>
+      <h1 style="font-size:22px;font-weight:700;margin:2px 0;letter-spacing:-.02em">Semaine ${weekNum}</h1>
+      <div style="font-size:13px;color:#a1a1a8">du ${formatDate(monStr)} au ${formatDate(sunStr)}</div>
+    </div>
+    <div style="font-size:10px;color:#6e6e76;text-align:right">
+      Export du ${new Date().toLocaleDateString('fr-CH')} ${new Date().toLocaleTimeString('fr-CH').slice(0,5)}
+    </div>`;
+  container.appendChild(headerEl);
+
+  // Cloner le gantt (sans scroll, hauteur naturelle)
+  const ganttClone = document.getElementById('gantt-scroll').cloneNode(true);
+  ganttClone.style.cssText = 'overflow:visible;height:auto;max-height:none;width:auto';
+  // Neutraliser position:sticky des colonnes "nom" : sans ancêtre scrollable,
+  // sticky+left:0 colle l'élément au bord gauche du viewport, ce qui projette
+  // les noms (container off-screen à -99999px) à l'extrême droite des lignes.
+  ganttClone.querySelectorAll('.gr-name, .gr-corner, .gr-block-name').forEach(el => {
+    el.style.position = 'static';
+    el.style.left = 'auto';
+  });
+  container.appendChild(ganttClone);
+
+  // ── Détail des étiquettes de la semaine ──
+  const inWeek = (a, b) => a <= sunStr && b >= monStr;
+  const commune = getLignesCommunes().map(p => String(p.id));
+  const collected = [];
+  state.etiquettes_montage
+    .filter(e => commune.includes(String(e.personneId)) && inWeek(e.dateDebut, e.dateFin))
+    .forEach(e => collected.push({lbl:e, source:'commune-montage'}));
+  state.etiquettes_sav
+    .filter(e => inWeek(e.dateDebut, e.dateFin))
+    .forEach(e => collected.push({lbl:e, source:'sav'}));
+
+  // Grouper par personne
+  const byPerson = new Map();
+  const personLabel = (lbl, source) => {
+    if (source === 'commune-montage') {
+      const p = state.personnes_montage.find(x => String(x.id) === String(lbl.personneId));
+      return p ? `${p.prenom} ${p.nom} · ligne commune` : '?';
+    }
+    if (lbl.commonPersonId) {
+      const p = state.personnes_montage.find(x => String(x.id) === String(lbl.commonPersonId));
+      return p ? `${p.prenom} ${p.nom} · ligne commune` : '?';
+    }
+    if (lbl.estMonteurZone) {
+      const p = state.personnes_montage.find(x => String(x.id) === String(lbl.monteurId));
+      return p ? `${p.prenom} ${p.nom} · ⚫ SAV bloqué` : '?';
+    }
+    const p = state.personnes_sav.find(x => String(x.id) === String(lbl.personneSavId));
+    return p ? `${p.prenom} ${p.nom}${p.role?' · '+p.role:''}` : '?';
+  };
+  collected.forEach(x => {
+    const k = personLabel(x.lbl, x.source);
+    if (!byPerson.has(k)) byPerson.set(k, []);
+    byPerson.get(k).push(x);
+  });
+
+  // Bloc détails
+  const detailsEl = document.createElement('div');
+  detailsEl.style.cssText = 'margin-top:24px';
+  detailsEl.innerHTML = `<h2 style="font-size:15px;font-weight:600;margin-bottom:10px;color:#ededee">📋 Détail des étiquettes (${collected.length})</h2>`;
+  if (collected.length === 0) {
+    detailsEl.innerHTML += '<div style="color:#a1a1a8;font-style:italic;font-size:12px">Aucune étiquette cette semaine</div>';
+  } else {
+    [...byPerson.entries()].sort((a,b) => a[0].localeCompare(b[0])).forEach(([person, items]) => {
+      const block = document.createElement('div');
+      block.style.cssText = 'margin-bottom:10px;padding:10px 12px;background:#1d1d22;border-radius:6px;border:1px solid #33333a';
+      block.innerHTML = `<div style="font-weight:600;font-size:13px;margin-bottom:6px;color:#ededee">${person}</div>`;
+      items.sort((a,b) => a.lbl.dateDebut.localeCompare(b.lbl.dateDebut)).forEach(({lbl, source}) => {
+        const types = (source === 'commune-montage') ? LABEL_TYPES_MONTAGE : LABEL_TYPES_SAV;
+        const ti = types[lbl.type] || {label:lbl.type, color:'#999'};
+        const fields = [];
+        if (lbl.data?.numeroInstallation) fields.push('N° ' + lbl.data.numeroInstallation);
+        if (lbl.data?.adresse) fields.push(lbl.data.adresse);
+        if (lbl.data?.lieu) fields.push(lbl.data.lieu);
+        if (lbl.data?.numeroDevis) fields.push('Devis ' + lbl.data.numeroDevis);
+        if (lbl.data?.texteLibre) fields.push(lbl.data.texteLibre);
+        if (lbl.data?.descriptionSAV) fields.push('SAV: ' + lbl.data.descriptionSAV);
+        if (lbl.data?.intitule) fields.push(lbl.data.intitule);
+        const dateRange = (lbl.dateDebut === lbl.dateFin)
+          ? formatDate(lbl.dateDebut)
+          : `${formatDate(lbl.dateDebut)} → ${formatDate(lbl.dateFin)}`;
+        block.innerHTML += `<div style="display:flex;gap:10px;font-size:11.5px;padding:5px 0;border-top:1px dotted #33333a;line-height:1.4">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${ti.color};margin-top:3px;flex-shrink:0;border:1px solid rgba(255,255,255,.1)"></span>
+          <span style="color:#a1a1a8;flex:0 0 130px">${dateRange}</span>
+          <strong style="flex:0 0 120px;color:#ededee">${ti.label}</strong>
+          <span style="flex:1;color:#ededee">${fields.join(' · ') || '—'}</span>
+        </div>`;
+      });
+      detailsEl.appendChild(block);
+    });
+  }
+  container.appendChild(detailsEl);
+
+  // Footer
+  const footer = document.createElement('div');
+  footer.style.cssText = 'margin-top:18px;padding-top:10px;border-top:1px solid #33333a;font-size:10px;color:#6e6e76;text-align:center';
+  footer.textContent = 'Ascenseurs Menétrey SA · manufacture suisse depuis 1924';
+  container.appendChild(footer);
+
+  document.body.appendChild(container);
+
+  let canvas;
+  try {
+    canvas = await html2canvas(container, {
+      scale: 1.6,
+      backgroundColor: '#16161a',
+      useCORS: true,
+      logging: false,
+      windowWidth: container.scrollWidth + 60,
+    });
+  } catch (e) {
+    toast('Erreur capture : ' + e.message, 'error');
+    container.remove();
+    return;
+  }
+  container.remove();
+
+  // Restaurer l'état
+  state.view = saved.view;
+  state.rangeBefore = saved.rangeBefore;
+  state.rangeAfter = saved.rangeAfter;
+  state.anchorDate = saved.anchorDate;
+  state._exporting = false;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view===saved.view));
+  renderGantt();
+  requestAnimationFrame(() => scrollToDate(saved.anchorDate));
+
+  // Génération PDF
+  try {
+    const { jsPDF } = window.jspdf;
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const orientation = canvas.width >= canvas.height ? 'landscape' : 'portrait';
+    const pdf = new jsPDF({ orientation, unit: 'pt', format: 'a4', compress: true });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 16;
+    const availW = pageW - margin * 2;
+    const availH = pageH - margin * 2;
+    const ratio = Math.min(availW / canvas.width, availH / canvas.height);
+    const renderW = canvas.width * ratio;
+    const renderH = canvas.height * ratio;
+    const offsetX = (pageW - renderW) / 2;
+    const offsetY = (pageH - renderH) / 2;
+    pdf.addImage(imgData, 'JPEG', offsetX, offsetY, renderW, renderH);
+    pdf.save(`Planning_SAV_S${weekNum}_${monStr}.pdf`);
+    toast(`Export semaine ${weekNum} téléchargé (${collected.length} étiquettes)`, 'success');
+  } catch (e) {
+    toast('Erreur génération PDF : ' + e.message, 'error');
+  }
+}
+
+// ════════════════════════════════════════════════════
+// COMPACT MODE
+// ════════════════════════════════════════════════════
+function toggleCompact() {
+  document.body.classList.toggle('compact');
+  requestAnimationFrame(() => { try { renderGantt(); } catch(e){} });
+}
+
+// ════════════════════════════════════════════════════
+// AJOUT GLOBAL D'UNE ÉTIQUETTE (depuis la toolbar)
+// ════════════════════════════════════════════════════
+function addLabelGlobal() {
+  if (!canEdit()) { toast('Lecture seule', 'warning'); return; }
+  closeAllPopups();
+  // Modale qui demande : sur quelle personne ?
+  const modal = createModal('Nouvelle étiquette — Choisir une personne');
+  const body = modal.querySelector('.modal-body');
+  const today = dateStr(new Date());
+  // Construire la liste : Lignes communes, Équipe SAV, Monteurs en SAV bloqué actuels
+  const commune = getLignesCommunes();
+  const sav = state.personnes_sav.filter(p => p.actif).sort((a,b) => {
+    const o = {chef:0, ts:1};
+    return ((o[a.sousgroupe]??99)-(o[b.sousgroupe]??99)) || (a.nom+a.prenom).localeCompare(b.nom+b.prenom);
+  });
+  const monteurs = getMonteursEnSav(today, today);
+  const optionStyle = 'display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;border-radius:6px;border:1px solid var(--border);background:var(--bg-elev-1);transition:.15s';
+  const sectionTitle = 'font-size:11px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;margin:14px 0 6px';
+  let html = `<div style="display:flex;flex-direction:column;gap:6px">`;
+  // Lignes communes
+  if (commune.length > 0) {
+    html += `<div style="${sectionTitle}">🤝 Lignes communes</div>`;
+    commune.forEach(p => {
+      html += `<div class="add-pick" data-source="montage" data-id="${p.id}" style="${optionStyle}">
+        <span style="font-size:9px;background:var(--bg-elev-3);padding:2px 6px;border-radius:4px;color:var(--text-muted)">COM</span>
+        <strong style="flex:1">${p.prenom} ${p.nom}</strong>
+        <span style="font-size:11px;color:var(--text-faint)">${p.role||''}</span>
+      </div>`;
+    });
+  }
+  // Équipe SAV
+  html += `<div style="${sectionTitle}">🛠️ Équipe SAV</div>`;
+  sav.forEach(p => {
+    html += `<div class="add-pick" data-source="sav" data-id="${p.id}" style="${optionStyle}">
+      <span style="font-size:9px;background:var(--bg-elev-3);padding:2px 6px;border-radius:4px;color:var(--text-muted)">${p.sousgroupe==='chef'?'CHEF':'TS'}</span>
+      <strong style="flex:1">${p.prenom} ${p.nom}</strong>
+      <span style="font-size:11px;color:var(--text-faint)">${p.role||''}</span>
+    </div>`;
+  });
+  // Monteurs en SAV bloqué
+  if (monteurs.length > 0) {
+    html += `<div style="${sectionTitle}">⚫ Monteurs en SAV bloqué (aujourd'hui)</div>`;
+    monteurs.forEach(({person, noirs}) => {
+      const noirActifAuj = noirs.find(n => n.dateDebut <= today && n.dateFin >= today) || noirs[0];
+      html += `<div class="add-pick" data-source="monteur-zone" data-id="${person.id}" data-noir="${noirActifAuj.id}" style="${optionStyle}">
+        <span style="font-size:9px;background:rgba(220,38,38,.2);padding:2px 6px;border-radius:4px;color:#fca5a5">⚫ SAV</span>
+        <strong style="flex:1">${person.prenom} ${person.nom}</strong>
+        <span style="font-size:11px;color:var(--text-faint)">bloqué</span>
+      </div>`;
+    });
+  }
+  html += `</div>`;
+  body.innerHTML = html;
+  body.querySelectorAll('.add-pick').forEach(el => {
+    el.addEventListener('mouseenter', () => el.style.borderColor = 'var(--primary)');
+    el.addEventListener('mouseleave', () => el.style.borderColor = 'var(--border)');
+    el.addEventListener('click', () => {
+      const src = el.dataset.source, id = el.dataset.id, noir = el.dataset.noir;
+      closeModal();
+      if (src === 'montage') addMontageLabel(id, today);
+      else if (src === 'sav') addSavLabel({personneSavId:id, defaultDate:today});
+      else if (src === 'monteur-zone') addSavLabel({estMonteurZone:true, monteurId:id, etiquetteNoirId:noir, defaultDate:today});
+    });
+  });
+  modal.querySelector('.modal-footer').innerHTML = '<button class="btn btn-secondary" onclick="closeModal()">Annuler</button>';
+  document.body.appendChild(modal);
+}
+
+// ════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════
+function toast(msg, type='info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+async function init() {
+  if (!window.supabase) {
+    document.getElementById('auth-screen').innerHTML = '<h2>⚠️ Supabase indisponible</h2><p>Vérifiez votre connexion.</p>';
+    showAuthScreen();
+    return;
+  }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true },
+    realtime: { params: { eventsPerSecond: 5 } }
+  });
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) await onAuthSuccess(session);
+  else showAuthScreen();
+  sb.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') showAuthScreen(); });
+}
+window.addEventListener('beforeunload', () => {
+  try { closeAllPopups && closeAllPopups(); } catch(e){}
+  try { unsubscribeRealtime && unsubscribeRealtime(); } catch(e){}
+});
+
+init();
+</script>
+</body>
+</html>
