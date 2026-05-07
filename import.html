@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Import Planning → Supabase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#16161a;--bg-elev-1:#1d1d22;--bg-elev-2:#23232a;--bg-elev-3:#2a2a32;
+  --border:#33333a;--text:#ededee;--text-muted:#a1a1a8;--text-faint:#6e6e76;
+  --primary:#3b6cc4;--primary-hover:#5685db;--primary-soft:rgba(59,108,196,.15);
+  --green:#10b981;--red:#ef4444;--amber:#f59e0b;
+}
+body{font-family:'Inter',-apple-system,sans-serif;font-size:14px;background:var(--bg);color:var(--text);min-height:100vh;padding:24px;line-height:1.5}
+.container{max-width:760px;margin:0 auto}
+h1{font-size:24px;font-weight:700;margin-bottom:6px;letter-spacing:-.02em}
+.subtitle{color:var(--text-muted);margin-bottom:24px;font-size:13px}
+.step{background:var(--bg-elev-1);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:14px;opacity:.5;transition:.2s}
+.step.active{opacity:1;border-color:var(--primary)}
+.step.done{opacity:.7;border-color:var(--green)}
+.step h2{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:600}
+.step.done .step-num{background:var(--green)}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+label{font-size:12px;color:var(--text-muted);font-weight:500}
+input[type=email],input[type=password],input[type=file]{padding:10px 13px;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev-2);color:var(--text);font-size:14px;font-family:inherit;transition:.15s;width:100%}
+input[type=email]:focus,input[type=password]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+input[type=file]{cursor:pointer}
+input[type=file]::file-selector-button{padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg-elev-3);color:var(--text);cursor:pointer;font-family:inherit;font-size:13px;margin-right:10px}
+.btn{padding:10px 18px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border);padding:6px 12px;font-size:12px}
+.btn-ghost:hover{background:var(--bg-elev-2);color:var(--text)}
+.summary{background:var(--bg-elev-2);border-radius:8px;padding:14px;margin-top:12px;font-size:13px}
+.summary .row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)}
+.summary .row:last-child{border-bottom:none}
+.summary .key{color:var(--text-muted)}
+.summary .val{font-weight:600}
+.error{color:var(--red);font-size:12px;margin-top:6px;min-height:16px}
+.user-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-elev-2);border:1px solid var(--border);border-radius:8px;font-size:12px;margin-bottom:14px}
+.user-bar .badge{padding:2px 8px;border-radius:10px;background:rgba(59,108,196,.15);color:#93c5fd;font-weight:600;font-size:10px;text-transform:uppercase}
+.progress{height:6px;background:var(--bg-elev-2);border-radius:3px;overflow:hidden;margin:14px 0}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--primary-hover));width:0;transition:width .2s}
+.log{font-family:'JetBrains Mono','Consolas',monospace;font-size:11px;background:#0d0d0f;border:1px solid var(--border);border-radius:6px;padding:12px;max-height:340px;overflow-y:auto;line-height:1.55}
+.log-line{padding:1px 0;color:var(--text-muted)}
+.log-line.ok{color:#34d399}
+.log-line.new{color:#93c5fd}
+.log-line.skip{color:var(--text-faint)}
+.log-line.error{color:#f87171;font-weight:600}
+.log-line.success{color:#fbbf24;font-weight:600;font-size:12px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+.warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:12px;margin-top:12px;font-size:12px;color:#fbbf24}
+.note{background:rgba(59,108,196,.08);border:1px solid rgba(59,108,196,.25);border-radius:8px;padding:12px;margin-top:12px;font-size:12px;color:var(--text-muted)}
+.note strong{color:var(--text)}
+.note ul{margin:6px 0 0 18px;line-height:1.7}
+.actions{display:flex;gap:10px;margin-top:14px}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>📥 Import Planning → Supabase</h1>
+  <p class="subtitle">Migration d'un fichier <code>planning.json</code> local vers la base Supabase.</p>
+
+  <!-- ÉTAPE 1 — CONNEXION -->
+  <div id="step-login" class="step active">
+    <h2><span class="step-num">1</span>Connexion</h2>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Connectez-vous avec un compte <strong>editor</strong> ou <strong>admin</strong>.</p>
+    <form onsubmit="event.preventDefault(); doLogin();">
+      <div class="field"><label>Email</label><input type="email" id="email" required></div>
+      <div class="field"><label>Mot de passe</label><input type="password" id="password" required></div>
+      <button class="btn btn-primary" id="login-btn" type="submit">Se connecter</button>
+      <div id="login-error" class="error"></div>
+    </form>
+  </div>
+
+  <!-- ÉTAPE 2 — FICHIER -->
+  <div id="step-file" class="step">
+    <h2><span class="step-num">2</span>Choisir le fichier <code>planning.json</code></h2>
+    <input type="file" id="file-input" accept="application/json,.json">
+    <div id="file-summary"></div>
+  </div>
+
+  <!-- ÉTAPE 3 — IMPORT -->
+  <div id="step-import" class="step">
+    <h2><span class="step-num">3</span>Importer dans Supabase</h2>
+    <div class="note">
+      <strong>Comportement :</strong>
+      <ul>
+        <li>Personnes existantes (même prénom + nom) → <strong>ignorées</strong> (pas de doublon).</li>
+        <li>Nouvelles personnes → insérées avec un <strong>UUID</strong>.</li>
+        <li>Étiquettes / ponts / réunions → insérés en remappant les références aux personnes.</li>
+      </ul>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="import-btn" onclick="doImport()" disabled>Importer dans Supabase</button>
+    </div>
+    <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+// CONFIGURATION
+// ════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://nnkthgxbcslkhkdayjvg.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_zX0P2GxSqIlh3Lqb_-PtCw_ydCahuhp';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true }
+});
+
+let parsedData = null;   // contenu JSON parsé
+let userRole = null;     // rôle de l'utilisateur connecté
+
+// ════════════════════════════════════════════════════
+// HELPERS UI
+// ════════════════════════════════════════════════════
+function setStepDone(id) {
+  const s = document.getElementById(id);
+  s.classList.remove('active');
+  s.classList.add('done');
+}
+function setStepActive(id) {
+  document.getElementById(id).classList.add('active');
+}
+function setProgress(pct) {
+  document.getElementById('progress-bar').style.width = Math.min(100, Math.round(pct)) + '%';
+}
+function log(msg, type='') {
+  const div = document.createElement('div');
+  div.className = 'log-line' + (type ? ' ' + type : '');
+  const ts = new Date().toLocaleTimeString();
+  div.textContent = `[${ts}] ${msg}`;
+  const logEl = document.getElementById('log');
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// UUID v4 via crypto.randomUUID
+function uuid() {
+  if (crypto?.randomUUID) return crypto.randomUUID();
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c/4).toString(16)
+  );
+}
+
+// Normalisation prénom+nom pour détection doublons
+function norm(s) {
+  return (s || '').toString().trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+function personKey(p) {
+  return norm(p.prenom) + '|' + norm(p.nom);
+}
+
+// ════════════════════════════════════════════════════
+// CONNEXION
+// ════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  errEl.textContent = '';
+  btn.disabled = true; btn.textContent = 'Connexion…';
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+
+    const { data: appUser, error: roleErr } = await sb
+      .from('app_users').select('role').eq('user_id', data.session.user.id).maybeSingle();
+    if (roleErr) console.warn('Rôle :', roleErr);
+    userRole = appUser?.role || 'viewer';
+
+    if (!['editor','admin'].includes(userRole)) {
+      throw new Error(`Rôle "${userRole}" insuffisant — il faut editor ou admin pour importer.`);
+    }
+
+    const stepEl = document.getElementById('step-login');
+    stepEl.innerHTML = `<div class="user-bar">👤 <strong>${email}</strong> <span class="badge">${userRole}</span> <span style="flex:1"></span>
+      <button class="btn-ghost" onclick="doLogout()">Déconnexion</button></div>`;
+    setStepDone('step-login');
+    setStepActive('step-file');
+  } catch (e) {
+    errEl.textContent = e.message || 'Erreur de connexion';
+    btn.disabled = false; btn.textContent = 'Se connecter';
+  }
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+// ════════════════════════════════════════════════════
+// CHOIX DU FICHIER
+// ════════════════════════════════════════════════════
+document.getElementById('file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const summaryEl = document.getElementById('file-summary');
+  try {
+    const text = await file.text();
+    parsedData = JSON.parse(text);
+
+    const personnes  = Array.isArray(parsedData.personnes)  ? parsedData.personnes  : [];
+    const etiquettes = Array.isArray(parsedData.etiquettes) ? parsedData.etiquettes : [];
+    const ponts      = Array.isArray(parsedData.ponts)      ? parsedData.ponts      : [];
+    const reunions   = Array.isArray(parsedData.reunions)   ? parsedData.reunions   : [];
+
+    summaryEl.innerHTML = `
+      <div class="summary">
+        <div class="row"><span class="key">Fichier</span><span class="val">${file.name} (${(file.size/1024).toFixed(1)} ko)</span></div>
+        <div class="row"><span class="key">Personnes</span><span class="val">${personnes.length}</span></div>
+        <div class="row"><span class="key">Étiquettes</span><span class="val">${etiquettes.length}</span></div>
+        <div class="row"><span class="key">Ponts offerts</span><span class="val">${ponts.length}</span></div>
+        <div class="row"><span class="key">Réunions</span><span class="val">${reunions.length}</span></div>
+      </div>
+    `;
+
+    if (personnes.length === 0) {
+      summaryEl.innerHTML += '<div class="warn">⚠️ Aucune personne trouvée — l\'import est inutile.</div>';
+      document.getElementById('import-btn').disabled = true;
+    } else {
+      document.getElementById('import-btn').disabled = false;
+      setStepDone('step-file');
+      setStepActive('step-import');
+    }
+  } catch (err) {
+    summaryEl.innerHTML = `<div class="warn">❌ Fichier invalide : ${err.message}</div>`;
+    document.getElementById('import-btn').disabled = true;
+    parsedData = null;
+  }
+});
+
+// ════════════════════════════════════════════════════
+// IMPORT
+// ════════════════════════════════════════════════════
+async function doImport() {
+  if (!parsedData) return;
+  const btn = document.getElementById('import-btn');
+  btn.disabled = true; btn.textContent = 'Import en cours…';
+  document.getElementById('log').innerHTML = '';
+  setProgress(0);
+
+  let stats = { personnesNew: 0, personnesSkip: 0, etqInserted: 0, pontsInserted: 0, reuInserted: 0 };
+
+  try {
+    // 1) Charger les personnes existantes
+    log('Chargement des personnes existantes dans Supabase…');
+    const { data: existingRows, error: selErr } = await sb.from('personnes').select('body');
+    if (selErr) throw new Error('Lecture personnes : ' + selErr.message);
+    const existingPersonnes = (existingRows || []).map(r => r.body);
+    log(`→ ${existingPersonnes.length} personnes déjà présentes`, 'skip');
+
+    const existingByKey = new Map();
+    existingPersonnes.forEach(p => existingByKey.set(personKey(p), p));
+    setProgress(8);
+
+    // 2) Construire la table de correspondance ancienId → nouvelUUID
+    const idMap = {};
+    const personnesToInsert = [];
+    const personnes = parsedData.personnes || [];
+    const totalP = personnes.length;
+
+    for (let i = 0; i < totalP; i++) {
+      const p = personnes[i];
+      const oldId = p.id;
+      const existing = existingByKey.get(personKey(p));
+      if (existing) {
+        idMap[oldId] = String(existing.id);
+        stats.personnesSkip++;
+        log(`👤 ${p.prenom} ${p.nom} → existe déjà (${String(existing.id).slice(0,8)}…)`, 'skip');
+      } else {
+        const newId = uuid();
+        idMap[oldId] = newId;
+        personnesToInsert.push({ ...p, id: newId });
+        stats.personnesNew++;
+        log(`+ ${p.prenom} ${p.nom} → ${newId.slice(0,8)}…`, 'new');
+      }
+      setProgress(8 + ((i + 1) / totalP) * 22);
+    }
+
+    // 3) Insérer les nouvelles personnes
+    if (personnesToInsert.length > 0) {
+      log(`Insertion de ${personnesToInsert.length} nouvelle(s) personne(s)…`);
+      const rows = personnesToInsert.map(p => ({ id: String(p.id), body: p }));
+      const { error: insErr } = await sb.from('personnes').insert(rows);
+      if (insErr) throw new Error('Insert personnes : ' + insErr.message);
+      log(`✓ ${personnesToInsert.length} personnes insérées`, 'ok');
+    } else {
+      log('Aucune nouvelle personne à insérer', 'skip');
+    }
+    setProgress(35);
+
+    // 4) Étiquettes : remap personneId via idMap
+    const etiquettes = parsedData.etiquettes || [];
+    log(`${etiquettes.length} étiquettes à traiter…`);
+
+    const etqRows = [];
+    let skippedEtq = 0;
+    for (const e of etiquettes) {
+      const newPersonneId = idMap[e.personneId];
+      if (newPersonneId === undefined) {
+        skippedEtq++;
+        continue; // étiquette orpheline
+      }
+      const newE = { ...e, personneId: newPersonneId };
+      etqRows.push({ id: String(e.id || uuid()), body: newE });
+    }
+    if (skippedEtq > 0) {
+      log(`⚠ ${skippedEtq} étiquettes orphelines ignorées (personne introuvable)`, 'skip');
+    }
+
+    const batchSize = 200;
+    for (let i = 0; i < etqRows.length; i += batchSize) {
+      const batch = etqRows.slice(i, i + batchSize);
+      const { error: insErr } = await sb.from('etiquettes').upsert(batch);
+      if (insErr) throw new Error('Insert étiquettes : ' + insErr.message);
+      stats.etqInserted += batch.length;
+      log(`✓ Étiquettes ${i + 1}–${i + batch.length} insérées`, 'ok');
+      setProgress(35 + ((i + batch.length) / Math.max(1, etqRows.length)) * 45);
+    }
+
+    // 5) Ponts (pas de remap)
+    const ponts = parsedData.ponts || [];
+    if (ponts.length > 0) {
+      const pontRows = ponts.map(p => ({ id: String(p.id || uuid()), body: p }));
+      const { error: insErr } = await sb.from('ponts').upsert(pontRows);
+      if (insErr) throw new Error('Insert ponts : ' + insErr.message);
+      stats.pontsInserted = ponts.length;
+      log(`✓ ${ponts.length} ponts insérés`, 'ok');
+    }
+    setProgress(88);
+
+    // 6) Réunions : remap des IDs de personnes dans .personnes[]
+    const reunions = parsedData.reunions || [];
+    if (reunions.length > 0) {
+      const reuRows = reunions.map(r => {
+        const mappedPersonnes = (r.personnes || [])
+          .map(oldId => idMap[oldId])
+          .filter(x => x !== undefined);
+        return { id: String(r.id || uuid()), body: { ...r, personnes: mappedPersonnes } };
+      });
+      const { error: insErr } = await sb.from('reunions').upsert(reuRows);
+      if (insErr) throw new Error('Insert réunions : ' + insErr.message);
+      stats.reuInserted = reunions.length;
+      log(`✓ ${reunions.length} réunions insérées`, 'ok');
+    }
+    setProgress(100);
+
+    log('', '');
+    log(`Import terminé — ${stats.personnesNew} personnes nouvelles (${stats.personnesSkip} ignorées), ${stats.etqInserted} étiquettes, ${stats.pontsInserted} ponts, ${stats.reuInserted} réunions importées`, 'success');
+    setStepDone('step-import');
+    btn.textContent = '✓ Import terminé';
+  } catch (e) {
+    log('❌ ERREUR : ' + (e.message || e), 'error');
+    btn.disabled = false; btn.textContent = 'Réessayer';
+    setProgress(0);
+  }
+}
+
+// ════════════════════════════════════════════════════
+// AUTO-LOGIN si session déjà présente
+// ════════════════════════════════════════════════════
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    document.getElementById('email').value = session.user.email;
+    const { data: appUser } = await sb.from('app_users').select('role').eq('user_id', session.user.id).maybeSingle();
+    userRole = appUser?.role || 'viewer';
+    if (['editor','admin'].includes(userRole)) {
+      const stepEl = document.getElementById('step-login');
+      stepEl.innerHTML = `<div class="user-bar">👤 <strong>${session.user.email}</strong> <span class="badge">${userRole}</span> <span style="flex:1"></span>
+        <button class="btn-ghost" onclick="doLogout()">Déconnexion</button></div>`;
+      setStepDone('step-login');
+      setStepActive('step-file');
+    } else {
+      document.getElementById('login-error').textContent =
+        `Rôle "${userRole}" insuffisant — déconnectez-vous et utilisez un compte editor/admin.`;
+    }
+  }
+})();
+</script>
+</body>
+</html>

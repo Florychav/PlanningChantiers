@@ -472,6 +472,31 @@ table.stats-table th,.team-list th{background:var(--surface-2)}
 #auth-screen .auth-form input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);background:var(--surface-3)}
 .btn-white{background:var(--primary);border-color:var(--primary);border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 16px rgba(59,130,246,.3)}
 .btn-white:hover{background:#2563EB;border-color:#2563EB}
+/* ── RECHERCHE D'ÉTIQUETTES ── */
+.search-btn{padding:5px 8px;font-size:14px;line-height:1;flex-shrink:0}
+.search-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:1100;display:flex;align-items:flex-start;justify-content:center;padding:80px 16px 16px;animation:fadeIn .15s ease-out}
+/* L'attribut [hidden] doit toujours masquer l'overlay malgré display:flex */
+.search-modal-overlay[hidden]{display:none !important}
+.search-modal{background:rgba(17,24,39,.98);border:1px solid var(--border-strong);border-radius:14px;padding:10px;box-shadow:var(--shadow-lg);width:100%;max-width:480px;display:flex;align-items:center;gap:8px;animation:searchSlide 180ms cubic-bezier(.2,.7,.2,1)}
+.search-modal .search-icon{width:30px;height:30px;border-radius:8px;background:var(--primary-soft);color:var(--primary);display:inline-flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.search-modal input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--border-strong);color:var(--text);padding:9px 12px;border-radius:8px;font-size:14px;outline:none;font-family:inherit}
+.search-modal input::placeholder{color:var(--text-faint)}
+.search-modal input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.search-counter{font-size:12px;color:var(--text-muted);white-space:nowrap;font-variant-numeric:tabular-nums;padding:0 4px}
+.search-next,.search-close{appearance:none;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);width:32px;height:32px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:16px;line-height:1;transition:.15s;flex-shrink:0;padding:0;font-family:inherit}
+.search-next:hover,.search-close:hover{color:var(--text);background:var(--surface-3);border-color:var(--border-strong)}
+/* Override pour que l'attribut [hidden] reste prioritaire sur display:inline-flex */
+.search-modal [hidden]{display:none !important}
+.search-close{background:var(--danger);border-color:var(--danger);color:#fff}
+.search-close:hover{background:#DC2626;border-color:#DC2626;color:#fff}
+@keyframes searchSlide{from{opacity:0;transform:translateY(-12px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes blink-label{0%,100%{opacity:1}50%{opacity:0}}
+.label-block.search-blink{animation:blink-label 500ms step-end 3;outline:2px solid var(--primary);outline-offset:1px;box-shadow:0 0 0 2px var(--primary-soft),0 8px 20px rgba(0,0,0,.6)}
+@media (max-width:640px){
+  .search-modal-overlay{padding:60px 12px 12px;align-items:flex-start}
+  .search-modal{padding:8px;gap:6px}
+  .search-modal input{font-size:13px;padding:8px 10px}
+}
 </style>
 </head>
 <body class="compact">
@@ -508,8 +533,20 @@ table.stats-table th,.team-list th{background:var(--surface-2)}
   <div class="spacer"></div>
   <span id="sync-indicator" class="file-status" title="Synchronisation Supabase"></span>
   <span id="user-info" class="file-status"></span>
+  <button type="button" class="btn btn-ghost btn-sm search-btn" onclick="openSearch()" title="Rechercher une étiquette (Ctrl+F)" aria-label="Rechercher">🔍</button>
   <button class="btn btn-ghost btn-sm" id="logout-btn" onclick="doLogout()" style="display:none">⏏ Déconnexion</button>
 </header>
+
+<!-- Modale flottante de recherche (déplacée hors du header pour ne pas perturber la mise en page) -->
+<div id="search-overlay" class="search-modal-overlay" hidden onclick="if(event.target===this)closeSearch()">
+  <div id="search-panel" class="search-modal" role="dialog" aria-label="Rechercher une étiquette">
+    <span class="search-icon" aria-hidden="true">🔍</span>
+    <input id="search-input" type="text" placeholder="N° installation, adresse, lieu, nom…" autocomplete="off" oninput="_searchOnInput()" onkeydown="_searchOnKey(event)">
+    <span id="search-counter" class="search-counter" hidden></span>
+    <button type="button" class="search-next" id="search-next-btn" onclick="searchNext()" title="Résultat suivant" aria-label="Suivant" hidden>›</button>
+    <button type="button" class="search-close" onclick="closeSearch()" title="Fermer (Échap)" aria-label="Fermer">✕</button>
+  </div>
+</div>
 
 <!-- ═══════════════════════════ GANTT TAB ═══════════════════════════ -->
 <div id="tab-gantt" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
@@ -3677,9 +3714,182 @@ async function init() {
   });
 }
 
+// ════════════════════════════════════════════════════
+// RECHERCHE D'ÉTIQUETTES
+// ════════════════════════════════════════════════════
+let _searchHits = [];
+let _searchIdx = 0;
+let _searchAutoCloseTimer = null;
+let _searchOutsideHandler = null;
+let _searchKeyHandler = null;
+
+function _searchNorm(s) {
+  if (s == null) return '';
+  return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+function _searchAllLabels() {
+  // Toutes les étiquettes du planning montage + les étiquettes SAV (lignes communes)
+  const out = [];
+  if (Array.isArray(state.etiquettes)) state.etiquettes.forEach(e => out.push(e));
+  if (Array.isArray(state.etiquettes_sav)) state.etiquettes_sav.forEach(e => out.push(e));
+  return out;
+}
+
+function _searchLabelMatches(lbl, q) {
+  const d = lbl?.data || {};
+  const fields = [
+    d.numeroInstallation, d.adresse, d.lieu, d.texteLibre, d.descriptionSAV,
+    d.travauxRestants, d.texteBrun, d.intitule, d.numeroDevis, d.commentaire,
+    d.client, d.contact, d.note, d.notes, d.titre,
+  ];
+  return fields.some(f => f && _searchNorm(f).includes(q));
+}
+
+function openSearch() {
+  const overlay = document.getElementById('search-overlay');
+  const input = document.getElementById('search-input');
+  if (!overlay || !input) return;
+  overlay.hidden = false;
+  setTimeout(() => input.focus(), 30);
+  if (_searchKeyHandler) document.removeEventListener('keydown', _searchKeyHandler);
+  _searchKeyHandler = (e) => { if (e.key === 'Escape') closeSearch(); };
+  document.addEventListener('keydown', _searchKeyHandler);
+  // (Pas de handler "outside" : la fermeture par clic en dehors est gérée
+  // directement par l'onclick de la div .search-modal-overlay — voir HTML.)
+  _resetSearchAutoClose();
+}
+
+function closeSearch() {
+  const overlay = document.getElementById('search-overlay');
+  const input = document.getElementById('search-input');
+  if (overlay) overlay.hidden = true;
+  if (input) input.value = '';
+  _searchHits = [];
+  _searchIdx = 0;
+  const counter = document.getElementById('search-counter');
+  const nextBtn = document.getElementById('search-next-btn');
+  if (counter) counter.hidden = true;
+  if (nextBtn) nextBtn.hidden = true;
+  if (_searchKeyHandler) { document.removeEventListener('keydown', _searchKeyHandler); _searchKeyHandler = null; }
+  if (_searchAutoCloseTimer) { clearTimeout(_searchAutoCloseTimer); _searchAutoCloseTimer = null; }
+  document.querySelectorAll('.label-block.search-blink').forEach(el => el.classList.remove('search-blink'));
+}
+
+function _resetSearchAutoClose() {
+  if (_searchAutoCloseTimer) clearTimeout(_searchAutoCloseTimer);
+  _searchAutoCloseTimer = setTimeout(closeSearch, 5000);
+}
+
+function _searchOnInput() {
+  _resetSearchAutoClose();
+  const raw = document.getElementById('search-input').value;
+  const q = _searchNorm(raw).trim();
+  const counter = document.getElementById('search-counter');
+  const nextBtn = document.getElementById('search-next-btn');
+  if (q.length < 2) {
+    _searchHits = [];
+    if (counter) counter.hidden = true;
+    if (nextBtn) nextBtn.hidden = true;
+    return;
+  }
+  _searchHits = _searchAllLabels().filter(l => _searchLabelMatches(l, q));
+  _searchHits.sort((a, b) => (a.dateDebut || '').localeCompare(b.dateDebut || ''));
+  if (_searchHits.length === 0) {
+    if (counter) counter.hidden = true;
+    if (nextBtn) nextBtn.hidden = true;
+    if (typeof toast === 'function') toast('Aucune étiquette trouvée', 'info');
+    return;
+  }
+  _searchIdx = 0;
+  _updateSearchCounter();
+  _gotoCurrentHit();
+}
+
+function _searchOnKey(e) {
+  if (e.key === 'Enter') { e.preventDefault(); searchNext(); }
+}
+
+function _updateSearchCounter() {
+  const counter = document.getElementById('search-counter');
+  const nextBtn = document.getElementById('search-next-btn');
+  if (_searchHits.length > 1) {
+    if (counter) { counter.textContent = `${_searchIdx + 1}/${_searchHits.length}`; counter.hidden = false; }
+    if (nextBtn) nextBtn.hidden = false;
+  } else {
+    if (counter) counter.hidden = true;
+    if (nextBtn) nextBtn.hidden = true;
+  }
+}
+
+function searchNext() {
+  if (_searchHits.length === 0) return;
+  _searchIdx = (_searchIdx + 1) % _searchHits.length;
+  _updateSearchCounter();
+  _gotoCurrentHit();
+  _resetSearchAutoClose();
+}
+
+function _gotoCurrentHit() {
+  const hit = _searchHits[_searchIdx];
+  if (!hit || !hit.dateDebut) return;
+  try {
+    const d = parseDate(hit.dateDebut);
+    state.anchorDate = d;
+    if (typeof renderGantt === 'function') renderGantt();
+    // S'assurer que la date est dans la plage rendue (renderGantt l'a placée
+    // au centre via anchorDate, mais on appelle scrollToDate pour étendre
+    // la plage si besoin avant le calcul de centrage précis).
+    requestAnimationFrame(() => {
+      try { if (typeof scrollToDate === 'function') scrollToDate(d); } catch(e){}
+      setTimeout(() => {
+        const el = document.querySelector(`.label-block[data-label-id="${hit.id}"]`);
+        if (!el) return;
+        const scroll = document.getElementById('gantt-scroll');
+        if (scroll) {
+          // Largeurs des zones sticky (colonne nom à gauche, en-tête en haut)
+          const nameCol = scroll.querySelector('.gr-name, .gr-corner');
+          const headerRow = scroll.querySelector('.gr-header');
+          const fixedLeft = nameCol ? nameCol.getBoundingClientRect().width : 0;
+          const fixedTop  = headerRow ? headerRow.getBoundingClientRect().height : 0;
+          const visibleW = Math.max(50, scroll.clientWidth  - fixedLeft);
+          const visibleH = Math.max(50, scroll.clientHeight - fixedTop);
+          // Position de l'étiquette dans le repère de défilement
+          const labelRect  = el.getBoundingClientRect();
+          const scrollRect = scroll.getBoundingClientRect();
+          const labelLeftInScroll = scroll.scrollLeft + (labelRect.left - scrollRect.left);
+          const labelTopInScroll  = scroll.scrollTop  + (labelRect.top  - scrollRect.top);
+          // Centre l'étiquette dans la zone visible (zone non recouverte par les sticky)
+          const targetScrollLeft = labelLeftInScroll - fixedLeft - (visibleW / 2) + (labelRect.width  / 2);
+          const targetScrollTop  = labelTopInScroll  - fixedTop  - (visibleH / 2) + (labelRect.height / 2);
+          scroll.scrollTo({
+            left: Math.max(0, targetScrollLeft),
+            top:  Math.max(0, targetScrollTop),
+            behavior: 'smooth',
+          });
+        }
+        // Animation de clignotement (relance via reflow forcé)
+        el.classList.remove('search-blink');
+        void el.offsetWidth;
+        el.classList.add('search-blink');
+        setTimeout(() => el.classList.remove('search-blink'), 1700);
+      }, 140);
+    });
+  } catch (e) { console.warn('[search] goto', e); }
+}
+
+// Raccourci clavier Ctrl+F / Cmd+F
+window.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && !e.shiftKey) {
+    const panel = document.getElementById('search-panel');
+    if (panel) { e.preventDefault(); if (panel.hidden) openSearch(); else document.getElementById('search-input').focus(); }
+  }
+});
+
 window.addEventListener('beforeunload', () => {
   try { closeAllPopups && closeAllPopups(); } catch(e){}
   try { unsubscribeRealtime && unsubscribeRealtime(); } catch(e){}
+  try { closeSearch(); } catch(e){}
 });
 
 init();
