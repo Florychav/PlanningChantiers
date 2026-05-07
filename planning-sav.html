@@ -348,7 +348,7 @@ header h1{font-size:15px;font-weight:700}
 .btn-white:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
 /* ── RECHERCHE D'ÉTIQUETTES ── */
 .search-btn{padding:5px 8px;font-size:14px;line-height:1;flex-shrink:0}
-.search-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:1100;display:flex;align-items:flex-start;justify-content:center;padding:80px 16px 16px;animation:fadeIn .15s ease-out}
+.search-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.18);z-index:1100;display:flex;align-items:flex-start;justify-content:center;padding:80px 16px 16px;animation:fadeIn .15s ease-out;pointer-events:auto}
 /* L'attribut [hidden] doit toujours masquer l'overlay malgré display:flex */
 .search-modal-overlay[hidden]{display:none !important}
 .search-modal{background:rgba(17,24,39,.98);border:1px solid var(--border-strong);border-radius:14px;padding:10px;box-shadow:var(--shadow-lg);width:100%;max-width:480px;display:flex;align-items:center;gap:8px;animation:searchSlide 180ms cubic-bezier(.2,.7,.2,1)}
