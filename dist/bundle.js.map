@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/main.js"],
+  "sourcesContent": ["// @ts-check\n// Planning Menetrey - ESM bundle entry point.\n// J1 scaffold: smoke-test only. Real app code arrives in J2+.\n\nconsole.log('[planning] bundle loaded, version=0.0.0-refonte');\n\nconst root = document.getElementById('app');\nif (root) {\n  root.textContent = 'Planning Menetrey - ESM bundle scaffold (J1). Aucun code applicatif charg\u00E9.';\n}\n"],
+  "mappings": "AAIA,QAAQ,IAAI,iDAAiD,EAE7D,IAAMA,EAAO,SAAS,eAAe,KAAK,EACtCA,IACFA,EAAK,YAAc",
+  "names": ["root"]
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "dep": "@supabase/supabase-js",
+    "status": "OK",
+    "sizeKB": "198.7",
+    "note": ""
+  },
+  {
+    "dep": "html2canvas",
+    "status": "OK",
+    "sizeKB": "200.0",
+    "note": ""
+  },
+  {
+    "dep": "jspdf",
+    "status": "OK",
+    "sizeKB": "735.2",
+    "note": ""
+  },
+  {
+    "dep": "xlsx",
+    "status": "OK",
+    "sizeKB": "422.5",
+    "note": ""
+  }
+]

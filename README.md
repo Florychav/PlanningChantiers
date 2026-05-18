@@ -2,6 +2,8 @@
 
 Application web monofichier (`index.html`) pour la gestion du planning des chantiers, déployée sur GitHub Pages avec stockage Supabase et synchronisation temps réel.
 
+> ⚙️ **Refonte ESM bundle en cours** — voir section [Refonte ESM (work in progress)](#refonte-esm-work-in-progress) en bas de ce README. La version monofichier ci-dessous reste la version de production sur `main` jusqu'à la bascule.
+
 ## Architecture
 
 - **Frontend** : `index.html` (HTML/CSS/JS vanilla, aucune build), hébergé sur GitHub Pages.
@@ -103,3 +105,73 @@ python -m http.server 8000
 ```
 
 L'API Supabase fonctionne aussi en local (CORS autorisé par défaut).
+
+---
+
+## Refonte ESM (work in progress)
+
+> **Branche dédiée** : `refonte/esm-bundle` (à créer — cf. blocker git documenté dans `J1_REPORT.md`).
+> **Objectif** : remplacer les iframes par un bundle ESM unique, bus de relations centralisé, undo atomique, vrais tests.
+
+### Structure (post-J1 scaffold)
+
+```
+Planning/
+├─ src/                  # Code applicatif ESM (entry: src/main.js)
+│  ├─ shared/            # Bus, supabase, undo, utils purs
+│  ├─ relations/         # 1 règle métier = 1 fichier
+│  ├─ montage/, sav/     # View layers
+│  └─ shell/             # Tabs, auth, recherche
+├─ tests/                # unit (Vitest), integration (jsdom), e2e (Playwright)
+├─ dist/                 # ⚠️ versionné — voir "Pourquoi dist/ est commité" ci-dessous
+├─ legacy/               # Anciens fichiers HTML (créé à la bascule)
+├─ esbuild.config.mjs    # Build (linked sourcemaps, ES2020, minify)
+├─ vitest.config.mjs
+├─ playwright.config.mjs
+├─ tsconfig.json         # checkJs + allowJs, noEmit (type-check IDE/CI uniquement)
+└─ package.json
+```
+
+### Pourquoi `dist/` est commité
+
+GitHub Pages sert directement le repo sans étape de build. Pour éviter une infra CI au démarrage, le bundle produit (`dist/bundle.js`, `dist/bundle.js.map`, `dist/index.html`) est versionné via `npm run build` avant chaque push. Le `.gitattributes` marque ces fichiers `linguist-generated=true` pour exclure des stats GitHub.
+
+### Migration vers CI (futur)
+
+Une fois la refonte stabilisée, migrer vers un build automatique :
+- **Option A** : GitHub Action sur push `main` → build → commit dans branche `gh-pages` → Pages source = `gh-pages`.
+- **Option B** : Pages-from-Actions (workflow `actions/deploy-pages`).
+- Bénéfice : `dist/` peut alors être `.gitignore`-d.
+
+### Workflow dev
+
+```bash
+cd Planning
+npm install               # premier setup
+npm run build             # produit dist/
+npm run preview           # http://localhost:3000
+npm test                  # unit + integration
+npm run test:e2e          # Playwright (compte Supabase test requis — cf. TESTING.md)
+npm run typecheck         # vérif types via JSDoc + checkJs
+```
+
+### Rollback d'urgence
+
+Avant la bascule sur `main`, un tag `legacy-pre-refonte` sera posé sur le commit de l'état actuel (4 fichiers HTML). Pour rollback :
+
+```bash
+git checkout legacy-pre-refonte -- Planning/index.html Planning/index-sav.html Planning/planning-montage.html Planning/planning-sav.html
+git commit -m "rollback: revert to pre-refonte state"
+git push
+```
+
+Les anciens HTML restent aussi disponibles dans `Planning/legacy/` pendant 2 semaines après la bascule.
+
+### TODO post-bascule
+
+- **Migration `import.html` vers le bundle ESM** : aujourd'hui hors scope refonte. Estimation grossière : **1-2 jours** (extraction logique d'import, intégration au shell, tests E2E import). À planifier après stabilisation du bundle principal.
+
+### Tests
+
+Voir [`TESTING.md`](./TESTING.md).
+
