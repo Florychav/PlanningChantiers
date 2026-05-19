@@ -10,6 +10,7 @@ import { register as registerGrisInstallation }  from './relations/gris-installa
 import { register as registerJauneProtocoleur }  from './relations/jaune-protocoleur.js';
 import { register as registerFusionEtiquettes }  from './relations/fusion-etiquettes.js';
 import { register as registerCascadeMereFilles } from './relations/cascade-mere-filles.js';
+import { register as registerMereFillesDragSync } from './relations/mere-filles-drag-sync.js';
 import { generateEmptyPdf, loadJsPdf } from './shared/export-pdf.js';
 import { createWorkbook, loadExcelJs } from './shared/export-excel.js';
 
@@ -19,6 +20,7 @@ registerGrisInstallation(bus, undo);
 registerJauneProtocoleur(bus, undo);
 registerFusionEtiquettes(bus, undo);
 registerCascadeMereFilles(bus, undo);
+registerMereFillesDragSync(bus, undo);
 
 bus.on('app.boot', (event) => {
   // eslint-disable-next-line no-console
