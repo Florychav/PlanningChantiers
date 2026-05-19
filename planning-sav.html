@@ -420,6 +420,12 @@ header h1{font-size:15px;font-weight:700}
 .search-close:hover{background:#DC2626;border-color:#DC2626;color:#fff}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes searchSlide{from{opacity:0;transform:translateY(-12px) scale(.96)}to{opacity:1;transform:none}}
+/* J2.4 — Panneau Parametres (dialog natif). */
+.settings-dialog{border:none;border-radius:var(--radius-lg);background:var(--surface);color:var(--text);padding:20px;max-width:340px;box-shadow:var(--shadow-lg)}
+.settings-dialog::backdrop{background:rgba(0,0,0,.5)}
+.settings-dialog h3{margin:0 0 12px;font-size:14px;font-weight:700}
+.settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}
+.settings-dialog menu{padding:0;margin:12px 0 0;display:flex;justify-content:flex-end;list-style:none}
 @keyframes blink-label{0%,100%{opacity:1}50%{opacity:0}}
 .label-block.search-blink{animation:blink-label 500ms step-end 3;outline:2px solid var(--accent-blue);outline-offset:1px;box-shadow:0 0 0 2px var(--primary-soft),0 8px 20px rgba(0,0,0,.6)}
 @media (max-width:640px){
@@ -428,6 +434,11 @@ header h1{font-size:15px;font-weight:700}
   .search-modal input{font-size:13px;padding:8px 10px}
 }
 </style>
+<script>/* J2.4 — handlers panneau Parametres (theme toggle). */
+function openSettings(){var d=document.getElementById('settings-dialog');if(!d)return;updateThemeLabel();if(d.showModal)d.showModal();else d.setAttribute('open','');}
+function toggleTheme(){var cur=document.documentElement.dataset.theme||'dark',next=cur==='dark'?'light':'dark';try{localStorage.setItem('planning.theme',next);}catch(e){}document.documentElement.dataset.theme=next;updateThemeLabel();}
+function updateThemeLabel(){var el=document.getElementById('theme-label');if(el)el.textContent=(document.documentElement.dataset.theme||'dark')==='dark'?'Sombre':'Clair';}
+</script>
 </head>
 <body class="compact">
 
@@ -457,6 +468,7 @@ header h1{font-size:15px;font-weight:700}
   <span id="sync-indicator"></span>
   <span id="user-info" class="file-status"></span>
   <button type="button" class="btn btn-ghost btn-sm search-btn" onclick="openSearch()" title="Rechercher une étiquette (Ctrl+F)" aria-label="Rechercher">🔍</button>
+  <button type="button" class="btn btn-ghost btn-sm" onclick="openSettings()" title="Paramètres" aria-label="Paramètres" style="padding:5px 8px;font-size:14px">⚙</button>
   <button class="btn btn-ghost btn-sm" onclick="manageEvents()">🎉 Événements</button>
   <button class="btn btn-ghost btn-sm" onclick="manageTeam()">👥 Équipe</button>
   <button class="btn btn-ghost btn-sm" id="logout-btn" onclick="doLogout()" style="display:none">⏏ Déconnexion</button>
@@ -2963,5 +2975,16 @@ window.addEventListener('beforeunload', () => {
 
 init();
 </script>
+<!-- J2.4 — Panneau Parametres (dialog natif HTML5). -->
+<dialog id="settings-dialog" class="settings-dialog">
+  <form method="dialog">
+    <h3>⚙ Paramètres</h3>
+    <label class="settings-row">
+      <span>Thème</span>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="toggleTheme()"><span id="theme-label">Sombre</span></button>
+    </label>
+    <menu><button type="submit" class="btn btn-ghost btn-sm">Fermer</button></menu>
+  </form>
+</dialog>
 </body>
 </html>
