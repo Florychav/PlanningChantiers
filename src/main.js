@@ -1,40 +1,38 @@
 // @ts-check
 // Planning Menetrey - ESM bundle entry point.
-// J2.2 : bus + undo skeleton cables en consumer smoke-test.
+// J2.3 : bus + undo + 3 regles metier (verrou-noir, gris-installation, jaune-protocoleur)
+//        branchees pour smoke. Sans UI legacy : le smoke se valide en console.
 
 import { bus } from './shared/bus.js';
 import { undo } from './shared/undo.js';
+import { state, resetState } from './shared/state.js';
+import { register as registerVerrouNoir }      from './relations/verrou-noir.js';
+import { register as registerGrisInstallation } from './relations/gris-installation.js';
+import { register as registerJauneProtocoleur } from './relations/jaune-protocoleur.js';
+
+// Branchement des 3 regles (pattern Q2 : import explicite + register).
+registerVerrouNoir(bus, undo);
+registerGrisInstallation(bus, undo);
+registerJauneProtocoleur(bus, undo);
 
 bus.on('app.boot', (event) => {
   // eslint-disable-next-line no-console
   console.log('[planning] bus alive', event);
 });
 
-// Smoke-test undo : handler 'smoke.tick' increment + push revert ;
-// transaction wrappante => undo atomique.
-let smokeCounter = 0;
-bus.on('smoke.tick', () => {
-  const before = smokeCounter;
-  smokeCounter++;
-  undo.push({
-    revert: () => { smokeCounter = before; },
-    description: 'smoke tick',
-    domain: 'smoke',
-  });
-});
-
 console.log('[planning] bundle loaded, version=0.0.0-refonte');
-bus.emit('app.boot', { ts: Date.now(), phase: 'J2.2' });
+bus.emit('app.boot', { ts: Date.now(), phase: 'J2.3' });
 
-undo.transaction(() => {
-  bus.emit('smoke.tick');
-  bus.emit('smoke.tick');
-}, 'smoke transaction');
-console.log('[planning] smoke counter after transaction =', smokeCounter); // 2
+// Smoke J2.3 : creation d'un 'noir' => verrouille:true ; undo => unlock.
+resetState();
+const lab = /** @type {any} */ ({ id: 'smoke-1', type: 'noir' });
+state.etiquettes.push(lab);
+bus.emit('label.created', { label: lab });
+console.log('[planning] smoke noir verrouille =', lab.verrouille); // true
 undo.undo();
-console.log('[planning] smoke counter after undo =', smokeCounter); // 0
+console.log('[planning] smoke noir verrouille apres undo =', lab.verrouille); // false
 
 const root = document.getElementById('app');
 if (root) {
-  root.textContent = 'Planning Menetrey - ESM bundle scaffold (J2.2). Bus + undo skeleton en place. Aucune regle metier encore convertie.';
+  root.textContent = 'Planning Menetrey - ESM bundle scaffold (J2.3). Bus + undo + 3 regles metier en place. Branchement UI legacy a venir (J3).';
 }
