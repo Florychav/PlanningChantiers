@@ -86,6 +86,10 @@ update public.app_users set role = 'viewer' where email = 'visiteur@example.com'
 
 Via le dashboard Supabase : **Authentication > Users > [...] > Delete user**. La ligne `app_users` est supprimée en cascade.
 
+## Thème (clair / sombre)
+
+Bouton **⚙ Paramètres** dans le header de Montage et SAV ouvre un panneau où le thème peut basculer entre sombre (défaut) et clair. Le choix est mémorisé dans le navigateur (`localStorage.planning.theme`) et partagé entre les deux vues : passer en clair sur Montage puis ouvrir SAV applique le clair au prochain chargement.
+
 ## Synchronisation temps réel
 
 - Toute modification est poussée à Supabase (debounce 200 ms après le dernier changement).
