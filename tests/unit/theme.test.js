@@ -8,6 +8,7 @@ import {
   toggleTheme,
   subscribeTheme,
   applyStoredTheme,
+  setupStorageSync,
   STORAGE_KEY,
   DEFAULT_THEME,
 } from '../../src/shared/theme.js';
@@ -101,6 +102,48 @@ describe('theme — module ESM', () => {
     const datasetBefore = document.documentElement.dataset.theme;
     applyStoredTheme();
     expect(document.documentElement.dataset.theme).toBe(datasetBefore);
+  });
+
+  it('setupStorageSync : storage event sur notre cle applique le theme', () => {
+    const handler = vi.fn();
+    bus.on('theme-changed', handler);
+    const off = setupStorageSync();
+
+    // Simule un autre onglet qui passe en light.
+    window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY, newValue: 'light', oldValue: 'dark' }));
+    expect(getTheme()).toBe('light');
+    expect(document.documentElement.dataset.theme).toBe('light');
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    off();
+  });
+
+  it('setupStorageSync : storage event sur autre cle = ignore', () => {
+    const handler = vi.fn();
+    bus.on('theme-changed', handler);
+    const off = setupStorageSync();
+    window.dispatchEvent(new StorageEvent('storage', { key: 'autre.cle', newValue: 'light' }));
+    expect(getTheme()).toBe('dark');
+    expect(handler).not.toHaveBeenCalled();
+    off();
+  });
+
+  it('setupStorageSync : newValue null (removeItem) = ignore', () => {
+    const handler = vi.fn();
+    bus.on('theme-changed', handler);
+    const off = setupStorageSync();
+    window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY, newValue: null, oldValue: 'dark' }));
+    expect(handler).not.toHaveBeenCalled();
+    off();
+  });
+
+  it('setupStorageSync : unsubscribe retire le listener', () => {
+    const handler = vi.fn();
+    bus.on('theme-changed', handler);
+    const off = setupStorageSync();
+    off();
+    window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY, newValue: 'light' }));
+    expect(handler).not.toHaveBeenCalled();
   });
 
   it('localStorage throw (mode prive) -> fallback dark, pas de crash', () => {

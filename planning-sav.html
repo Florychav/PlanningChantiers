@@ -438,6 +438,8 @@ header h1{font-size:15px;font-weight:700}
 function openSettings(){var d=document.getElementById('settings-dialog');if(!d)return;updateThemeLabel();if(d.showModal)d.showModal();else d.setAttribute('open','');}
 function toggleTheme(){var cur=document.documentElement.dataset.theme||'dark',next=cur==='dark'?'light':'dark';try{localStorage.setItem('planning.theme',next);}catch(e){}document.documentElement.dataset.theme=next;updateThemeLabel();}
 function updateThemeLabel(){var el=document.getElementById('theme-label');if(el)el.textContent=(document.documentElement.dataset.theme||'dark')==='dark'?'Sombre':'Clair';}
+/* J3.9 — sync live cross-onglet/iframe via storage event. */
+window.addEventListener('storage',function(ev){if(ev.key!=='planning.theme'||ev.newValue==null)return;var t=ev.newValue;if(t!=='dark'&&t!=='light')t='dark';document.documentElement.dataset.theme=t;updateThemeLabel();});
 </script>
 </head>
 <body class="compact">

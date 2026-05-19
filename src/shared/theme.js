@@ -103,3 +103,24 @@ export function applyStoredTheme() {
   }
   return t;
 }
+
+/**
+ * J3.9 — synchro thème live cross-onglet/iframe via storage event.
+ * Quand un autre onglet/iframe modifie `localStorage.planning.theme`,
+ * applique le nouveau theme localement (DOM + emit bus) sans reload.
+ * setTheme() chez nous ne re-declenche pas l'event (le navigateur n'emet
+ * `storage` que pour les autres windows, pas la window courante).
+ *
+ * @returns {() => void}  unsubscribe.
+ */
+export function setupStorageSync() {
+  if (typeof window === 'undefined') return () => {};
+  /** @param {StorageEvent} ev */
+  function handler(ev) {
+    if (ev.key !== STORAGE_KEY) return;
+    if (ev.newValue == null) return; // cleared via removeItem : ignorer
+    setTheme(ev.newValue);
+  }
+  window.addEventListener('storage', handler);
+  return () => window.removeEventListener('storage', handler);
+}
