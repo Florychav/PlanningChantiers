@@ -11,6 +11,7 @@ import { register as registerJauneProtocoleur }  from './relations/jaune-protoco
 import { register as registerFusionEtiquettes }  from './relations/fusion-etiquettes.js';
 import { register as registerCascadeMereFilles } from './relations/cascade-mere-filles.js';
 import { register as registerMereFillesDragSync } from './relations/mere-filles-drag-sync.js';
+import { register as registerJauneAutoJ2 }       from './relations/jaune-auto-j2.js';
 import { generateEmptyPdf, loadJsPdf } from './shared/export-pdf.js';
 import { createWorkbook, loadExcelJs } from './shared/export-excel.js';
 
@@ -21,6 +22,7 @@ registerJauneProtocoleur(bus, undo);
 registerFusionEtiquettes(bus, undo);
 registerCascadeMereFilles(bus, undo);
 registerMereFillesDragSync(bus, undo);
+registerJauneAutoJ2(bus, undo);
 
 bus.on('app.boot', (event) => {
   // eslint-disable-next-line no-console
