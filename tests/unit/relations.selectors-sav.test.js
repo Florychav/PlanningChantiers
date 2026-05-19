@@ -3,6 +3,14 @@ import { describe, it, expect } from 'vitest';
 import { normalizeName, getLignesCommunes } from '../../src/relations/lignes-communes.js';
 import { getMonteursEnSav } from '../../src/relations/monteurs-en-sav.js';
 
+/**
+ * Helper de cast : un test passe des partials d'Etiquette sans id. On caste
+ * vers any[] pour eviter de devoir ajouter des id factices partout.
+ * @param {any[]} a
+ * @returns {any[]}
+ */
+const E = (a) => a;
+
 describe('normalizeName', () => {
   it('lowercase + trim + diacritiques retires', () => {
     expect(normalizeName('  Florent  ')).toBe('florent');
@@ -72,40 +80,40 @@ describe('getLignesCommunes', () => {
 
 describe('getMonteursEnSav', () => {
   it('retourne les personneId avec noir chevauchant la fenetre', () => {
-    const etiq = [
-      { id: 'a', type: 'noir', personneId: 'P1', dateDebut: '2026-05-18', dateFin: '2026-05-20' },
-      { id: 'b', type: 'noir', personneId: 'P2', dateDebut: '2026-05-25', dateFin: '2026-05-27' },
+    const etiq = E([
+      { id: 'a', type: 'noir',  personneId: 'P1', dateDebut: '2026-05-18', dateFin: '2026-05-20' },
+      { id: 'b', type: 'noir',  personneId: 'P2', dateDebut: '2026-05-25', dateFin: '2026-05-27' },
       { id: 'c', type: 'rouge', personneId: 'P3', dateDebut: '2026-05-19', dateFin: '2026-05-19' },
-    ];
+    ]);
     const r = getMonteursEnSav(etiq, '2026-05-19', '2026-05-22');
     expect(r).toEqual(new Set(['P1'])); // P2 hors fenetre, P3 pas noir
   });
 
   it('overlap inclusif (borne identique = match)', () => {
-    const etiq = [{ id: 'a', type: 'noir', personneId: 'P1', dateDebut: '2026-05-20', dateFin: '2026-05-20' }];
+    const etiq = E([{ id: 'a', type: 'noir', personneId: 'P1', dateDebut: '2026-05-20', dateFin: '2026-05-20' }]);
     expect(getMonteursEnSav(etiq, '2026-05-18', '2026-05-20')).toEqual(new Set(['P1']));
     expect(getMonteursEnSav(etiq, '2026-05-20', '2026-05-22')).toEqual(new Set(['P1']));
   });
 
   it('aucun match si label hors fenetre', () => {
-    const etiq = [{ id: 'a', type: 'noir', personneId: 'P1', dateDebut: '2026-05-18', dateFin: '2026-05-18' }];
+    const etiq = E([{ id: 'a', type: 'noir', personneId: 'P1', dateDebut: '2026-05-18', dateFin: '2026-05-18' }]);
     expect(getMonteursEnSav(etiq, '2026-05-19', '2026-05-22')).toEqual(new Set());
   });
 
   it('plusieurs personnes', () => {
-    const etiq = [
-      { type: 'noir', personneId: 'P1', dateDebut: '2026-05-18', dateFin: '2026-05-22' },
-      { type: 'noir', personneId: 'P2', dateDebut: '2026-05-19', dateFin: '2026-05-19' },
-      { type: 'noir', personneId: 'P3', dateDebut: '2026-04-01', dateFin: '2026-04-01' },
-    ];
+    const etiq = E([
+      { id: 'a', type: 'noir', personneId: 'P1', dateDebut: '2026-05-18', dateFin: '2026-05-22' },
+      { id: 'b', type: 'noir', personneId: 'P2', dateDebut: '2026-05-19', dateFin: '2026-05-19' },
+      { id: 'c', type: 'noir', personneId: 'P3', dateDebut: '2026-04-01', dateFin: '2026-04-01' },
+    ]);
     expect(getMonteursEnSav(etiq, '2026-05-18', '2026-05-22')).toEqual(new Set(['P1', 'P2']));
   });
 
   it('ignore labels sans personneId / dates manquantes', () => {
-    const etiq = [
-      { type: 'noir', dateDebut: '2026-05-18', dateFin: '2026-05-22' },
-      { type: 'noir', personneId: 'P1', dateDebut: '2026-05-18' }, // pas de dateFin
-    ];
+    const etiq = E([
+      { id: 'a', type: 'noir', dateDebut: '2026-05-18', dateFin: '2026-05-22' },
+      { id: 'b', type: 'noir', personneId: 'P1', dateDebut: '2026-05-18' },
+    ]);
     expect(getMonteursEnSav(etiq, '2026-05-18', '2026-05-22')).toEqual(new Set());
   });
 });
