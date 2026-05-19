@@ -11,7 +11,8 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:wcag": "node scripts/check-wcag.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
