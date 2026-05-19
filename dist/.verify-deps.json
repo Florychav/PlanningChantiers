@@ -8,19 +8,19 @@
   {
     "dep": "html2canvas",
     "status": "OK",
-    "sizeKB": "200.0",
+    "sizeKB": "199.7",
     "note": ""
   },
   {
     "dep": "jspdf",
     "status": "OK",
-    "sizeKB": "735.2",
+    "sizeKB": "795.1",
     "note": ""
   },
   {
-    "dep": "xlsx",
+    "dep": "exceljs",
     "status": "OK",
-    "sizeKB": "422.5",
+    "sizeKB": "924.7",
     "note": ""
   }
 ]

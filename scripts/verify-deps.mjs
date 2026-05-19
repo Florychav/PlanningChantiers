@@ -11,7 +11,7 @@ const deps = [
   { name: '@supabase/supabase-js', src: `import { createClient } from '@supabase/supabase-js'; export const _ = createClient;` },
   { name: 'html2canvas',           src: `import h from 'html2canvas'; export const _ = h;` },
   { name: 'jspdf',                 src: `import { jsPDF } from 'jspdf'; export const _ = jsPDF;` },
-  { name: 'xlsx',                  src: `import * as X from 'xlsx'; export const _ = X;` },
+  { name: 'exceljs',               src: `import ExcelJS from 'exceljs'; export const _ = ExcelJS;` },
 ];
 
 const results = [];
