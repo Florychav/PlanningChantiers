@@ -12,6 +12,7 @@ import { register as registerFusionEtiquettes }  from './relations/fusion-etique
 import { register as registerCascadeMereFilles } from './relations/cascade-mere-filles.js';
 import { register as registerMereFillesDragSync } from './relations/mere-filles-drag-sync.js';
 import { register as registerJauneAutoJ2 }       from './relations/jaune-auto-j2.js';
+import { register as registerNoirTravauxSav }    from './relations/noir-travaux-sav.js';
 import { generateEmptyPdf, loadJsPdf } from './shared/export-pdf.js';
 import { createWorkbook, loadExcelJs } from './shared/export-excel.js';
 
@@ -23,6 +24,7 @@ registerFusionEtiquettes(bus, undo);
 registerCascadeMereFilles(bus, undo);
 registerMereFillesDragSync(bus, undo);
 registerJauneAutoJ2(bus, undo);
+registerNoirTravauxSav(bus, undo);
 
 bus.on('app.boot', (event) => {
   // eslint-disable-next-line no-console

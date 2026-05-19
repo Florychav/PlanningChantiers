@@ -32,16 +32,27 @@
  * @property {boolean} [manuallyMoved]
  */
 
-/** @type {{ etiquettes: Etiquette[], personnes: Personne[] }} */
+/**
+ * @type {{
+ *   etiquettes: Etiquette[],
+ *   etiquettes_sav: Etiquette[],
+ *   personnes: Personne[],
+ *   personnes_sav: Personne[],
+ * }}
+ */
 export const state = {
-  etiquettes: [],
-  personnes: [],
+  etiquettes: [],       // Montage
+  etiquettes_sav: [],   // SAV (J3.4.7+)
+  personnes: [],        // Montage
+  personnes_sav: [],    // SAV (J3.4.7+)
 };
 
 /** Reset complet — utile pour tests. */
 export function resetState() {
   state.etiquettes.length = 0;
+  state.etiquettes_sav.length = 0;
   state.personnes.length = 0;
+  state.personnes_sav.length = 0;
 }
 
 /**
