@@ -5,9 +5,10 @@
 import { bus } from './shared/bus.js';
 import { undo } from './shared/undo.js';
 import { state, resetState } from './shared/state.js';
-import { register as registerVerrouNoir }      from './relations/verrou-noir.js';
-import { register as registerGrisInstallation } from './relations/gris-installation.js';
-import { register as registerJauneProtocoleur } from './relations/jaune-protocoleur.js';
+import { register as registerVerrouNoir }       from './relations/verrou-noir.js';
+import { register as registerGrisInstallation }  from './relations/gris-installation.js';
+import { register as registerJauneProtocoleur }  from './relations/jaune-protocoleur.js';
+import { register as registerFusionEtiquettes }  from './relations/fusion-etiquettes.js';
 import { generateEmptyPdf, loadJsPdf } from './shared/export-pdf.js';
 import { createWorkbook, loadExcelJs } from './shared/export-excel.js';
 
@@ -15,6 +16,7 @@ import { createWorkbook, loadExcelJs } from './shared/export-excel.js';
 registerVerrouNoir(bus, undo);
 registerGrisInstallation(bus, undo);
 registerJauneProtocoleur(bus, undo);
+registerFusionEtiquettes(bus, undo);
 
 bus.on('app.boot', (event) => {
   // eslint-disable-next-line no-console
