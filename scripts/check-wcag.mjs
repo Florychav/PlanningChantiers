@@ -19,44 +19,12 @@
  * propriete utilisateur pertinente pour Q9 (reconnaitre un label sur la grille).
  */
 
-const HEX_RE = /^#([0-9a-f]{6})$/i;
-
-/**
- * @param {string} hex
- * @returns {[number, number, number]}
- */
-function hexToRgb(hex) {
-  const m = HEX_RE.exec(hex);
-  if (!m) throw new Error(`hexToRgb: format invalide '${hex}'`);
-  const n = parseInt(m[1], 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-
-/**
- * Luminance relative WCAG.
- * @param {string} hex
- * @returns {number}
- */
-export function relativeLuminance(hex) {
-  const [r, g, b] = hexToRgb(hex).map((c) => {
-    const cs = c / 255;
-    return cs <= 0.03928 ? cs / 12.92 : Math.pow((cs + 0.055) / 1.055, 2.4);
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-/**
- * Ratio de contraste WCAG entre deux couleurs hex.
- * @param {string} fg
- * @param {string} bg
- * @returns {number}
- */
-export function computeContrast(fg, bg) {
-  const l1 = relativeLuminance(fg);
-  const l2 = relativeLuminance(bg);
-  const [hi, lo] = l1 > l2 ? [l1, l2] : [l2, l1];
-  return (hi + 0.05) / (lo + 0.05);
-}
+// J3.6 : reutilise les helpers contrast/luminance depuis le module ESM
+// commun pour eviter la duplication de la table sRGB. Re-export local
+// pour preserver l'API publique du script (relativeLuminance, computeContrast).
+import { relativeLuminance, contrastRatio } from '../src/shared/contrast.js';
+export { relativeLuminance };
+export const computeContrast = contrastRatio;
 
 /**
  * @typedef {Object} ContrastCheck
