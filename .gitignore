@@ -11,3 +11,4 @@ desktop.ini
 Archive planning/
 # Node
 node_modules/
+Planning/.env.test
