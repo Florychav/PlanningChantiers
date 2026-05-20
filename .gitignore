@@ -12,3 +12,8 @@ Archive planning/
 # Node
 node_modules/
 Planning/.env.test
+# Local env files (NEVER commit — contain secrets)
+.env
+.env.*
+!.env.example
+!.env.test.example
