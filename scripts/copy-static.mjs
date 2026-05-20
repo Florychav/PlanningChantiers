@@ -7,6 +7,7 @@ await mkdir('dist', { recursive: true });
 
 const staticFiles = [
   ['src/index.html', 'dist/index.html'],
+  ['src/import.html', 'dist/import.html'],
 ];
 
 for (const [from, to] of staticFiles) {

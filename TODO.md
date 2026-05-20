@@ -27,11 +27,19 @@
 - [x] **Storage event listener live** thème cross-onglet/iframe (J3.9).
 - [x] **Rapport `J3_REPORT.md` + freeze J3** (J3.10).
 
-## Reste à faire (post-J3)
+## J3.8 — Migration import.html ✅ (2026-05-20)
+
+- [x] **`src/shared/supabase.js`** : `createSupabaseClient()` factorisé.
+- [x] **`src/import/`** : import-core (pur) + import-runner (I/O) + import-ui (DOM).
+- [x] **`src/import.js` + `src/import.html`** : 2e point d'entrée esbuild + copie statique.
+- [x] **28 tests** : import-core (logique pure) + import-runner (client factice).
+- [x] Legacy `import.html` conservé pour rollback. 320 tests verts.
+
+## Reste à faire (post-J3.8)
 
 - [ ] **Compte Supabase test** `test-refonte@menetrey.local` (B2 Flory) — bloque l'E2E.
 - [ ] **J3.7 — E2E Playwright** : 3-5 scénarios couvrant les règles converties.
-- [ ] **J3.8 — Migration `import.html`** vers bundle (~1-2j) — validation périmètre PM.
 - [ ] **Texte adaptatif labels mode light** : brancher `pickTextColor` au render layer (J4).
 - [ ] **Bus 'theme-changed' relayé au legacy** quand UI legacy bundlée.
+- [ ] **Factoriser constantes Supabase** des 2 HTML legacy restants vers `supabase.js`.
 - [ ] **J4 — Bascule UI legacy → bundle** (vrai render layer) — validation périmètre PM.

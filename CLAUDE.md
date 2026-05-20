@@ -15,22 +15,26 @@
 ### Layout repo
 ```
 /c/dev/Planning-web/
-├─ src/                       Bundle ESM (entry: src/main.js, ~14 KB minifié)
+├─ src/                       Bundle ESM (entries: main.js + import.js)
+│  ├─ main.js, index.html      entry bundle planning (~15.5 KB minifié)
+│  ├─ import.js, import.html    entry page d'import bundlée (J3.8)
 │  ├─ shared/                 bus, undo, theme, state, dates, ids, contrast,
-│  │                          realtime, export-pdf, export-excel
+│  │                          realtime, supabase, export-pdf, export-excel
+│  ├─ import/                 import-core (pur), import-runner (I/O), import-ui (DOM)
 │  └─ relations/              11 règles : verrou-noir, gris-installation,
 │                             jaune-protocoleur, fusion-etiquettes,
 │                             cascade-mere-filles, mere-filles-drag-sync,
 │                             jaune-auto-j2, lignes-communes (sel),
 │                             monteurs-en-sav (sel), noir-travaux-sav, _utils
-├─ tests/unit/                20 fichiers, 292 tests verts
+├─ tests/unit/                22 fichiers, 320 tests verts
 ├─ tests/integration/         (vide — J3+)
 ├─ tests/e2e/                 (vide — J3.7 Playwright, bloqué B2)
-├─ dist/                      bundle.js + chunks dynamiques + .map (commités)
+├─ dist/                      bundle.js + import.js + chunks + .map (commités)
 ├─ scripts/                   copy-static, verify-deps, check-wcag
-├─ planning-montage.html      Legacy actif (+80 lignes A13 theme exception)
-├─ planning-sav.html          Legacy actif (+80 lignes A13)
-├─ index.html, index-sav.html, import.html, planning.json, supabase-schema.sql  Legacy intacts
+├─ planning-montage.html      Legacy actif (+84 lignes A13 theme exception)
+├─ planning-sav.html          Legacy actif (+84 lignes A13)
+├─ index.html, index-sav.html, planning.json, supabase-schema.sql  Legacy intacts
+├─ import.html                Legacy import — conservé pour rollback (bundle = dist/import.html)
 ├─ J1_REPORT.md, J2_4_REPORT.md
 ├─ TESTING.md, TODO.md, README.md, CLAUDE.md
 ├─ esbuild.config.mjs (splitting:true), vitest.config.mjs, playwright.config.mjs, tsconfig.json
@@ -62,11 +66,11 @@
 | **J3.5** Realtime patch incrémental + 19 tests | ✅ | `d3ecbb0` |
 | **J3.6** contrast.js + pickTextColor + 17 tests | ✅ | `48381be` |
 | **J3.9** storage event live sync thème | ✅ | `21c2d68` |
-| **J3.10** Rapport `J3_REPORT.md` + freeze J3 | ✅ | (ce commit) |
+| **J3.10** Rapport `J3_REPORT.md` + freeze J3 | ✅ | `22d68de` |
+| **J3.8** Migration `import.html` vers bundle ESM + 28 tests | ✅ | (ce commit) |
 | **J3.7** Playwright E2E | 🟡 **bloqué B2** | — |
-| **J3.8** Migration `import.html` vers bundle | ⏳ **reporté — validation périmètre PM** | — |
 
-**Total : 292 tests verts. Bundle initial ~15.6 KB. 0 CVE. J3 figé (voir `J3_REPORT.md`).**
+**Total : 320 tests verts. Bundle planning ~15.5 KB. Page import bundlée. 0 CVE.**
 
 ## 🧠 Règles métier ESM (11 règles)
 
@@ -107,6 +111,17 @@
 - **Pas d'emit bus** sur patch : les cascades sont parties côté émetteur, replay = double application
 - Callback `onPatchApplied` pour observability sans couplage bus
 
+## 📥 Page d'import bundlée (J3.8)
+- Entry `src/import.js` → `dist/import.js` (2e point d'entrée esbuild, forme `{in,out}`)
+- `src/import.html` → `dist/import.html` (copie statique, plus de `<script>` CDN ni inline)
+- 3 modules `src/import/` : **import-core** (pur, testable) / **import-runner** (I/O Supabase) / **import-ui** (DOM, handlers via `addEventListener`)
+- `src/shared/supabase.js` : `createSupabaseClient()` factorisé (1er usage npm de `@supabase/supabase-js` dans le bundle)
+- Logique portée 1:1 du legacy : dédup personnes (prénom+nom normalisés), idMap, remap étiquettes/réunions, étiquettes orphelines écartées, upsert par lots de 200
+- UI construite en API DOM (pas d'`innerHTML`) — l'email utilisateur n'est jamais interprété
+- `import.js` = 206 KB (supabase-js bundlé) — **isolé**, n'alourdit pas `bundle.js` (15.5 KB)
+- Legacy `import.html` (racine) **conservé** pour rollback jusqu'à la bascule
+- 28 tests : `import-core.test.js` (logique pure) + `import-runner.test.js` (client Supabase factice)
+
 ## 📅 Calendrier fériés (J3.2)
 - `src/shared/dates.js` étendu : `FERIES_INFO` (Frozen, 42 entrées 2025-2027)
 - API : `isHoliday(iso, canton?)`, `getHolidayInfo(iso)`, `isWorkingDayExcludingHolidays(d, canton?)`, `addBusinessDaysSkippingHolidays(iso, n, canton?)`
@@ -118,7 +133,7 @@
 SUPABASE_URL = 'https://nnkthgxbcslkhkdayjvg.supabase.co'
 SUPABASE_KEY = 'sb_publishable_zX0P2GxSqIlh3Lqb_-PtCw_ydCahuhp'
 ```
-Dupliquées dans 3 fichiers legacy (montage + SAV + import.html). À factoriser quand UI legacy bundlée.
+Factorisées dans `src/shared/supabase.js` côté bundle (J3.8). Encore dupliquées dans les 2 HTML legacy (montage + SAV) — à factoriser quand leur UI sera bundlée.
 
 ## 📐 Conventions code
 - JSDoc + `// @ts-check` en tête de chaque module ESM
@@ -135,7 +150,7 @@ Dupliquées dans 3 fichiers legacy (montage + SAV + import.html). À factoriser 
 - Rollback d'urgence : `git checkout legacy-pre-refonte -- planning-*.html index*.html import.html`
 
 ## 📌 Méthodologie active
-AGENTS.md (autonomie + sub-agents + isoler-confirmer-2-fois + format rapport ✅/❌/🟡). Auto-mode activé. PM demande enchaînement auto si pas de blocker → STOP uniquement sur B2 (Supabase test account) ou gros chantier J3.8.
+AGENTS.md (autonomie + sub-agents + isoler-confirmer-2-fois + format rapport ✅/❌/🟡). Auto-mode activé. PM demande enchaînement auto si pas de blocker → STOP sur B2 (Supabase test account) ou gros chantier J4.
 
 ## ⛔ Blockers actifs
 
@@ -149,8 +164,6 @@ AGENTS.md (autonomie + sub-agents + isoler-confirmer-2-fois + format rapport ✅
 | # | Item | Effort | Bloqué ? |
 |---|---|---|---|
 | J3.7 | Compte Supabase + E2E Playwright | ~2h | **B2 Flory** |
-| J3.8 | Migration `import.html` vers bundle | 1-2j | Validation scope PM |
-| J3.10 | Rapport `J3_REPORT.md` + freeze J3 | 30 min | — |
 | J4 | Bascule UI legacy → bundle (vrai render layer) | 3-5j | Validation scope PM |
 
-**Reprise post-/clear** : lire ce fichier + `J3_REPORT.md` + `TODO.md`. État repo : `git log --oneline -25` depuis `refonte/esm-bundle`. **J3 figé** — prochaine décision : débloquer B2 (→ J3.7 E2E) et trancher le périmètre J3.8 (migration `import.html`, à faire seul ou couplé à J4).
+**Reprise post-/clear** : lire ce fichier + `J3_REPORT.md` + `TODO.md`. État repo : `git log --oneline -25` depuis `refonte/esm-bundle`. **J3 + J3.8 livrés** — prochaine décision : débloquer B2 (→ J3.7 E2E) ou lancer J4 (bascule UI legacy → bundle).

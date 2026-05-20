@@ -13,9 +13,14 @@ const isWatch = process.argv.includes('--watch');
 
 /** @type {import('esbuild').BuildOptions} */
 const config = {
-  entryPoints: ['src/main.js'],
+  // Deux points d'entree : le bundle planning + la page d'import (J3.8).
+  // Forme { in, out } pour nommer chaque sortie independamment.
+  entryPoints: [
+    { in: 'src/main.js', out: 'bundle' },   // -> dist/bundle.js
+    { in: 'src/import.js', out: 'import' }, // -> dist/import.js
+  ],
   outdir: 'dist',
-  entryNames: 'bundle',       // bundle.js (au lieu du nom auto 'main.js')
+  entryNames: '[name]',       // respecte le champ `out` ci-dessus
   chunkNames: 'chunk-[hash]', // chunks dynamiques
   bundle: true,
   splitting: true,            // active code-splitting (requiert format ESM)

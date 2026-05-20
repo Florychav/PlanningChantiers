@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/shared/ids.js"],
+  "sourcesContent": ["// @ts-check\n/**\n * Generation d'identifiants. Tente crypto.randomUUID() (RFC 4122 v4),\n * fallback Math.random + Date.now en environnements vieillots ou non-DOM\n * (Node < 19 sans webcrypto, certains JSDom anciens).\n *\n * @returns {string}\n */\nexport function generateId() {\n  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {\n    return crypto.randomUUID();\n  }\n  const rand = Math.random().toString(36).slice(2, 12);\n  return `id-${rand}-${Date.now().toString(36)}`;\n}\n"],
+  "mappings": "AAQO,SAASA,GAAa,CAC3B,OAAI,OAAO,OAAW,KAAe,OAAO,OAAO,YAAe,WACzD,OAAO,WAAW,EAGpB,MADM,KAAK,OAAO,EAAE,SAAS,EAAE,EAAE,MAAM,EAAG,EAAE,CAClC,IAAI,KAAK,IAAI,EAAE,SAAS,EAAE,CAAC,EAC9C",
+  "names": ["generateId"]
+}
