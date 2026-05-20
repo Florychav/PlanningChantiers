@@ -1,6 +1,7 @@
 # CLAUDE.md — Planning Menétrey (refonte ESM bundle)
 
-> Mémoire de contexte projet. À jour fin J3.5+6+9 (2026-05-19, sauvegarde pre-/clear).
+> Mémoire de contexte projet. À jour fin J3.10 — **J3 figé** (2026-05-20).
+> Rapport de clôture : `J3_REPORT.md`.
 > Pour l'historique pre-refonte : voir l'archive `Archive planning/OneDrive-pre-bascule-2026-05-18/CLAUDE.md` (hors repo).
 
 ## 🏗️ Architecture actuelle
@@ -61,10 +62,11 @@
 | **J3.5** Realtime patch incrémental + 19 tests | ✅ | `d3ecbb0` |
 | **J3.6** contrast.js + pickTextColor + 17 tests | ✅ | `48381be` |
 | **J3.9** storage event live sync thème | ✅ | `21c2d68` |
+| **J3.10** Rapport `J3_REPORT.md` + freeze J3 | ✅ | (ce commit) |
 | **J3.7** Playwright E2E | 🟡 **bloqué B2** | — |
-| **J3.8** Migration `import.html` vers bundle | ⏳ | — |
+| **J3.8** Migration `import.html` vers bundle | ⏳ **reporté — validation périmètre PM** | — |
 
-**Total : 292 tests verts. Bundle initial ~14 KB. 0 CVE. 21 commits J2+J3.**
+**Total : 292 tests verts. Bundle initial ~15.6 KB. 0 CVE. J3 figé (voir `J3_REPORT.md`).**
 
 ## 🧠 Règles métier ESM (11 règles)
 
@@ -151,4 +153,4 @@ AGENTS.md (autonomie + sub-agents + isoler-confirmer-2-fois + format rapport ✅
 | J3.10 | Rapport `J3_REPORT.md` + freeze J3 | 30 min | — |
 | J4 | Bascule UI legacy → bundle (vrai render layer) | 3-5j | Validation scope PM |
 
-**Reprise post-/clear** : lire ce fichier + `TODO.md` + `J2_4_REPORT.md`. État repo : `git log --oneline -25` depuis `refonte/esm-bundle`. Working tree clean (working tree fully committed, last commit `21c2d68`).
+**Reprise post-/clear** : lire ce fichier + `J3_REPORT.md` + `TODO.md`. État repo : `git log --oneline -25` depuis `refonte/esm-bundle`. **J3 figé** — prochaine décision : débloquer B2 (→ J3.7 E2E) et trancher le périmètre J3.8 (migration `import.html`, à faire seul ou couplé à J4).

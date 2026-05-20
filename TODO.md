@@ -17,22 +17,21 @@
 - [x] **dompurify** : remontée automatiquement via bump jspdf.
 - [x] **npm audit** : 0 vulnérabilités (était 8 avant J3.1).
 
-## J3.x — Suite (proposition d'ordre)
+## J3.2-J3.10 — Livré ✅ (2026-05-20, J3 figé — voir `J3_REPORT.md`)
 
-- [ ] **Fériés FR/GE dans `src/shared/dates.js`** : extraction calendrier
-  legacy + tests fixtures dédiés.
-- [ ] **Dynamic imports `jspdf` / `exceljs`** : charge à la demande dans
-  les handlers d'export, bundle initial < 10 KB.
-- [ ] **8 règles métier restantes** : cascade mère-filles, jaune-auto-J+2,
-  fusion-etiquettes-consecutives, getMonteursEnSav, updateNoirTravauxSav,
-  lignes communes Menétrey/Burgy (sync bidirectionnelle), etc.
-- [ ] **Patch incrémental Realtime** : remplace le reload complet legacy.
-  Suppose `originTag` + `updated_at` (cf. plan v2).
-- [ ] **Compte Supabase test** `test-refonte@menetrey.local` (B2 Flory).
-- [ ] **E2E Playwright** : 3-5 scénarios couvrant les règles converties.
-- [ ] **Texte adaptatif labels mode light** : couleur de texte calculée
-  selon luminance du fond (limite J2.4 documentée).
-- [ ] **Migration `import.html`** vers bundle (~1-2j).
-- [ ] **Storage event listener live** pour propagation thème
-  cross-onglet/iframe sans reload (limite J2.4 / A19).
-- [ ] **Bus 'theme-changed' relayé au legacy** quand UI legacy bundle.
+- [x] **Fériés FR/GE dans `src/shared/dates.js`** : `FERIES_INFO` 2025-2027 + tests.
+- [x] **Dynamic imports `jspdf` / `exceljs`** + code splitting esbuild (bundle ~15.6 KB).
+- [x] **8 règles métier restantes** : 11/11 règles converties en ESM.
+- [x] **Patch incrémental Realtime** : `realtime.js` `applyPatch` + `originTag`.
+- [x] **`contrast.js` + `pickTextColor`** : utilitaire prêt (branchement render layer J4+).
+- [x] **Storage event listener live** thème cross-onglet/iframe (J3.9).
+- [x] **Rapport `J3_REPORT.md` + freeze J3** (J3.10).
+
+## Reste à faire (post-J3)
+
+- [ ] **Compte Supabase test** `test-refonte@menetrey.local` (B2 Flory) — bloque l'E2E.
+- [ ] **J3.7 — E2E Playwright** : 3-5 scénarios couvrant les règles converties.
+- [ ] **J3.8 — Migration `import.html`** vers bundle (~1-2j) — validation périmètre PM.
+- [ ] **Texte adaptatif labels mode light** : brancher `pickTextColor` au render layer (J4).
+- [ ] **Bus 'theme-changed' relayé au legacy** quand UI legacy bundlée.
+- [ ] **J4 — Bascule UI legacy → bundle** (vrai render layer) — validation périmètre PM.
